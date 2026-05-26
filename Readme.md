@@ -38,7 +38,8 @@ pip install -r requirements.txt
 ### 3. Запуск
 
 ```bash
-python main.py
+uvicorn app.main:app --reload --port 3000
+http://localhost:8000/docs  -> Swagger UI 
 ```
 
 ---
