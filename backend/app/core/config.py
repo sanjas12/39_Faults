@@ -1,20 +1,18 @@
-import logging
-import os
-from pathlib import Path
+from pydantic_settings import BaseSettings
 
-# Directories
-BASE_DIR = Path(__file__).parent.parent.absolute()
-CONFIG_DIR = Path(BASE_DIR, "config")
-LOGS_DIR = Path(BASE_DIR.parent, "logs")
+class Settings(BaseSettings):
+    app_name: str = "Faults"
+    debug: bool = True
+    
+    # База данных
+    database_url: str = "sqlite:///./faults.db"  # Начнём с SQLite
+    
+    # JWT
+    secret_key: str = "your-secret-key-change-me"
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 30
+    
+    class Config:
+        env_file = ".env"
 
-# Создаем директории, если они не существуют
-os.makedirs(LOGS_DIR, exist_ok=True)
-os.makedirs(CONFIG_DIR, exist_ok=True)
-
-#Logging
-FORMAT = '%(asctime)s:%(levelname)s:%(message)s'
-LEVEL_LOG = logging.INFO
-LOG_FILE = Path(LOGS_DIR, 'app.log')
-
-# UI
-FONT_SIZE = 8
+settings = Settings()
