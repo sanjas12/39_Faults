@@ -1,0 +1,52 @@
+faults/
+├── bugs/
+├── docs/
+│     ┗ RelNote.txt
+├── scripts/
+│   ├── toexe.sh
+│    ── venv_pip.sh
+├── input/
+├── backend/
+│   ├── app/
+│   │   ├── api/       # роутеры (units, faults, auth)
+│   │   │   ├── faults.py
+│   │   │   ├── knowledge_base.py
+│   │   │   ├── projects.py
+│   │   │   └── dashboard.py
+│   │   ├── core/      # config, db, security
+│   │   │   ├── config.py
+│   │   │   ├── database.py
+│   │   │   └── security.py
+│   │   ├── models/    # SQLAlchemy модели
+│   │   ├── schemas/   # Pydantic
+│   │   └── services/  # бизнес-логика (статусы, эскалация)
+│   │   │   ├── escalation.py  # Автоэскалация
+│   │   │   ├── search.py       # Поиск по базе знаний
+│   │   │   └── notifications.py
+│   │   └── main.py
+│   │   └── build.py
+│   ├── migrations/
+│   ├── tests/
+│   ├── Dockerfile
+│   └── pyproject.toml
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── FaultTable.tsx
+│   │   │   ├── CommentThread.tsx
+│   │   │   ├── FilterBar.tsx
+│   │   │   └── MarkdownEditor.tsx
+│   │   ├── pages/     (Dashboard, FaultList, FaultDetail)
+│   │   │   ├── Dashboard.tsx
+│   │   │   ├── FaultList.tsx
+│   │   │   ├── FaultDetail.tsx (с лентой комментариев)
+│   │   │   ├── KanbanBoard.tsx
+│   │   │   └── KnowledgeBase.tsx
+│   │   └── api/
+│   │   ├── hooks/
+│   │   ├── api/ (React Query)
+│   │   └── App.tsx
+│   └── Dockerfile
+├── docker-compose.yml
+├── .gitignore
+└── README.md
