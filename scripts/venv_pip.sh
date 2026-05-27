@@ -70,6 +70,15 @@ activate_venv() {
     fi
 }
 
+# Проверка интернета
+check_internet() {
+    if command -v python >/dev/null 2>&1; then
+        python -c "import urllib.request; urllib.request.urlopen('https://pypi.org/simple/', timeout=3)" 2>/dev/null && return 0
+    fi
+    
+    return 1
+}
+
 # --- CONFIG ---
 PIP_VERSION="25.0.1"
 
@@ -105,19 +114,13 @@ else
     log_warning "uv не найден -> fallback на pip"
 fi
 
-# интернет
+# Проверка интернета (исправленная)
 log "Проверка доступа в интернет..."
-set +e
-python - <<EOF 2>/dev/null
-import urllib.request
-urllib.request.urlopen("https://pypi.org/simple/", timeout=3)
-EOF
-NET_OK=$?
-set -e
-
-if [ $NET_OK -eq 0 ]; then
+if check_internet; then
+    NET_OK=0
     log_success "Интернет доступен"
 else
+    NET_OK=1
     log_warning "Интернет НЕ доступен"
 fi
 
@@ -219,20 +222,26 @@ install_hooks() {
     log "=== УСТАНОВКА GIT HOOKS ==="
 
     if [ ! -d ".git" ]; then
-        log_error "это не git репозиторий"
-        exit 1
+        log_warning "это не git репозиторий, пропускаем установку хуков"
+        return 0
     fi
 
     if command -v uv >/dev/null 2>&1; then
         log "Установка pre-commit hooks через uv..."
-        uv run pre-commit install
-        uv run pre-commit install --hook-type commit-msg
-        log_success "Git hooks установлены через uv"
+        if uv run pre-commit install 2>/dev/null; then
+            log_success "Git hooks установлены через uv"
+        else
+            log_warning "pre-commit не установлен"
+        fi
+        uv run pre-commit install --hook-type commit-msg 2>/dev/null || true
     else
         log "Установка pre-commit hooks..."
-        pre-commit install
-        pre-commit install --hook-type commit-msg
-        log_success "Git hooks установлены через pre-commit"
+        if pre-commit install 2>/dev/null; then
+            log_success "Git hooks установлены через pre-commit"
+        else
+            log_warning "pre-commit не установлен"
+        fi
+        pre-commit install --hook-type commit-msg 2>/dev/null || true
     fi
 }
 
