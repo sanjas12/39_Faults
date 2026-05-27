@@ -114,7 +114,7 @@ else
     log_warning "uv не найден -> fallback на pip"
 fi
 
-# Проверка интернета (исправленная)
+# Проверка интернета
 log "Проверка доступа в интернет..."
 if check_internet; then
     NET_OK=0
@@ -127,15 +127,21 @@ fi
 # --- DETECT PROJECT TYPE ---
 [ -f "pyproject.toml" ] && USE_PYPROJECT=1 || USE_PYPROJECT=0
 
-if [ $USE_PYPROJECT -eq 1 ]; then
-    log "Тип проекта: pyproject.toml"
-else
-    log "Тип проекта: requirements.txt"
-fi
+# Поиск requirements.txt (только в ожидаемых местах)
+REQUIREMENTS_FILE=""
 
-if [ $USE_PYPROJECT -eq 0 ] && [ ! -f "requirements.txt" ]; then
-    log_error "нет зависимостей"
-    exit 1
+if [ $USE_PYPROJECT -eq 0 ]; then
+    # Проверяем только два ожидаемых места
+    if [[ -f "backend/app/requirements.txt" ]]; then
+        REQUIREMENTS_FILE="backend/app/requirements.txt"
+        log_success "requirements.txt найден: backend/app/requirements.txt"
+    elif [[ -f "requirements.txt" ]]; then
+        REQUIREMENTS_FILE="requirements.txt"
+        log_success "requirements.txt найден в корне проекта"
+    else
+        log_error "requirements.txt не найден (искали: backend/app/requirements.txt, requirements.txt)"
+        exit 1
+    fi
 fi
 
 if [ $NET_OK -ne 0 ] && [ ! -d "$LOCAL_PACKAGES_DIR" ]; then
@@ -174,12 +180,15 @@ install_with_uv() {
         uv sync "${UV_ARGS[@]}"
         log_success "Зависимости установлены через uv sync"
     else
-        log "Выполнение: uv pip install с параметрами ${PIP_ARGS[*]}"
+        log "Выполнение: uv pip install из $REQUIREMENTS_FILE"
+        log "Параметры: ${PIP_ARGS[*]}"
+        
         # dry-run
-        uv pip install "${PIP_ARGS[@]}" -r requirements.txt --dry-run
+        uv pip install "${PIP_ARGS[@]}" -r "$REQUIREMENTS_FILE" --dry-run
         log "Dry-run выполнен успешно"
+        
         # install
-        uv pip install "${PIP_ARGS[@]}" -r requirements.txt
+        uv pip install "${PIP_ARGS[@]}" -r "$REQUIREMENTS_FILE"
         log_success "Зависимости установлены через uv pip"
     fi
 }
@@ -204,14 +213,14 @@ install_with_pip() {
     # dry-run (если доступен)
     if python -m pip install --help | grep -q -- "--dry-run"; then
         log "Выполнение dry-run..."
-        pip install "${PIP_ARGS[@]}" -r requirements.txt --dry-run
+        pip install "${PIP_ARGS[@]}" -r "$REQUIREMENTS_FILE" --dry-run
         log_success "Dry-run выполнен"
     else
         log_warning "pip без --dry-run, пропускаем проверку"
     fi
 
-    log "Установка зависимостей..."
-    pip install "${PIP_ARGS[@]}" -r requirements.txt
+    log "Установка зависимостей из $REQUIREMENTS_FILE..."
+    pip install "${PIP_ARGS[@]}" -r "$REQUIREMENTS_FILE"
     log_success "Зависимости установлены через pip"
 }
 
