@@ -36,4 +36,4 @@ wheels/
 MANIFEST
 
 # Project
-venv_pip_*
+logs/
