@@ -11,6 +11,8 @@ set -e
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BACKEND_DIR="$PROJECT_ROOT/backend"
 
+SCRIPT_NAME=$(basename "$0" .sh)
+
 cd "$PROJECT_ROOT" || exit 1
 
 # ── НАСТРОЙКА ЛОГИРОВАНИЯ ───────────────────────────────────────────────────
@@ -18,8 +20,8 @@ cd "$PROJECT_ROOT" || exit 1
 LOG_DIR="$PROJECT_ROOT/logs"
 mkdir -p "$LOG_DIR"
 
-LOG_FILE="$LOG_DIR/venv_pip_$(date +%Y%m%d_%H%M%S).log"
-ERROR_LOG="$LOG_DIR/venv_pip_errors.log"
+LOG_FILE="$LOG_DIR/${SCRIPT_NAME}_$(date +%Y%m%d_%H%M%S).log"
+ERROR_LOG="$LOG_DIR/${SCRIPT_NAME}_errors.log"
 
 # Функция логирования
 log() {

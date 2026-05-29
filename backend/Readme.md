@@ -16,7 +16,7 @@
 #### 2.1 Создание виртуального окружения для backend (VSCode)
 
 ```bash
-bash scripts/venv_pip.sh
+bash scripts/init_backend_env.sh
 ```
 
 #### 2.2 Установка зависимостей (если скрипт из пункта 2.1 не сработал)
