@@ -50,13 +50,13 @@ error_handler() {
     local line_no=$1
     local command=$2
     local exit_code=$3
-    
+
     log_error "Ошибка на строке $line_no"
     log_error "Команда: $command"
     log_error "Код возврата: $exit_code"
     log_error "Текущая директория: $(pwd)"
     log_error "Скрипт завершен с ошибкой. Лог: $LOG_FILE"
-    
+
     exit $exit_code
 }
 
@@ -83,7 +83,7 @@ check_internet() {
     if command -v python >/dev/null 2>&1; then
         python -c "import urllib.request; urllib.request.urlopen('https://pypi.org/simple/', timeout=3)" 2>/dev/null && return 0
     fi
-    
+
     return 1
 }
 
@@ -181,41 +181,41 @@ fi
 # ─────────────────────────────────────────────────────────────────────────────
 install_with_uv() {
     log "=== УСТАНОВКА ЧЕРЕЗ UV ==="
-    
+
     if [ $USE_PYPROJECT -eq 1 ]; then
         log "Переход в директорию бэкенда: $BACKEND_DIR"
         cd "$BACKEND_DIR"
-        
+
         log "Создание виртуального окружения..."
         uv venv
         log_success "Виртуальное окружение создано в $BACKEND_DIR/.venv"
 
-        UV_ARGS=(--group build)
+        UV_ARGS=(--group build --group dev)
         [ $USE_OFFLINE -eq 1 ] && UV_ARGS+=(--no-index --find-links="$LOCAL_PACKAGES_DIR" --frozen)
 
         log "Выполнение: uv sync ${UV_ARGS[*]}"
         uv sync "${UV_ARGS[@]}"
         log_success "Зависимости установлены через uv sync"
-        
+
         cd "$PROJECT_ROOT"
     else
         # Обработка requirements.txt
         local work_dir="$(dirname "$REQUIREMENTS_FILE")"
         cd "$work_dir"
-        
+
         log "Создание виртуального окружения в $work_dir..."
         uv venv
         log_success "Виртуальное окружение создано"
 
         local req_basename="$(basename "$REQUIREMENTS_FILE")"
         log "Выполнение: uv pip install из $req_basename"
-        
+
         uv pip install "${PIP_ARGS[@]}" -r "$req_basename" --dry-run
         log "Dry-run выполнен успешно"
-        
+
         uv pip install "${PIP_ARGS[@]}" -r "$req_basename"
         log_success "Зависимости установлены через uv pip"
-        
+
         cd "$PROJECT_ROOT"
     fi
 }
@@ -228,13 +228,13 @@ install_with_pip() {
 
     local work_dir="$BACKEND_DIR"
     [ -n "$REQUIREMENTS_FILE" ] && work_dir="$(dirname "$REQUIREMENTS_FILE")"
-    
+
     cd "$work_dir"
 
     log "Создание виртуального окружения в $work_dir..."
     python3 -m venv .venv || python -m venv .venv
     log_success "Виртуальное окружение создано"
-    
+
     activate_venv ".venv"
 
     # обновление pip
@@ -256,7 +256,7 @@ install_with_pip() {
     log "Установка зависимостей из $req_file..."
     pip install "${PIP_ARGS[@]}" -r "$req_file"
     log_success "Зависимости установлены через pip"
-    
+
     cd "$PROJECT_ROOT"
 }
 
@@ -281,7 +281,7 @@ install_hooks() {
         log_warning "pre-commit не найден в окружении. Убедитесь, что он есть в зависимостях."
     fi
     pre-commit install --hook-type commit-msg 2>/dev/null || true
-    
+
     # Деактивация окружения (для чистоты)
     deactivate 2>/dev/null || true
 }

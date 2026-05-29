@@ -39,7 +39,7 @@ pip install -r requirements.txt
 
 ```bash
 uvicorn app.main:app --reload --port 3000
-http://localhost:8000/docs  -> Swagger UI 
+http://localhost:8000/docs  -> Swagger UI
 ```
 
 ---
