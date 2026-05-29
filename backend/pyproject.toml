@@ -2,7 +2,7 @@
 name = "faults"
 version = "0.0.1"
 description = "Add your description here"
-readme = "README.md"
+readme = "../Readme.md"
 requires-python = ">=3.8"
 authors = [
     {name = "sanja_s", email = "sanja100v@gmail.com"}
@@ -31,8 +31,8 @@ environments = [
     # "sys_platform == 'linux'",  # раскоментить если будет в linux собираться
 ]
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.setuptools]
+packages = ["app"]
 
 # ─── Ruff: линтер + форматер ─────────────────────────────────────────────────
 [tool.ruff]
