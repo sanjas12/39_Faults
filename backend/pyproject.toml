@@ -11,7 +11,7 @@ authors = [
 dependencies = []
 
 [project.urls]
-Repository = ".git"
+Repository = "https://github.com/sanjas12/39_Faults.git"
 
 [build-system]
 requires = ["setuptools>=68"]
