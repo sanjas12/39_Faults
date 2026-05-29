@@ -141,11 +141,14 @@ prompt-toolkit==3.0.51 ; sys_platform == 'win32'
 pydantic==2.10.6 ; sys_platform == 'win32'
     # via
     #   faults
+    #   pydantic-settings
     #   python-semantic-release
 pydantic-core==2.27.2 ; sys_platform == 'win32'
     # via
     #   faults
     #   pydantic
+pydantic-settings==2.8.1 ; sys_platform == 'win32'
+    # via faults
 pygments==2.19.2 ; sys_platform == 'win32'
     # via
     #   faults
@@ -160,6 +163,8 @@ python-discovery==1.4.0 ; sys_platform == 'win32'
     # via
     #   faults
     #   virtualenv
+python-dotenv==1.0.1 ; sys_platform == 'win32'
+    # via pydantic-settings
 python-gitlab==4.13.0 ; sys_platform == 'win32'
     # via
     #   faults
