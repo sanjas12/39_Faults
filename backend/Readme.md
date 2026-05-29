@@ -38,7 +38,9 @@ pip install -r requirements.txt
 ### 3. Запуск
 
 ```bash
-uvicorn app.main:app --reload --port 3000
+uv run python backend/init_db.py     - скрипт для инициализации БД
+
+uv run uvicorn app.main:app --reload --port 3000
 http://localhost:8000/docs  -> Swagger UI
 ```
 

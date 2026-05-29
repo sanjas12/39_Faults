@@ -1,11 +1,9 @@
+from backend._version import __version__
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend._version import __version__
 
 app = FastAPI(
-    title="Faults",
-    description="Отслеживание неисправностей",
-    version=__version__
+    title="Faults", description="Отслеживание неисправностей", version=__version__
 )
 
 # CORS для React (будет работать на разных портах)
@@ -17,9 +15,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/")
 def root():
     return {"message": "Faults API работает"}
+
 
 @app.get("/health")
 def health():
