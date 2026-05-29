@@ -1,6 +1,7 @@
-from backend._version import __version__
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from _version import __version__
 
 app = FastAPI(
     title="Faults", description="Отслеживание неисправностей", version=__version__
@@ -24,3 +25,9 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "ok", "python_version": "3.8.10"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="127.0.0.1", port=3000, reload=True)

@@ -11,7 +11,7 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 from cx_Freeze import Executable, setup  # type: ignore  # noqa: E402
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
-from backend._version import __app_name__, __revision__, __version__  # noqa: E402
+from backend.app._version import __app_name__, __revision__, __version__  # noqa: E402
 
 _sys = platform.system().lower()
 if _sys == "darwin":
