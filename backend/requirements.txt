@@ -75,6 +75,8 @@ gitpython==3.1.50 ; sys_platform == 'win32'
     # via
     #   faults
     #   python-semantic-release
+greenlet==3.1.1 ; (platform_machine == 'AMD64' and sys_platform == 'win32') or (platform_machine == 'WIN32' and sys_platform == 'win32') or (platform_machine == 'aarch64' and sys_platform == 'win32') or (platform_machine == 'amd64' and sys_platform == 'win32') or (platform_machine == 'ppc64le' and sys_platform == 'win32') or (platform_machine == 'win32' and sys_platform == 'win32') or (platform_machine == 'x86_64' and sys_platform == 'win32')
+    # via sqlalchemy
 identify==2.6.1 ; sys_platform == 'win32'
     # via
     #   faults
@@ -195,6 +197,8 @@ smmap==5.0.3 ; sys_platform == 'win32'
     # via
     #   faults
     #   gitdb
+sqlalchemy==2.0.50 ; sys_platform == 'win32'
+    # via faults
 termcolor==2.4.0 ; sys_platform == 'win32'
     # via
     #   commitizen
@@ -217,6 +221,7 @@ typing-extensions==4.13.2 ; sys_platform == 'win32'
     #   gitpython
     #   pydantic
     #   pydantic-core
+    #   sqlalchemy
     #   virtualenv
 urllib3==2.2.3 ; sys_platform == 'win32'
     # via
