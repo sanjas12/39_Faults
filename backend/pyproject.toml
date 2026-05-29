@@ -3,7 +3,7 @@ name = "faults"
 version = "0.0.1"
 description = "Add your description here"
 readme = "Readme.md"
-requires-python = ">=3.8"
+requires-python = ">=3.8, <3.9"
 authors = [
     {name = "sanja_s", email = "sanja100v@gmail.com"}
 ]
