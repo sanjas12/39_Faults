@@ -1,6 +1,6 @@
 39_Faults
  ┣ backend
- ┃ ┗ app
+ ┃ ┣ app
  ┃ ┃ ┣ api
  ┃ ┃ ┃ ┣ dashboard.py
  ┃ ┃ ┃ ┣ faults.py
@@ -17,18 +17,18 @@
  ┃ ┃ ┃ ┗ __init__.py
  ┃ ┃ ┣ schemas
  ┃ ┃ ┃ ┗ __init__.py
- ┃ ┃ ┣ services
+ ┃ ┃ ┗ services
  ┃ ┃ ┃ ┣ escalation.py
  ┃ ┃ ┃ ┣ notifications.py
  ┃ ┃ ┃ ┣ search.py
  ┃ ┃ ┃ ┗ __init__.py
- ┃ ┃ ┣ .python-version
- ┃ ┃ ┣ build.py
- ┃ ┃ ┣ main.py
- ┃ ┃ ┣ pyproject.toml
- ┃ ┃ ┣ requirements.txt
- ┃ ┃ ┗ _version.py
- ├── frontend/
+ ┃ ┣ .python-version
+ ┃ ┣ build.py
+ ┃ ┣ main.py
+ ┃ ┣ pyproject.toml
+ ┃ ┣ requirements.txt
+ ┃ ┗ _version.py
+├── frontend/
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── FaultTable.tsx
