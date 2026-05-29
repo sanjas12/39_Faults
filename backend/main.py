@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from _version import __version__
+from backend._version import __version__
 
 app = FastAPI(
     title="Faults",
