@@ -147,6 +147,11 @@ if [ -f "$BACKEND_DIR/pyproject.toml" ]; then
     USE_PYPROJECT=1
     VENV_LOCATION="$BACKEND_DIR/.venv"
     log_success "pyproject.toml найден: $BACKEND_DIR/pyproject.toml"
+    if [ -f "$BACKEND_DIR/requirements.txt" ]; then
+	REQUIREMENTS_FILE="$BACKEND_DIR/requirements.txt"
+    	VENV_LOCATION="$BACKEND_DIR/.venv"
+    	log_success "requirements.txt найден: $REQUIREMENTS_FILE"
+    fi
 elif [ -f "$BACKEND_DIR/requirements.txt" ]; then
     REQUIREMENTS_FILE="$BACKEND_DIR/requirements.txt"
     VENV_LOCATION="$BACKEND_DIR/.venv"
@@ -193,7 +198,7 @@ install_with_uv() {
         log_success "Виртуальное окружение создано в $BACKEND_DIR/.venv"
 
         UV_ARGS=(--group build --group dev)
-        [ $USE_OFFLINE -eq 1 ] && UV_ARGS+=(--no-index --find-links="$LOCAL_PACKAGES_DIR" --frozen)
+        [ $USE_OFFLINE -eq 1 ] && UV_ARGS+=(--no-index --find-links="$LOCAL_PACKAGES_DIR")
 
         log "Выполнение: uv sync ${UV_ARGS[*]}"
         uv sync "${UV_ARGS[@]}"
@@ -244,19 +249,16 @@ install_with_pip() {
     python -m pip install "${PIP_ARGS[@]}" --upgrade pip=="$PIP_VERSION"
     log_success "Pip обновлен"
 
-    local req_file="requirements.txt"
-    [ $USE_PYPROJECT -eq 1 ] && log_error "Для работы с pyproject.toml требуется uv" && exit 1
-
     if python -m pip install --help | grep -q -- "--dry-run"; then
         log "Выполнение dry-run..."
-        pip install "${PIP_ARGS[@]}" -r "$req_file" --dry-run
+        pip install "${PIP_ARGS[@]}" -r "$REQUIREMENTS_FILE" --dry-run
         log_success "Dry-run выполнен"
     else
         log_warning "pip без --dry-run, пропускаем проверку"
     fi
 
-    log "Установка зависимостей из $req_file..."
-    pip install "${PIP_ARGS[@]}" -r "$req_file"
+    log "Установка зависимостей из $REQUIREMENTS_FILE..."
+    pip install "${PIP_ARGS[@]}" -r "$REQUIREMENTS_FILE"
     log_success "Зависимости установлены через pip"
 
     cd "$PROJECT_ROOT"
@@ -292,8 +294,6 @@ install_hooks() {
 # RUN
 # ─────────────────────────────────────────────────────────────────────────────
 START_TIME=$(date +%s)
-
-log "=== START BOOTSTRAP ==="
 
 if [ $HAS_UV -eq 1 ]; then
     install_with_uv
