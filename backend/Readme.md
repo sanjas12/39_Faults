@@ -1,7 +1,7 @@
 # Title
 
 
-## Установка (из репозитория)
+## Запуск приложения (из репозитория)
 
 ### 1. Требования
 
@@ -44,22 +44,27 @@ uv run python backend/init_db.py     - скрипт для инициализа�
 
 cd backend
 uv run uvicorn app.main:app --reload --port 3000
-http://localhost:8000/docs  -> Swagger UI
+http://localhost:3000/docs  -> Swagger UI
 ```
 
 #### 3.2 Без uv
 
 ```bash
-uv run python backend/init_db.py     - скрипт для инициализации БД
+cd backend
 
-source backend/.venv/Scripts/activate
+source .venv/Scripts/activate
+
+python backend/init_db.py     - скрипт для инициализации БД
+
+
 uvicorn app.main:app --reload --port 3000
-http://localhost:8000/docs  -> Swagger UI
+
+http://localhost:3000/docs  -> Swagger UI
 ```
 
 ---
 
-## Использование (Windows — exe)
+## Запуск приложения (Windows — exe)
 
 ### Требования
 
