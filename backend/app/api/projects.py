@@ -161,3 +161,43 @@ def delete_project(
     db.delete(project)
     db.commit()
     return None
+
+@router.get(
+    "/{project_id}/stats",
+    summary="Получить статистику по неисправностям проекта"
+)
+def get_project_stats(
+    project_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Получение статистики по неисправностям для проекта.
+    """
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Проект с ID {project_id} не найден"
+        )
+    
+    faults = db.query(Fault).filter(Fault.project_id == project_id).all()
+    
+    stats = {
+        "project_id": project_id,
+        "project_name": project.name,
+        "total": len(faults),
+        "by_status": {
+            "open": sum(1 for f in faults if f.status == "open"),
+            "in_progress": sum(1 for f in faults if f.status == "in_progress"),
+            "review": sum(1 for f in faults if f.status == "review"),
+            "closed": sum(1 for f in faults if f.status == "closed"),
+        },
+        "by_severity": {
+            "critical": sum(1 for f in faults if f.severity == "critical"),
+            "major": sum(1 for f in faults if f.severity == "major"),
+            "minor": sum(1 for f in faults if f.severity == "minor"),
+            "trivial": sum(1 for f in faults if f.severity == "trivial"),
+        }
+    }
+    
+    return stats
