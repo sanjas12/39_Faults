@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import faults
+from app.api import faults, projects
 
 from _version import __version__
 
@@ -19,7 +19,7 @@ app.add_middleware(
 
 # Подключаем роутеры
 app.include_router(faults.router)
-
+app.include_router(projects.router)
 
 @app.get("/")
 def root():

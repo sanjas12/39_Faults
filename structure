@@ -13,21 +13,50 @@
  ┃ ┃ ┃ ┣ security.py
  ┃ ┃ ┃ ┗ __init__.py
  ┃ ┃ ┣ models
+ ┃ ┃ ┃ ┣ all_models.py
  ┃ ┃ ┃ ┣ project.py
  ┃ ┃ ┃ ┗ __init__.py
  ┃ ┃ ┣ schemas
+ ┃ ┃ ┃ ┣ fault.py
+ ┃ ┃ ┃ ┣ project.py
  ┃ ┃ ┃ ┗ __init__.py
- ┃ ┃ ┗ services
+ ┃ ┃ ┣ services
  ┃ ┃ ┃ ┣ escalation.py
  ┃ ┃ ┃ ┣ notifications.py
  ┃ ┃ ┃ ┣ search.py
  ┃ ┃ ┃ ┗ __init__.py
+ ┃ ┃ ┣ main.py
+ ┃ ┃ ┗ __init__.py
+ ┃ ┣ migrations
+ ┃ ┣ tests
  ┃ ┣ .python-version
  ┃ ┣ build.py
- ┃ ┣ main.py
+ ┃ ┣ faults.db
+ ┃ ┣ init_db.py
+ ┃ ┣ migrate_db.py
  ┃ ┣ pyproject.toml
+ ┃ ┣ Readme.md
  ┃ ┣ requirements.txt
+ ┃ ┣ uv.lock
  ┃ ┗ _version.py
+ ┣ bugs
+ ┃ ┗ bug-001.md
+ ┣ docs
+ ┃ ┣ Context.md
+ ┃ ┣ Promt.md
+ ┃ ┣ RelNote.txt
+ ┃ ┗ Start.md
+ ┣ logs
+ ┃ ┗ venv_pip_20260529_202840.log
+ ┣ scripts
+ ┃ ┣ init_backend_env.sh
+ ┃ ┣ run.sh
+ ┃ ┗ toexe.sh
+ ┣ .gitattributes
+ ┣ .gitignore
+ ┣ .pre-commit-config.yaml
+ ┣ Readme.md
+ ┗ structure
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
@@ -61,3 +90,21 @@
  ┣ .pre-commit-config.yaml
  ┣ Readme.md
  ┗ structure
+
+
+ 39_Faults/
+└── backend/                  # <--- Ваша корневая папка бэкенда
+    ├── app/                  # <--- Весь код приложения
+    ├── migrations/           # <--- Сюда Alembic будет складывать миграции
+    ├── tests/                # <--- Тесты
+    ├── scripts/              # <--- У вас уже есть такая папка для вспомогательных скриптов!
+    │   ├── init_backend_env.sh
+    │   ├── run.sh
+    │   └── toexe.sh
+    ├── init_db.py            # <--- 1. Инициализация (создание таблиц с нуля)
+    ├── migrate_db.py         # <--- 2. Ручное обновление (добавление колонок)
+    ├── seed_data.py          # <--- 3. Наполнение тестовыми данными (рекомендую создать)
+    ├── pyproject.toml
+    ├── uv.lock
+    ├── faults.db             # <--- Файл SQLite базы (не в коде, а в корне)
+    └── .python-version
