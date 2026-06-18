@@ -54,8 +54,7 @@ cd backend
 
 source .venv/Scripts/activate
 
-python backend/init_db.py     - скрипт для инициализации БД
-
+python init_db.py     - скрипт для инициализации БД
 
 uvicorn app.main:app --reload --port 3000
 
