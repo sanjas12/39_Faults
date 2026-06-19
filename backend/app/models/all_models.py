@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
-from sqlalchemy.orm import relationship  # Добавляем для связей
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
 
@@ -31,10 +31,37 @@ class Fault(Base):
     status = Column(String(50), default="open")    # open, in_progress, review, closed
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=True)  # Связь с проектом
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    resolved_at = Column(DateTime(timezone=True), nullable=True)  # Когда закрыта
+    resolved_at = Column(DateTime(timezone=True), nullable=True)
     
     # Связь с проектом (много неисправностей → один проект)
     project = relationship("Project", back_populates="faults")
+    comments = relationship("FaultComment", back_populates="fault", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<Fault(id={self.id}, title='{self.title[:30]}...')>"
+
+class FaultComment(Base):
+    __tablename__ = "fault_comments"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    fault_id = Column(Integer, ForeignKey("faults.id"), nullable=False)
+    author = Column(String(100), nullable=False, default="system")
+    content = Column(Text, nullable=False)
+    is_internal = Column(Integer, default=0)  # 0 - публичный, 1 - внутренний
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    fault = relationship("Fault", back_populates="comments")
+    
+    def __repr__(self):
+        return f"<FaultComment(id={self.id}, fault_id={self.fault_id})>"
+
+class FaultHistory(Base):
+    __tablename__ = "fault_history"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    fault_id = Column(Integer, ForeignKey("faults.id"), nullable=False)
+    field = Column(String(50), nullable=False)  # status, severity, project_id
+    old_value = Column(String(200), nullable=True)
+    new_value = Column(String(200), nullable=True)
+    author = Column(String(100), nullable=False, default="system")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

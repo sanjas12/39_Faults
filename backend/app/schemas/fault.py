@@ -1,8 +1,9 @@
 from pydantic import BaseModel, Field, validator
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from enum import Enum
-from app.schemas.project import ProjectResponse  # Импортируем схему проекта
+from app.schemas.project import ProjectResponse
+from app.schemas.comment import CommentResponse
 
 class SeverityEnum(str, Enum):
     CRITICAL = "critical"
@@ -52,7 +53,8 @@ class FaultResponse(FaultBase):
     status: StatusEnum
     created_at: datetime
     resolved_at: Optional[datetime] = None
-    project: Optional[ProjectResponse] = None  # Добавляем вложенный объект
+    project: Optional[ProjectResponse] = None
+    comments: List[CommentResponse] = []
     
     class Config:
         from_attributes = True

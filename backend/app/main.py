@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import faults, projects
+from app.api import faults, projects, comments
 
 from _version import __version__
 
@@ -27,6 +27,7 @@ app.add_middleware(
 # Подключаем API роутеры
 app.include_router(faults.router, prefix="/api")
 app.include_router(projects.router, prefix="/api")
+app.include_router(comments.router, prefix="/api")
 
 # HTML страницы
 @app.get("/")
