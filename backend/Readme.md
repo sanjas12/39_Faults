@@ -54,11 +54,14 @@ cd backend
 
 source .venv/Scripts/activate
 
-python init_db.py     - скрипт для инициализации БД
+python init_db.py                                               - скрипт для инициализации БД
 
-uvicorn app.main:app --reload --port 3000
+uvicorn app.main:app --reload --port 3000                       - для localhost
+uvicorn app.main:app --reload --host 0.0.0.0 --port 3000        - для сети
 
-http://localhost:3000/docs  -> Swagger UI
+python seed_data.py                                             - Наполняем тестовыми данными 
+
+http://localhost:3000/docs                                      -> Swagger UI
 ```
 
 ---

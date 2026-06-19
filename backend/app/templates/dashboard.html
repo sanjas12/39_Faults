@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Дашборд{% endblock %}
+{% block page_title %}Дашборд{% endblock %}
+{% set active_page = 'dashboard' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3 mb-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h5 class="card-title">Всего неисправностей</h5>
+                <h2 class="card-text" id="total-faults">0</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <h5 class="card-title">Критические</h5>
+                <h2 class="card-text" id="critical-faults">0</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <h5 class="card-title">В работе</h5>
+                <h2 class="card-text" id="inprogress-faults">0</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h5 class="card-title">Закрытые</h5>
+                <h2 class="card-text" id="closed-faults">0</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Последние неисправности</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped" id="faults-table">
+                    <thead>
+                        <tr>
+                            <th>Название</th>
+                            <th>Проект</th>
+                            <th>Важность</th>
+                            <th>Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody id="faults-list">
+                        <tr><td colspan="4" class="text-center">Загрузка...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Проекты</h5>
+            </div>
+            <div class="card-body" id="projects-list">
+                <p>Загрузка...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Загрузка данных с API
+async function loadDashboard() {
+    try {
+        const faults = await axios.get('/api/faults');
+        const projects = await axios.get('/api/projects');
+        
+        // Статистика
+        const total = faults.data.length;
+        const critical = faults.data.filter(f => f.severity === 'critical').length;
+        const inProgress = faults.data.filter(f => f.status === 'in_progress').length;
+        const closed = faults.data.filter(f => f.status === 'closed').length;
+        
+        document.getElementById('total-faults').textContent = total;
+        document.getElementById('critical-faults').textContent = critical;
+        document.getElementById('inprogress-faults').textContent = inProgress;
+        document.getElementById('closed-faults').textContent = closed;
+        
+        // Последние неисправности
+        const tbody = document.getElementById('faults-list');
+        const recentFaults = faults.data.slice(0, 5);
+        tbody.innerHTML = recentFaults.map(f => `
+            <tr>
+                <td>${f.title}</td>
+                <td>${f.project_id || 'Без проекта'}</td>
+                <td><span class="badge bg-${f.severity === 'critical' ? 'danger' : f.severity === 'major' ? 'warning' : 'info'}">${f.severity}</span></td>
+                <td><span class="badge bg-${f.status === 'open' ? 'danger' : f.status === 'in_progress' ? 'warning' : f.status === 'review' ? 'primary' : 'success'}">${f.status}</span></td>
+            </tr>
+        `).join('');
+        
+        // Проекты
+        document.getElementById('projects-list').innerHTML = projects.data.map(p => `
+            <div class="mb-2">
+                <strong>${p.name}</strong>
+                <span class="badge bg-secondary float-end">${p.client || 'Нет клиента'}</span>
+            </div>
+        `).join('');
+        
+    } catch (error) {
+        console.error('Ошибка загрузки:', error);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadDashboard);
+</script>
+{% endblock %}

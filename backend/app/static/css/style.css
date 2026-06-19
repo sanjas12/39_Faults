@@ -1,0 +1,69 @@
+/* Базовые стили */
+body {
+    font-size: .875rem;
+}
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    padding: 48px 0 0;
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+}
+
+.sidebar .nav-link {
+    font-weight: 500;
+    color: #333;
+    padding: 0.75rem 1rem;
+}
+
+.sidebar .nav-link .bi {
+    margin-right: 4px;
+    color: #727272;
+}
+
+.sidebar .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.sidebar .nav-link.active {
+    color: #fff;
+    background-color: #0d6efd;
+}
+
+.sidebar .nav-link.active .bi {
+    color: #fff;
+}
+
+/* Карточки статистики */
+.card {
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+/* Таблицы */
+.table th {
+    background-color: #f8f9fa;
+}
+
+/* Badges */
+.badge {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.6rem;
+}
+
+/* Адаптивность для sidebar */
+@media (max-width: 767.98px) {
+    .sidebar {
+        position: static;
+        padding: 0;
+        min-height: auto !important;
+    }
+}
