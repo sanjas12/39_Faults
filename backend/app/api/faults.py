@@ -2,9 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_
 from typing import List, Optional
+from datetime import datetime
 from app.core.database import get_db
 from app.models.all_models import Fault, Project
-from app.schemas.fault import FaultCreate, FaultUpdate, FaultResponse, SeverityEnum, StatusEnum
+from app.schemas.fault import (
+    FaultCreate, FaultUpdate, FaultResponse, 
+    SeverityEnum, StatusEnum
+)
 
 router = APIRouter(prefix="/faults", tags=["faults"])
 
@@ -58,7 +62,8 @@ def list_faults(
     """
     Получение списка неисправностей с фильтрацией и поиском.
     """
-    query = db.query(Fault)
+    # Подгружаем связанный проект
+    query = db.query(Fault).options(joinedload(Fault.project))
     
     # Фильтры
     if status:
@@ -95,7 +100,7 @@ def get_fault(
     """
     Получение детальной информации о неисправности.
     """
-    fault = db.query(Fault).filter(Fault.id == fault_id).first()
+    fault = db.query(Fault).options(joinedload(Fault.project)).filter(Fault.id == fault_id).first()
     if not fault:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -192,7 +197,7 @@ def get_faults_by_project(
             detail=f"Проект с ID {project_id} не найден"
         )
     
-    faults = db.query(Fault).filter(
+    faults = db.query(Fault).options(joinedload(Fault.project)).filter(
         Fault.project_id == project_id
     ).order_by(Fault.created_at.desc()).offset(skip).limit(limit).all()
     

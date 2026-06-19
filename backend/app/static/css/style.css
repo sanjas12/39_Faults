@@ -67,3 +67,43 @@ body {
         min-height: auto !important;
     }
 }
+
+/* Стили для проектов на дашборде */
+.project-item {
+    background-color: #f8f9fa;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.project-item:hover {
+    background-color: #e9ecef;
+    transform: translateX(5px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.project-item .badge {
+    font-size: 0.8rem;
+}
+
+#projects-list {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+#projects-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+#projects-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+#projects-list::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+#projects-list::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}

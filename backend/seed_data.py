@@ -49,7 +49,7 @@ def seed_data():
         # Создаём неисправности для проектов
         faults = [
             Fault(
-                title="Ошибка контроллера на ТЭЦ-5",
+                title="Ошибка контроллера",
                 description="PLC выдаёт ошибку 0xE4 при запуске котла №3",
                 severity="critical",
                 status="open",
@@ -80,7 +80,7 @@ def seed_data():
                 title="Перегрев блока питания контроллера",
                 description="Температура блока питания достигает 85°C",
                 severity="critical",
-                status="open",
+                status="closed",
                 project_id=projects[0].id
             ),
         ]

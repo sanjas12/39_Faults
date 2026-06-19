@@ -2,8 +2,8 @@ from pydantic import BaseModel, Field, validator
 from datetime import datetime
 from typing import Optional
 from enum import Enum
+from app.schemas.project import ProjectResponse  # Импортируем схему проекта
 
-# Добавим Enum для строгой типизации
 class SeverityEnum(str, Enum):
     CRITICAL = "critical"
     MAJOR = "major"
@@ -21,7 +21,7 @@ class FaultBase(BaseModel):
     description: Optional[str] = Field(None, max_length=2000)
     severity: SeverityEnum = SeverityEnum.MINOR
     project_id: Optional[int] = Field(None, description="ID проекта (может быть null)")
-    
+
     @validator('title')
     def title_not_empty(cls, v):
         if not v or not v.strip():
@@ -52,9 +52,7 @@ class FaultResponse(FaultBase):
     status: StatusEnum
     created_at: datetime
     resolved_at: Optional[datetime] = None
-    
-    # Добавляем информацию о проекте (опционально)
-    project: Optional[dict] = None  # Будем подгружать через relationship
+    project: Optional[ProjectResponse] = None  # Добавляем вложенный объект
     
     class Config:
         from_attributes = True

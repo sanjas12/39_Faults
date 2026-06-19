@@ -37,4 +37,4 @@ MANIFEST
 
 # Project
 logs/
-backend/faults.db
+*.db
