@@ -69,3 +69,10 @@ def fault_detail(request: Request, fault_id: int):
 @app.get("/health")
 def health():
     return {"status": "ok", "version": "0.1.0"}
+
+@app.get("/kanban")
+def kanban_page(request: Request):
+    return templates.TemplateResponse("kanban.html", {
+        "request": request,
+        "active_page": "kanban"
+    })
