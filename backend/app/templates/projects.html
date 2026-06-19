@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+
+{% block title %}Проекты{% endblock %}
+{% block page_title %}Управление проектами{% endblock %}
+{% set active_page = 'projects' %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-6">
+        <div class="input-group">
+            <input type="text" class="form-control" id="searchInput" placeholder="Поиск проектов...">
+            <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                <i class="bi bi-search"></i>
+            </button>
+        </div>
+    </div>
+    <div class="col-md-6 text-end">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+            <i class="bi bi-plus-circle"></i> Создать проект
+        </button>
+    </div>
+</div>
+
+<div class="row" id="projectsContainer">
+    <!-- Проекты будут загружены через JavaScript -->
+    <div class="col-12 text-center text-muted">Загрузка проектов...</div>
+</div>
+
+<!-- Модальное окно для создания проекта -->
+<div class="modal fade" id="createProjectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Создать новый проект</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createProjectForm">
+                    <div class="mb-3">
+                        <label for="projectName" class="form-label">Название проекта *</label>
+                        <input type="text" class="form-control" id="projectName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="projectClient" class="form-label">Клиент - Станция</label>
+                        <input type="text" class="form-control" id="projectClient">
+                    </div>
+                    <div class="mb-3">
+                        <label for="projectDescription" class="form-label">Описание</label>
+                        <textarea class="form-control" id="projectDescription" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="saveProjectBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для редактирования проекта -->
+<div class="modal fade" id="editProjectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редактировать проект</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editProjectForm">
+                    <input type="hidden" id="editProjectId">
+                    <div class="mb-3">
+                        <label for="editProjectName" class="form-label">Название проекта *</label>
+                        <input type="text" class="form-control" id="editProjectName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editProjectClient" class="form-label">Клиент - Станция</label>
+                        <input type="text" class="form-control" id="editProjectClient">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editProjectDescription" class="form-label">Описание</label>
+                        <textarea class="form-control" id="editProjectDescription" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="updateProjectBtn">Обновить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно подтверждения удаления -->
+<div class="modal fade" id="deleteProjectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Подтверждение удаления</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Вы уверены, что хотите удалить проект <strong id="deleteProjectName"></strong>?</p>
+                <p class="text-danger"><small>Это действие также удалит все связанные неисправности!</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Удалить</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Глобальная переменная для хранения проектов
+let allProjects = [];
+let currentDeleteId = null;
+
+// Загрузка проектов
+async function loadProjects(search = '') {
+    try {
+        const url = search ? `/api/projects?search=${encodeURIComponent(search)}` : '/api/projects';
+        const response = await axios.get(url);
+        allProjects = response.data;
+        renderProjects(allProjects);
+    } catch (error) {
+        console.error('Ошибка загрузки проектов:', error);
+        document.getElementById('projectsContainer').innerHTML = `
+            <div class="col-12 text-center text-danger">
+                <i class="bi bi-exclamation-triangle"></i> Ошибка загрузки проектов
+            </div>
+        `;
+    }
+}
+
+// Отображение проектов
+function renderProjects(projects) {
+    const container = document.getElementById('projectsContainer');
+    
+    if (projects.length === 0) {
+        container.innerHTML = `
+            <div class="col-12 text-center text-muted">
+                <i class="bi bi-folder-plus" style="font-size: 48px;"></i>
+                <p class="mt-2">Нет проектов. Создайте первый проект!</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = projects.map(project => `
+        <div class="col-md-6 col-lg-4 mb-3">
+            <div class="card project-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <h5 class="card-title">${project.name}</h5>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="#" onclick="editProject(${project.id})">
+                                        <i class="bi bi-pencil"></i> Редактировать
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="#" onclick="deleteProject(${project.id})">
+                                        <i class="bi bi-trash"></i> Удалить
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    ${project.client ? `<p class="text-muted small mb-1"><i class="bi bi-building"></i> ${project.client}</p>` : ''}
+                    ${project.description ? `<p class="card-text small">${project.description}</p>` : ''}
+                    
+                    <div class="mt-2">
+                        <span class="badge bg-primary" id="faults-count-${project.id}">
+                            <i class="bi bi-bug"></i> Загрузка...
+                        </span>
+                        <span class="badge bg-secondary">
+                            <i class="bi bi-calendar3"></i> ${new Date(project.created_at).toLocaleDateString('ru-RU')}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    // Загружаем количество неисправностей для каждого проекта
+    loadFaultsCount(projects);
+}
+
+// Загрузка количества неисправностей
+async function loadFaultsCount(projects) {
+    try {
+        const faultsResponse = await axios.get('/api/faults');
+        const faults = faultsResponse.data;
+        
+        projects.forEach(project => {
+            const count = faults.filter(f => f.project_id === project.id).length;
+            const element = document.getElementById(`faults-count-${project.id}`);
+            if (element) {
+                element.textContent = ` ${count} неиспр.`;
+            }
+        });
+    } catch (error) {
+        console.error('Ошибка загрузки неисправностей:', error);
+    }
+}
+
+// Создание проекта
+async function createProject() {
+    const name = document.getElementById('projectName').value.trim();
+    const client = document.getElementById('projectClient').value.trim();
+    const description = document.getElementById('projectDescription').value.trim();
+    
+    if (!name) {
+        alert('Название проекта обязательно!');
+        return;
+    }
+    
+    try {
+        const response = await axios.post('/api/projects', {
+            name,
+            client: client || null,
+            description: description || null
+        });
+        
+        // Закрываем модальное окно
+        const modal = bootstrap.Modal.getInstance(document.getElementById('createProjectModal'));
+        modal.hide();
+        
+        // Очищаем форму
+        document.getElementById('createProjectForm').reset();
+        
+        // Перезагружаем проекты
+        await loadProjects();
+        
+        // Показываем уведомление
+        alert('Проект успешно создан!');
+    } catch (error) {
+        console.error('Ошибка создания проекта:', error);
+        alert('Ошибка при создании проекта: ' + (error.response?.data?.detail || error.message));
+    }
+}
+
+// Редактирование проекта
+async function editProject(id) {
+    try {
+        const response = await axios.get(`/api/projects/${id}`);
+        const project = response.data;
+        
+        document.getElementById('editProjectId').value = project.id;
+        document.getElementById('editProjectName').value = project.name;
+        document.getElementById('editProjectClient').value = project.client || '';
+        document.getElementById('editProjectDescription').value = project.description || '';
+        
+        const modal = new bootstrap.Modal(document.getElementById('editProjectModal'));
+        modal.show();
+    } catch (error) {
+        console.error('Ошибка загрузки проекта:', error);
+        alert('Ошибка при загрузке данных проекта');
+    }
+}
+
+// Обновление проекта
+async function updateProject() {
+    const id = parseInt(document.getElementById('editProjectId').value);
+    const name = document.getElementById('editProjectName').value.trim();
+    const client = document.getElementById('editProjectClient').value.trim();
+    const description = document.getElementById('editProjectDescription').value.trim();
+    
+    if (!name) {
+        alert('Название проекта обязательно!');
+        return;
+    }
+    
+    try {
+        await axios.put(`/api/projects/${id}`, {
+            name,
+            client: client || null,
+            description: description || null
+        });
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('editProjectModal'));
+        modal.hide();
+        
+        await loadProjects();
+        alert('Проект успешно обновлён!');
+    } catch (error) {
+        console.error('Ошибка обновления проекта:', error);
+        alert('Ошибка при обновлении проекта: ' + (error.response?.data?.detail || error.message));
+    }
+}
+
+// Удаление проекта
+function deleteProject(id) {
+    const project = allProjects.find(p => p.id === id);
+    if (!project) return;
+    
+    document.getElementById('deleteProjectName').textContent = project.name;
+    currentDeleteId = id;
+    
+    const modal = new bootstrap.Modal(document.getElementById('deleteProjectModal'));
+    modal.show();
+}
+
+// Подтверждение удаления
+async function confirmDelete() {
+    if (!currentDeleteId) return;
+    
+    try {
+        await axios.delete(`/api/projects/${currentDeleteId}`);
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('deleteProjectModal'));
+        modal.hide();
+        
+        await loadProjects();
+        alert('Проект успешно удалён!');
+    } catch (error) {
+        console.error('Ошибка удаления проекта:', error);
+        alert('Ошибка при удалении проекта: ' + (error.response?.data?.detail || error.message));
+    }
+}
+
+// Поиск проектов
+document.getElementById('searchBtn').addEventListener('click', function() {
+    const search = document.getElementById('searchInput').value.trim();
+    loadProjects(search);
+});
+
+document.getElementById('searchInput').addEventListener('keyup', function(e) {
+    if (e.key === 'Enter') {
+        document.getElementById('searchBtn').click();
+    }
+});
+
+// Обработчики кнопок
+document.getElementById('saveProjectBtn').addEventListener('click', createProject);
+document.getElementById('updateProjectBtn').addEventListener('click', updateProject);
+document.getElementById('confirmDeleteBtn').addEventListener('click', confirmDelete);
+
+// Загрузка при открытии страницы
+document.addEventListener('DOMContentLoaded', function() {
+    loadProjects();
+});
+</script>
+{% endblock %}
