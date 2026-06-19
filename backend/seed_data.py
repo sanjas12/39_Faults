@@ -1,16 +1,49 @@
 from app.core.database import SessionLocal
-from app.models.all_models import Project, Fault
-from datetime import datetime
+from app.models.all_models import Project, Fault, User, UserRole
+from app.core.security import get_password_hash
+
 
 def seed_data():
     db = SessionLocal()
     try:
-        # Проверяем, есть ли уже проекты
-        if db.query(Project).count() > 0:
+        # Проверяем, есть ли уже пользователи
+        if db.query(User).count() > 0:
             print("📦 Данные уже есть в БД")
             return
         
-        # Создаём проекты
+        # ===== СОЗДАЁМ ПОЛЬЗОВАТЕЛЕЙ =====
+        users = [
+            User(
+                username="admin",
+                email="admin@diakont.com",
+                password_hash=get_password_hash("admin123"),
+                full_name="Администратор",
+                role=UserRole.ADMIN,
+                is_active=True
+            ),
+            User(
+                username="engineer",
+                email="engineer@diakont.com",
+                password_hash=get_password_hash("eng123"),
+                full_name="Инженер Иванов",
+                role=UserRole.ENGINEER,
+                is_active=True
+            ),
+            User(
+                username="manager",
+                email="manager@diakont.com",
+                password_hash=get_password_hash("ma123"),
+                full_name="Manager Петров",
+                role=UserRole.MANAGER,
+                is_active=True
+            ),
+        ]
+        
+        for user in users:
+            db.add(user)
+        db.flush()
+        
+        # ===== СОЗДАЁМ ПРОЕКТЫ (с полями unit и type) =====
         projects = [
             Project(
                 name="Кольская_САРЗ_1",
@@ -46,10 +79,10 @@ def seed_data():
             db.add(project)
         db.flush()  # Получаем ID проектов
         
-        # Создаём неисправности для проектов
+        # ===== СОЗДАЁМ НЕИСПРАВНОСТИ =====
         faults = [
             Fault(
-                title="Ошибка контроллера",
+                title="Ошибка контроллера на Кольская_САРЗ_1",
                 description="PLC выдаёт ошибку 0xE4 при запуске котла №3",
                 severity="critical",
                 status="open",
@@ -89,10 +122,24 @@ def seed_data():
             db.add(fault)
         
         db.commit()
-        print(f"✅ Создано {len(projects)} проектов и {len(faults)} неисправностей")
         
+        print(f"✅ Создано:")
+        print(f"   👤 {len(users)} пользователей")
+        print(f"   📁 {len(projects)} проектов")
+        print(f"   🐛 {len(faults)} неисправностей")
+        print()
+        print("   🔑 Данные для входа:")
+        print("      👤 admin / admin123 (Администратор)")
+        print("      👤 engineer / eng123 (Инженер)")
+        print("      👤 manager / ma123 (Менеджер)")
+        
+    except Exception as e:
+        print(f"❌ Ошибка: {e}")
+        db.rollback()
+        raise
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     seed_data()

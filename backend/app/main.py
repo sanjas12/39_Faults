@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import faults, projects, comments
+from app.api import faults, projects, comments, auth
 
 from _version import __version__
 
@@ -28,6 +28,7 @@ app.add_middleware(
 app.include_router(faults.router, prefix="/api")
 app.include_router(projects.router, prefix="/api")
 app.include_router(comments.router, prefix="/api")
+app.include_router(auth.router)
 
 # HTML страницы
 @app.get("/")
@@ -76,3 +77,7 @@ def kanban_page(request: Request):
         "request": request,
         "active_page": "kanban"
     })
+
+@app.get("/login")
+def login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})

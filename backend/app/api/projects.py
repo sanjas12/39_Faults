@@ -3,8 +3,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from typing import List, Optional
 from app.core.database import get_db
-from app.models.all_models import Project
+from app.core.security import get_current_user, require_engineer, require_admin
+from app.models.all_models import Project, Fault
 from app.schemas.project import ProjectCreate, ProjectUpdate, ProjectResponse
+from app.schemas.user import UserResponse
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -16,14 +18,15 @@ router = APIRouter(prefix="/projects", tags=["projects"])
 )
 def create_project(
     project: ProjectCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: UserResponse = Depends(require_engineer)  # Только инженеры и админы
 ):
     """
     Создание нового проекта в системе.
     
     - **name**: Название проекта (обязательно)
     - **description**: Описание проекта (опционально)
-    - **client**: Клиент (опционально)
+    - **client**: Клиент-Заказчик (опционально)
     """
     # Проверяем, нет ли проекта с таким именем
     existing = db.query(Project).filter(Project.name == project.name).first()
@@ -48,7 +51,8 @@ def list_projects(
     skip: int = Query(0, ge=0, description="Сколько пропустить"),
     limit: int = Query(100, ge=1, le=1000, description="Сколько вернуть"),
     search: Optional[str] = Query(None, description="Поиск по названию или клиенту"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: UserResponse = Depends(get_current_user)  # Все авторизованные
 ):
     """
     Получение списка проектов с возможностью поиска и пагинации.
@@ -78,7 +82,8 @@ def list_projects(
 )
 def get_project(
     project_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: UserResponse = Depends(get_current_user)  # Все авторизованные
 ):
     """
     Получение детальной информации о проекте по его ID.
@@ -139,7 +144,8 @@ def update_project(
 )
 def delete_project(
     project_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: UserResponse = Depends(require_engineer)  # Только инженеры и админы
 ):
     """
     Удаление проекта по ID.
@@ -168,7 +174,8 @@ def delete_project(
 )
 def get_project_stats(
     project_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: UserResponse = Depends(get_current_user)  # Все авторизованные
 ):
     """
     Получение статистики по неисправностям для проекта.
