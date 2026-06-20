@@ -12,7 +12,7 @@ dependencies = [
     "annotated-types==0.7.0 ; sys_platform == 'win32'",
     "argcomplete==3.5.3 ; python_full_version < '3.9' and sys_platform == 'win32'",
     "argcomplete==3.6.3 ; python_full_version >= '3.9' and sys_platform == 'win32'",
-    "bcrypt>=5.0.0",
+    "bcrypt==4.0.1",
     "certifi==2026.5.20 ; sys_platform == 'win32'",
     "cfgv==3.4.0 ; python_full_version < '3.10' and sys_platform == 'win32'",
     "cfgv==3.5.0 ; python_full_version >= '3.10' and sys_platform == 'win32'",
