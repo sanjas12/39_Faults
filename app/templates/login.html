@@ -11,16 +11,30 @@
                 <h4 class="text-center mb-4">Вход в систему</h4>
                 <form id="loginForm">
                     <div class="mb-3">
-                        <label class="form-label">Имя пользователя</label>
-                        <input type="text" class="form-control" id="loginUsername" required>
+                        <label for="loginUsername" class="form-label">Имя пользователя</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="loginUsername"
+                            name="username"
+                            autocomplete="username"
+                            required
+                        >
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Пароль</label>
-                        <input type="password" class="form-control" id="loginPassword" required>
+                        <label for="loginPassword" class="form-label">Пароль</label>
+                        <input
+                            type="password"
+                            class="form-control"
+                            id="loginPassword"
+                            name="password"
+                            autocomplete="current-password"
+                            required
+                        >
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">Войти</button>
+                    <button type="submit" class="btn btn-primary w-100" id="loginSubmit">Войти</button>
                 </form>
-                <div id="loginError" class="alert alert-danger mt-3 d-none"></div>
+                <div id="loginError" class="alert alert-danger mt-3 d-none" role="alert" aria-live="polite"></div>
             </div>
         </div>
     </div>
@@ -29,18 +43,34 @@
 
 {% block scripts %}
 <script>
-document.getElementById('loginForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const username = document.getElementById('loginUsername').value;
-    const password = document.getElementById('loginPassword').value;
+    document.getElementById('loginForm').addEventListener('submit', async function (event) {
+        event.preventDefault();
 
-    const result = await login(username, password);
-    if (result.success) {
-        window.location.href = '/';
-    } else {
-        document.getElementById('loginError').textContent = result.error;
-        document.getElementById('loginError').classList.remove('d-none');
-    }
-});
+        const usernameField = document.getElementById('loginUsername');
+        const passwordField = document.getElementById('loginPassword');
+        const submitButton = document.getElementById('loginSubmit');
+        const errorBox = document.getElementById('loginError');
+
+        const username = usernameField.value;
+        const password = passwordField.value;
+
+        errorBox.classList.add('d-none');
+        submitButton.disabled = true;
+
+        try {
+            const result = await login(username, password);
+            if (result.success) {
+                window.location.href = '/';
+                return;
+            }
+            errorBox.textContent = result.error;
+            errorBox.classList.remove('d-none');
+        } catch (error) {
+            errorBox.textContent = 'Не удалось выполнить вход. Проверьте соединение и попробуйте снова.';
+            errorBox.classList.remove('d-none');
+        } finally {
+            submitButton.disabled = false;
+        }
+    });
 </script>
 {% endblock %}
