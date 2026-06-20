@@ -9,6 +9,7 @@
         <div class="card">
             <div class="card-body">
                 <h4 class="text-center mb-4">Вход в систему</h4>
+                
                 <form id="loginForm">
                     <div class="mb-3">
                         <label for="loginUsername" class="form-label">Имя пользователя</label>
@@ -32,9 +33,18 @@
                             required
                         >
                     </div>
-                    <button type="submit" class="btn btn-primary w-100" id="loginSubmit">Войти</button>
+                    <button type="submit" class="btn btn-primary w-100" id="loginSubmit">
+                        <i class="bi bi-box-arrow-in-right"></i> Войти
+                    </button>
                 </form>
+                
                 <div id="loginError" class="alert alert-danger mt-3 d-none" role="alert" aria-live="polite"></div>
+                
+                <hr class="my-3">
+                
+                <p class="text-center mb-0">
+                    Нет аккаунта? <a href="/register">Зарегистрироваться</a>
+                </p>
             </div>
         </div>
     </div>
@@ -43,33 +53,69 @@
 
 {% block scripts %}
 <script>
-    document.getElementById('loginForm').addEventListener('submit', async function (event) {
+    console.log('📄 login.html загружен');
+    
+    const form = document.getElementById('loginForm');
+    const usernameField = document.getElementById('loginUsername');
+    const passwordField = document.getElementById('loginPassword');
+    const submitButton = document.getElementById('loginSubmit');
+    const errorBox = document.getElementById('loginError');
+
+    if (!form) {
+        console.error('❌ Форма loginForm не найдена!');
+    } else {
+        console.log('✅ Форма loginForm найдена');
+    }
+
+    form.addEventListener('submit', async function (event) {
         event.preventDefault();
+        console.log('🔐 Отправка формы входа...');
 
-        const usernameField = document.getElementById('loginUsername');
-        const passwordField = document.getElementById('loginPassword');
-        const submitButton = document.getElementById('loginSubmit');
-        const errorBox = document.getElementById('loginError');
+        const username = usernameField.value.trim();
+        const password = passwordField.value.trim();
 
-        const username = usernameField.value;
-        const password = passwordField.value;
+        if (!username || !password) {
+            errorBox.textContent = 'Пожалуйста, заполните все поля';
+            errorBox.classList.remove('d-none');
+            return;
+        }
 
+        // Скрываем старую ошибку
         errorBox.classList.add('d-none');
         submitButton.disabled = true;
+        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Вход...';
 
         try {
+            console.log(`📤 Отправка запроса на /api/auth/login (username: ${username})`);
+            
             const result = await login(username, password);
+            console.log('📥 Результат входа:', result);
+            
             if (result.success) {
+                console.log('✅ Вход успешен, редирект на /');
                 window.location.href = '/';
                 return;
             }
-            errorBox.textContent = result.error;
+            
+            // Показываем ошибку
+            errorBox.textContent = result.error || 'Неверное имя пользователя или пароль';
             errorBox.classList.remove('d-none');
+            
         } catch (error) {
-            errorBox.textContent = 'Не удалось выполнить вход. Проверьте соединение и попробуйте снова.';
+            console.error('❌ Ошибка при входе:', error);
+            errorBox.textContent = 'Не удалось выполнить вход. Проверьте соединение с сервером.';
             errorBox.classList.remove('d-none');
         } finally {
             submitButton.disabled = false;
+            submitButton.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Войти';
+        }
+    });
+
+    // Ввод по Enter
+    form.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            form.dispatchEvent(new Event('submit'));
         }
     });
 </script>

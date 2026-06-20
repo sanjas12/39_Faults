@@ -26,7 +26,7 @@
 #### 2.1 Создание виртуального окружения для backend (VSCode)
 
 ```bash
-bash scripts/init_backend_env.sh
+bash scripts/init_env.sh
 ```
 
 #### 2.2 Установка зависимостей (если скрипт из пункта 2.1 не сработал)
@@ -112,12 +112,11 @@ alembic upgrade head
 
 
 39_Faults/
-└── backend/                          # Корневая папка бэкенда
     ├── app/                          # Весь код приложения
 
     ├── migrations/                   # Миграции Alembic (не меняется)
     ├── scripts/                      # Вспомогательные скрипты (не меняется)
-    │   ├── init_backend_env.sh
+    │   ├── init_env.sh
     │   ├── run.sh
     │   └── toexe.sh
     ├── tests/                        # Тесты (не меняется)

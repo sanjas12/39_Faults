@@ -7,6 +7,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.middleware.base import BaseHTTPMiddleware
+from app.middleware.auth import auth_middleware
+from fastapi import Request, Form, HTTPException
+from fastapi.responses import RedirectResponse
+from app.core.security import verify_password, create_access_token
+from app.models.all_models import User
 
 from _version import __version__
 from app.api import auth, comments, faults, projects
@@ -14,6 +20,8 @@ from app.api import auth, comments, faults, projects
 app = FastAPI(
     title="Faults", description="Отслеживание неисправностей", version=__version__
 )
+
+app.add_middleware(BaseHTTPMiddleware, dispatch=auth_middleware)
 
 # Подключаем статику и шаблоны
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
@@ -32,7 +40,7 @@ app.add_middleware(
 app.include_router(faults.router, prefix="/api")
 app.include_router(projects.router, prefix="/api")
 app.include_router(comments.router, prefix="/api")
-app.include_router(auth.router)
+app.include_router(auth.router, prefix="/api")
 
 
 def _render_page(
@@ -89,7 +97,7 @@ def fault_detail(request: Request, fault_id: int) -> HTMLResponse:
 @app.get("/health")
 def health() -> Dict[str, str]:
     """Проверка работоспособности сервиса."""
-    return {"status": "ok", "version": "0.1.0"}
+    return {"status": "ok", "version": __version__}
 
 
 @app.get("/kanban")
@@ -102,3 +110,41 @@ def kanban_page(request: Request) -> HTMLResponse:
 def login_page(request: Request) -> HTMLResponse:
     """Страница входа в систему."""
     return _render_page(request, "login.html")
+
+@app.post("/login")
+async def login_post(
+    request: Request,
+    username: str = Form(...),
+    password: str = Form(...)
+):
+    """Обработка POST-запроса для входа"""
+    from app.core.database import SessionLocal
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.username == username).first()
+        if not user or not verify_password(password, user.password_hash):
+            return templates.TemplateResponse("login.html", {
+                "request": request,
+                "error": "Неверное имя пользователя или пароль"
+            })
+        
+        if not user.is_active:
+            return templates.TemplateResponse("login.html", {
+                "request": request,
+                "error": "Пользователь заблокирован"
+            })
+        
+        # Создаём токен
+        token = create_access_token({"sub": user.username, "role": user.role})
+        
+        # Устанавливаем cookie и редиректим
+        response = RedirectResponse(url="/", status_code=302)
+        response.set_cookie(key="access_token", value=token, httponly=True)
+        return response
+    finally:
+        db.close()
+
+@app.get("/register")
+def register_page(request: Request) -> HTMLResponse:
+    """Страница регистрации."""
+    return _render_page(request, "register.html")

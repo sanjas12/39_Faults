@@ -23,11 +23,9 @@ from app.schemas.user import (
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post(
-    "/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED
-)
+@router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
 def register(user_data: UserCreate, db: Session = Depends(get_db)):
-    """Регистрация нового пользователя"""
+    """Регистрация нового пользователя с автоматическим входом"""
     # Проверяем, существует ли пользователь
     existing_user = (
         db.query(User)
@@ -55,7 +53,14 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_user)
 
-    return db_user
+    # ✅ Автоматически создаём токен для входа
+    access_token = create_access_token(data={"sub": db_user.username, "role": db_user.role})
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": db_user
+    }
 
 
 @router.post("/login", response_model=Token)

@@ -1,244 +1,48 @@
-/* Базовые стили */
-body {
-    font-size: .875rem;
+/* Блок пользователя внутри сайдбара */
+#userContainer {
+    width: 100%;
+    max-width: 100%;
+    padding: 0 4px;
 }
 
-.sidebar {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 100;
-    padding: 48px 0 0;
-    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
-}
-
-.sidebar .nav-link {
-    font-weight: 500;
-    color: #333;
-    padding: 0.75rem 1rem;
-}
-
-.sidebar .nav-link .bi {
-    margin-right: 4px;
-    color: #727272;
-}
-
-.sidebar .nav-link:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: #fff;
-}
-
-.sidebar .nav-link.active {
-    color: #fff;
-    background-color: #0d6efd;
-}
-
-.sidebar .nav-link.active .bi {
-    color: #fff;
-}
-
-/* Карточки статистики */
-.card {
-    transition: transform 0.2s;
-}
-
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-}
-
-/* Таблицы */
-.table th {
-    background-color: #f8f9fa;
-}
-
-/* Badges */
-.badge {
-    font-size: 0.85rem;
-    padding: 0.4rem 0.6rem;
-}
-
-/* Адаптивность для sidebar */
-@media (max-width: 767.98px) {
-    .sidebar {
-        position: static;
-        padding: 0;
-        min-height: auto !important;
-    }
-}
-
-/* Стили для проектов на дашборде */
-.project-item {
-    background-color: #f8f9fa;
-    transition: all 0.2s;
-    cursor: pointer;
-}
-
-.project-item:hover {
-    background-color: #e9ecef;
-    transform: translateX(5px);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.project-item .badge {
+#userContainer .btn {
     font-size: 0.8rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    width: 100%;
+    text-align: center;
 }
 
-#projects-list {
-    max-height: 500px;
-    overflow-y: auto;
+#userContainer .btn:hover {
+    background-color: rgba(255, 255, 255, 0.15);
 }
 
-#projects-list::-webkit-scrollbar {
-    width: 6px;
+#userContainer .btn-outline-light {
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
-#projects-list::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
+#userContainer .btn-outline-light:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
 }
 
-#projects-list::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 10px;
-}
-
-#projects-list::-webkit-scrollbar-thumb:hover {
-    background: #555;
-}
-
-/* Стили для карточек проектов */
-.project-card {
-    transition: transform 0.2s, box-shadow 0.2s;
-    cursor: pointer;
-}
-
-.project-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-}
-
-.project-card .card-title {
-    font-size: 1.1rem;
-    margin-bottom: 0.5rem;
-}
-
-.project-card .badge {
-    font-size: 0.85rem;
-    padding: 0.4rem 0.6rem;
-}
-
-.project-card .dropdown-menu {
-    font-size: 0.9rem;
-}
-
-.project-card .dropdown-item i {
-    margin-right: 8px;
-}
-
-/* Анимация загрузки */
-@keyframes shimmer {
-    0% { background-position: -200px 0; }
-    100% { background-position: 200px 0; }
-}
-
-.loading-shimmer {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200px 100%;
-    animation: shimmer 1.5s infinite;
-}
-
-/* Kanban стили */
-.kanban-column {
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-.kanban-header {
-    border-radius: 8px 8px 0 0;
-    font-weight: 600;
-    flex-shrink: 0;
-}
-
-.kanban-body {
+#userInfo {
+    line-height: 1.3;
+    width: 100%;
+    overflow: hidden;
     flex: 1;
-    min-height: 400px;
-    max-height: 600px;
-    overflow-y: auto;
-    border: 1px solid #dee2e6;
-    border-top: none;
-    border-radius: 0 0 8px 8px;
-    background-color: #f8f9fa;
 }
 
-.kanban-body::-webkit-scrollbar {
-    width: 6px;
+#userInfo strong {
+    font-size: 0.9rem;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.kanban-body::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-}
-
-.kanban-body::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 10px;
-}
-
-.kanban-body::-webkit-scrollbar-thumb:hover {
-    background: #555;
-}
-
-.kanban-item {
-    cursor: grab;
-    transition: all 0.2s ease;
-    border-left: 3px solid transparent;
-}
-
-.kanban-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    border-left-color: #0d6efd;
-}
-
-.kanban-item.dragging {
-    opacity: 0.5;
-    transform: scale(0.95);
-}
-
-.kanban-body.drag-over {
-    background-color: #e9ecef;
-    border-color: #0d6efd;
-}
-
-/* Анимация для уведомлений */
-.notification-toast {
-    animation: slideIn 0.3s ease-out;
-}
-
-@keyframes slideIn {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-/* Адаптивность для Kanban */
-@media (max-width: 768px) {
-    .kanban-body {
-        min-height: 200px;
-        max-height: 300px;
-    }
-
-    .kanban-item .card-title {
-        font-size: 0.8rem;
-    }
+#userInfo small {
+    font-size: 0.7rem;
+    display: block;
 }

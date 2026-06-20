@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Регистрация{% endblock %}
+{% block page_title %}Регистрация{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="text-center mb-4">Регистрация</h4>
+                <form id="registerForm">
+                    <div class="mb-3">
+                        <label for="regUsername" class="form-label">Имя пользователя *</label>
+                        <input type="text" class="form-control" id="regUsername" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="regEmail" class="form-label">Email *</label>
+                        <input type="email" class="form-control" id="regEmail" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="regFullName" class="form-label">Полное имя</label>
+                        <input type="text" class="form-control" id="regFullName">
+                    </div>
+                    <div class="mb-3">
+                        <label for="regPassword" class="form-label">Пароль * (мин. 6 символов)</label>
+                        <input type="password" class="form-control" id="regPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Зарегистрироваться</button>
+                </form>
+                <div id="registerError" class="alert alert-danger mt-3 d-none" role="alert"></div>
+                <hr>
+                <p class="text-center mb-0">
+                    Уже есть аккаунт? <a href="/login">Войти</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('registerForm').addEventListener('submit', async function(event) {
+    event.preventDefault();
+    
+    const username = document.getElementById('regUsername').value;
+    const email = document.getElementById('regEmail').value;
+    const fullName = document.getElementById('regFullName').value;
+    const password = document.getElementById('regPassword').value;
+    const errorBox = document.getElementById('registerError');
+    
+    errorBox.classList.add('d-none');
+    
+    if (password.length < 6) {
+        errorBox.textContent = 'Пароль должен быть не менее 6 символов';
+        errorBox.classList.remove('d-none');
+        return;
+    }
+    
+    try {
+        const result = await register(username, email, password, fullName);
+        if (result.success) {
+            window.location.href = '/';
+            return;
+        }
+        errorBox.textContent = result.error;
+        errorBox.classList.remove('d-none');
+    } catch (error) {
+        console.error('Ошибка:', error);
+        errorBox.textContent = 'Ошибка при регистрации';
+        errorBox.classList.remove('d-none');
+    }
+});
+</script>
+{% endblock %}
