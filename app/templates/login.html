@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Вход в систему{% endblock %}
+{% block page_title %}Вход{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="text-center mb-4">Вход в систему</h4>
+                <form id="loginForm">
+                    <div class="mb-3">
+                        <label class="form-label">Имя пользователя</label>
+                        <input type="text" class="form-control" id="loginUsername" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Пароль</label>
+                        <input type="password" class="form-control" id="loginPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Войти</button>
+                </form>
+                <div id="loginError" class="alert alert-danger mt-3 d-none"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const username = document.getElementById('loginUsername').value;
+    const password = document.getElementById('loginPassword').value;
+
+    const result = await login(username, password);
+    if (result.success) {
+        window.location.href = '/';
+    } else {
+        document.getElementById('loginError').textContent = result.error;
+        document.getElementById('loginError').classList.remove('d-none');
+    }
+});
+</script>
+{% endblock %}
