@@ -57,6 +57,7 @@ dependencies = [
     "mdurl==0.1.2 ; sys_platform == 'win32'",
     "nodeenv==1.10.0 ; sys_platform == 'win32'",
     "packaging==26.2 ; sys_platform == 'win32'",
+    "passlib>=1.7.4",
     "platformdirs==4.10.0 ; python_full_version >= '3.10' and sys_platform == 'win32'",
     "platformdirs==4.3.6 ; python_full_version < '3.9' and sys_platform == 'win32'",
     "platformdirs==4.4.0 ; python_full_version == '3.9.*' and sys_platform == 'win32'",

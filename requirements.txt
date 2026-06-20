@@ -147,6 +147,8 @@ packaging==26.2 ; sys_platform == 'win32'
     #   commitizen
     #   faults
     #   pytest
+passlib==1.7.4 ; sys_platform == 'win32'
+    # via faults
 platformdirs==4.3.6 ; sys_platform == 'win32'
     # via
     #   faults
