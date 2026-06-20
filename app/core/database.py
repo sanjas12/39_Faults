@@ -10,9 +10,7 @@ engine = create_engine(
     if "sqlite" in settings.database_url
     else {},
 )
-
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
 Base = declarative_base()
 
 
@@ -22,3 +20,12 @@ def get_db():  # type: ignore
         yield db
     finally:
         db.close()
+
+
+# Импортируем все модели здесь, ПОСЛЕ определения Base, чтобы они
+# зарегистрировались в Base.metadata. Это нужно делать в конце файла,
+# чтобы избежать циклического импорта (all_models.py импортирует Base
+# отсюда же). Любой модуль, импортирующий что-либо из database.py,
+# теперь автоматически получает и все модели — Base.metadata.create_all()
+# будет работать корректно в init_db.py, migrate_db.py, seed_data.py и т.д.
+from app.models.all_models import Fault, Project, User, UserRole  # noqa: E402,F401
