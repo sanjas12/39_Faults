@@ -52,16 +52,14 @@ pip install -r requirements.txt
 ```bash
 uv run python backend/init_db.py     - скрипт для инициализации БД
 
-cd backend
 uv run uvicorn app.main:app --reload --port 3000
+
 http://localhost:3000/docs  -> Swagger UI
 ```
 
 #### 3.2 Без uv
 
 ```bash
-cd backend
-
 source .venv/Scripts/activate
 
 python init_db.py                                               - скрипт для инициализации БД

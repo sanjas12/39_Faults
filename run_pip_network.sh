@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
-cd backend
-
 source .venv/Scripts/activate
 
 python init_db.py
 
-python migrate_db.py  
+python migrate_db.py
 
 python seed_data.py
 
