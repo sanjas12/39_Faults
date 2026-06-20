@@ -109,3 +109,25 @@ alembic revision --autogenerate -m "Initial tables"
 alembic upgrade head
 
 Преимущество: Теперь структура БД будет меняться контролируемо, и вы сможете откатывать изменения.
+
+
+39_Faults/
+└── backend/                          # Корневая папка бэкенда
+    ├── app/                          # Весь код приложения
+
+    ├── migrations/                   # Миграции Alembic (не меняется)
+    ├── scripts/                      # Вспомогательные скрипты (не меняется)
+    │   ├── init_backend_env.sh
+    │   ├── run.sh
+    │   └── toexe.sh
+    ├── tests/                        # Тесты (не меняется)
+    ├── .python-version               # Версия Python (не меняется)
+    ├── faults.db                     # Файл SQLite базы (не меняется)
+    ├── init_db.py                    # Скрипт инициализации БД (не меняется)
+    ├── migrate_db.py                 # Скрипт миграции БД (не меняется)
+    ├── pyproject.toml                # Зависимости uv (не меняется)
+    ├── requirements.txt              # Зависимости pip (не меняется)
+    ├── seed_data.py                  # НОВО! Скрипт для наполнения тестовыми данными
+    ├── uv.lock                       # Lock-файл uv (не меняется)
+    ├── Readme.md                     # Документация (не меняется)
+    └── _version.py                   # Версия проекта (не меняется)

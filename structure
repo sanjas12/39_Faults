@@ -1,20 +1,74 @@
-39_Faults/
-└── backend/                          # Корневая папка бэкенда
-    ├── app/                          # Весь код приложения
-
-    ├── migrations/                   # Миграции Alembic (не меняется)
-    ├── scripts/                      # Вспомогательные скрипты (не меняется)
-    │   ├── init_backend_env.sh
-    │   ├── run.sh
-    │   └── toexe.sh
-    ├── tests/                        # Тесты (не меняется)
-    ├── .python-version               # Версия Python (не меняется)
-    ├── faults.db                     # Файл SQLite базы (не меняется)
-    ├── init_db.py                    # Скрипт инициализации БД (не меняется)
-    ├── migrate_db.py                 # Скрипт миграции БД (не меняется)
-    ├── pyproject.toml                # Зависимости uv (не меняется)
-    ├── requirements.txt              # Зависимости pip (не меняется)
-    ├── seed_data.py                  # НОВО! Скрипт для наполнения тестовыми данными
-    ├── uv.lock                       # Lock-файл uv (не меняется)
-    ├── Readme.md                     # Документация (не меняется)
-    └── _version.py                   # Версия проекта (не меняется)
+39_Faults
+ ┣ app
+ ┃ ┣ api
+ ┃ ┃ ┣ auth.py
+ ┃ ┃ ┣ comments.py
+ ┃ ┃ ┣ dashboard.py
+ ┃ ┃ ┣ faults.py
+ ┃ ┃ ┣ knowledge_base.py
+ ┃ ┃ ┣ projects.py
+ ┃ ┃ ┗ __init__.py
+ ┃ ┣ core
+ ┃ ┃ ┣ config.py
+ ┃ ┃ ┣ database.py
+ ┃ ┃ ┣ security.py
+ ┃ ┃ ┗ __init__.py
+ ┃ ┣ models
+ ┃ ┃ ┣ all_models.py
+ ┃ ┃ ┣ project.py
+ ┃ ┃ ┗ __init__.py
+ ┃ ┣ schemas
+ ┃ ┃ ┣ comment.py
+ ┃ ┃ ┣ fault.py
+ ┃ ┃ ┣ project.py
+ ┃ ┃ ┣ user.py
+ ┃ ┃ ┗ __init__.py
+ ┃ ┣ services
+ ┃ ┃ ┣ escalation.py
+ ┃ ┃ ┣ notifications.py
+ ┃ ┃ ┣ search.py
+ ┃ ┃ ┗ __init__.py
+ ┃ ┣ static
+ ┃ ┃ ┣ css
+ ┃ ┃ ┃ ┗ style.css
+ ┃ ┃ ┗ js
+ ┃ ┃ ┃ ┗ app.js
+ ┃ ┣ templates
+ ┃ ┃ ┣ base.html
+ ┃ ┃ ┣ dashboard.html
+ ┃ ┃ ┣ faults.html
+ ┃ ┃ ┣ fault_detail.html
+ ┃ ┃ ┣ kanban.html
+ ┃ ┃ ┣ knowledge_base.html
+ ┃ ┃ ┣ login.html
+ ┃ ┃ ┗ projects.html
+ ┃ ┣ main.py
+ ┃ ┗ __init__.py
+ ┣ bugs
+ ┃ ┗ bug-001.md
+ ┣ docs
+ ┃ ┣ Context.md
+ ┃ ┣ Promt.md
+ ┃ ┣ RelNote.txt
+ ┃ ┗ Start.md
+ ┣ logs
+ ┣ scripts
+ ┃ ┣ init_env.sh
+ ┃ ┣ run_pip.sh
+ ┃ ┣ run_pip_network.sh
+ ┃ ┣ run_uv.sh
+ ┃ ┗ toexe.sh
+ ┣ .gitattributes
+ ┣ .gitignore
+ ┣ .pre-commit-config.yaml
+ ┣ .python-version
+ ┣ build.py
+ ┣ faults.db
+ ┣ init_db.py
+ ┣ migrate_db.py
+ ┣ pyproject.toml
+ ┣ Readme.md
+ ┣ requirements.txt
+ ┣ seed_data.py
+ ┣ uv.lock
+ ┗ _version.py
