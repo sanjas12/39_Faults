@@ -9,7 +9,7 @@ set -e
 
 # Определяем абсолютные пути
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-BACKEND_DIR="$PROJECT_ROOT/backend"
+BACKEND_DIR="$PROJECT_ROOT"
 
 SCRIPT_NAME=$(basename "$0" .sh)
 

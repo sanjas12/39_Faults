@@ -50,7 +50,7 @@ pip install -r requirements.txt
 #### 3.1 C uv
 
 ```bash
-uv run python backend/init_db.py     - скрипт для инициализации БД
+uv run python init_db.py     - скрипт для инициализации БД
 
 uv run uvicorn app.main:app --reload --port 3000
 
