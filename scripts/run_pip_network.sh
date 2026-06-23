@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+rm faults.db
+
 source .venv/Scripts/activate
 
 python init_db.py
