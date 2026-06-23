@@ -5,30 +5,73 @@
 {% set active_page = 'dashboard' %}
 
 {% block content %}
-<!-- Структура карточек осталась прежней -->
 <div class="row">
-    <div class="col-md-3 mb-3"><div class="card bg-primary text-white"><div class="card-body"><h5>Всего</h5><h2 id="total-faults">0</h2></div></div></div>
-    <div class="col-md-3 mb-3"><div class="card bg-danger text-white"><div class="card-body"><h5>Критические</h5><h2 id="critical-faults">0</h2></div></div></div>
-    <div class="col-md-3 mb-3"><div class="card bg-warning text-dark"><div class="card-body"><h5>В работе</h5><h2 id="inprogress-faults">0</h2></div></div></div>
-    <div class="col-md-3 mb-3"><div class="card bg-success text-white"><div class="card-body"><h5>Закрытые</h5><h2 id="closed-faults">0</h2></div></div></div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h5 class="card-title">Всего неисправностей</h5>
+                <h2 class="card-text" id="total-faults">0</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <h5 class="card-title">Критические</h5>
+                <h2 class="card-text" id="critical-faults">0</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <h5 class="card-title">В работе</h5>
+                <h2 class="card-text" id="inprogress-faults">0</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h5 class="card-title">Закрытые</h5>
+                <h2 class="card-text" id="closed-faults">0</h2>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="row">
     <div class="col-md-8">
         <div class="card">
-            <div class="card-header"><h5>Последние неисправности</h5></div>
+            <div class="card-header">
+                <h5>Последние неисправности</h5>
+            </div>
             <div class="card-body">
                 <table class="table table-striped" id="faults-table">
-                    <thead><tr><th>Название</th><th>Проект</th><th>Важность</th><th>Статус</th></tr></thead>
-                    <tbody id="faults-list"><tr><td colspan="4" class="text-center">Загрузка...</td></tr></tbody>
+                    <thead>
+                        <tr>
+                            <th>Название</th>
+                            <th>Проект</th>
+                            <th>Важность</th>
+                            <th>Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody id="faults-list">
+                        <tr><td colspan="4" class="text-center">Загрузка...</td></tr>
+                    </tbody>
                 </table>
             </div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="card">
-            <div class="card-header"><h5>Проекты</h5><small id="projects-count">Загрузка...</small></div>
-            <div class="card-body" id="projects-list"><div class="text-center">Загрузка...</div></div>
+            <div class="card-header">
+                <h5>Проекты</h5>
+                <small class="text-muted" id="projects-count">Загрузка...</small>
+            </div>
+            <div class="card-body" id="projects-list">
+                <div class="text-center text-muted">Загрузка проектов...</div>
+            </div>
         </div>
     </div>
 </div>
@@ -37,53 +80,154 @@
 {% block scripts %}
 <script>
 async function loadDashboard() {
+    console.log('🔄 Загрузка дашборда...');
+    
     try {
-        // Используем наш новый API модуль
-        const [faults, projects] = await Promise.all([
-            API.getFaults(),
-            API.getProjects()
+        // Проверяем авторизацию
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            console.warn('🔒 Нет токена, редирект на логин');
+            window.location.href = '/login';
+            return;
+        }
+
+        // Устанавливаем токен в заголовки
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+        // Загружаем данные
+        const [faultsRes, projectsRes] = await Promise.all([
+            axios.get('/api/faults'),
+            axios.get('/api/projects')
         ]);
 
+        const faults = faultsRes.data || [];
+        const projects = projectsRes.data || [];
+
+        console.log(`📊 Загружено: ${faults.length} неисправностей, ${projects.length} проектов`);
+
         // === СТАТИСТИКА ===
-        document.getElementById('total-faults').textContent = faults.length;
-        document.getElementById('critical-faults').textContent = faults.filter(f => f.severity === 'critical').length;
-        document.getElementById('inprogress-faults').textContent = faults.filter(f => f.status === 'in_progress').length;
-        document.getElementById('closed-faults').textContent = faults.filter(f => f.status === 'closed').length;
+        const total = faults.length;
+        const critical = faults.filter(f => f.severity === 'critical').length;
+        const inProgress = faults.filter(f => f.status === 'in_progress').length;
+        const closed = faults.filter(f => f.status === 'closed').length;
+        
+        document.getElementById('total-faults').textContent = total;
+        document.getElementById('critical-faults').textContent = critical;
+        document.getElementById('inprogress-faults').textContent = inProgress;
+        document.getElementById('closed-faults').textContent = closed;
 
         // === ПОСЛЕДНИЕ НЕИСПРАВНОСТИ ===
         const tbody = document.getElementById('faults-list');
-        const recentFaults = faults.slice(0, 5);
-
+        const recentFaults = faults.slice(-5).reverse();
+        
         if (recentFaults.length === 0) {
             tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Нет неисправностей</td></tr>';
         } else {
-            tbody.innerHTML = recentFaults.map(f => `
-                <tr>
-                    <td><a href="/faults/${f.id}">${f.title}</a></td>
-                    <td>${projects.find(p => p.id === f.project_id)?.name || 'Без проекта'}</td>
-                    <td><span class="badge bg-${f.severity === 'critical' ? 'danger' : 'secondary'}">${f.severity}</span></td>
-                    <td><span class="badge bg-primary">${f.status}</span></td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = recentFaults.map(f => {
+                const projectName = f.project?.name || 'Без проекта';
+                const severityColors = {
+                    critical: 'danger',
+                    major: 'warning',
+                    minor: 'info',
+                    trivial: 'secondary'
+                };
+                const statusColors = {
+                    open: 'danger',
+                    in_progress: 'warning',
+                    review: 'primary',
+                    closed: 'success'
+                };
+                
+                return `
+                    <tr>
+                        <td>
+                            <a href="/faults/${f.id}" class="text-decoration-none">
+                                ${f.title.length > 40 ? f.title.slice(0, 40) + '...' : f.title}
+                            </a>
+                        </td>
+                        <td>${projectName}</td>
+                        <td><span class="badge bg-${severityColors[f.severity] || 'secondary'}">${f.severity}</span></td>
+                        <td><span class="badge bg-${statusColors[f.status] || 'secondary'}">${f.status}</span></td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         // === ПРОЕКТЫ ===
         const projectsContainer = document.getElementById('projects-list');
-        document.getElementById('projects-count').textContent = `(${projects.length})`;
-
-        projectsContainer.innerHTML = projects.map(p => `
-            <div class="border-bottom p-2">
-                <strong>${p.name}</strong><br>
-                <small class="text-muted">Неисправностей: ${faults.filter(f => f.project_id === p.id).length}</small>
-            </div>
-        `).join('');
+        const projectsCount = document.getElementById('projects-count');
+        
+        if (projects.length === 0) {
+            projectsContainer.innerHTML = '<div class="text-center text-muted">Нет проектов</div>';
+            projectsCount.textContent = '(0)';
+        } else {
+            // Считаем неисправности по проектам
+            const faultsByProject = {};
+            faults.forEach(f => {
+                if (f.project_id) {
+                    faultsByProject[f.project_id] = (faultsByProject[f.project_id] || 0) + 1;
+                }
+            });
+            
+            projectsContainer.innerHTML = projects.map(p => {
+                const count = faultsByProject[p.id] || 0;
+                return `
+                    <div class="project-item mb-2 p-2 border rounded">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <a href="/projects" class="text-decoration-none fw-bold">
+                                    ${p.name.length > 20 ? p.name.slice(0, 20) + '...' : p.name}
+                                </a>
+                                ${p.client ? `<br><small class="text-muted">${p.client}</small>` : ''}
+                            </div>
+                            <span class="badge bg-primary">${count} неиспр.</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            projectsCount.textContent = `(${projects.length})`;
+        }
 
     } catch (error) {
-        document.getElementById('faults-list').innerHTML = '<tr><td colspan="4" class="text-danger text-center">Ошибка загрузки</td></tr>';
+        console.error('❌ Ошибка загрузки дашборда:', error);
+        
+        if (error.response?.status === 401) {
+            console.warn('🔒 Неавторизован, редирект на логин');
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('current_user');
+            window.location.href = '/login';
+            return;
+        }
+        
+        document.getElementById('faults-list').innerHTML = `
+            <tr><td colspan="4" class="text-center text-danger">
+                Ошибка загрузки данных: ${error.message}
+            </td></tr>
+        `;
+        document.getElementById('projects-list').innerHTML = `
+            <div class="text-center text-danger">Ошибка загрузки проектов</div>
+        `;
+        document.getElementById('projects-count').textContent = '(ошибка)';
     }
 }
 
-document.addEventListener('DOMContentLoaded', loadDashboard);
-setInterval(loadDashboard, 30000);
+// Загружаем данные при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+        console.warn('🔒 Нет токена, редирект на логин');
+        window.location.href = '/login';
+        return;
+    }
+    loadDashboard();
+});
+
+// Обновляем каждые 30 секунд
+setInterval(() => {
+    if (localStorage.getItem('auth_token')) {
+        loadDashboard();
+    }
+}, 30000);
 </script>
 {% endblock %}
