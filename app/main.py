@@ -150,3 +150,9 @@ async def login_post(
 def register_page(request: Request) -> HTMLResponse:
     """Страница регистрации."""
     return _render_page(request, "register.html")
+
+
+@app.get("/knowledge/{article_id}")
+def knowledge_article_detail(request: Request, article_id: int):
+    """Страница просмотра статьи"""
+    return _render_page(request, "knowledge_article.html", active_page="knowledge", article_id=article_id)

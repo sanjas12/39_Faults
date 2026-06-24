@@ -66,6 +66,9 @@ class Fault(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     resolved_at = Column(DateTime(timezone=True), nullable=True)
 
+    # Связанные статьи базы знаний (ID через запятую)
+    linked_knowledge_ids = Column(String(500), nullable=True, default="")
+
     # Связь с проектом (много неисправностей → один проект)
     project = relationship("Project", back_populates="faults")
     comments = relationship(

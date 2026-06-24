@@ -7,7 +7,7 @@ from sqlalchemy import or_, func
 
 from app.core.database import get_db
 from app.core.security import get_current_user
-from app.models.all_models import Fault, Project, FaultHistory
+from app.models.all_models import Fault, Project, FaultHistory, KnowledgeBase
 from app.schemas.fault import (
     FaultCreate,
     FaultResponse,
@@ -127,19 +127,37 @@ def get_fault(fault_id: int, db: Session = Depends(get_db)):
     if not fault:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Неисправность с ID {fault_id} не найдена",
+            detail=f"Неисправность с ID {fault_id} не найдена"
         )
-    return fault
+    
+    # Загружаем связанные статьи
+    linked_knowledge = []
+    if fault.linked_knowledge_ids:
+        ids = [int(id.strip()) for id in fault.linked_knowledge_ids.split(',') if id.strip()]
+        if ids:
+            articles = db.query(KnowledgeBase).filter(KnowledgeBase.id.in_(ids)).all()
+            linked_knowledge = [
+                {
+                    "id": a.id,
+                    "title": a.title,
+                    "category": a.category,
+                    "tags": a.tags
+                }
+                for a in articles
+            ]
+    
+    # Добавляем связанные статьи в ответ
+    response = FaultResponse.model_validate(fault)
+    response.linked_knowledge = linked_knowledge
+    return response
 
 
-@router.patch(
-    "/{fault_id}", response_model=FaultResponse, summary="Обновить неисправность"
-)
+@router.patch("/{fault_id}", response_model=FaultResponse)
 def update_fault(
     fault_id: int,
     fault_update: FaultUpdate,
     db: Session = Depends(get_db),
-    current_user: UserResponse = Depends(get_current_user)  # ✅ Добавить
+    current_user: UserResponse = Depends(get_current_user)
 ):
     """Частичное обновление неисправности с записью в историю"""
     fault = db.query(Fault).filter(Fault.id == fault_id).first()
@@ -149,13 +167,14 @@ def update_fault(
             detail=f"Неисправность с ID {fault_id} не найдена"
         )
     
-    # Сохраняем старые значения для истории
+    # Сохраняем старые значения
     old_values = {
         "title": fault.title,
-        "description": fault.description,
+        "description": fault.description or "",
         "severity": fault.severity,
         "status": fault.status,
-        "project_id": fault.project_id
+        "project_id": fault.project_id,
+        "linked_knowledge_ids": fault.linked_knowledge_ids or ""  # ✅ Добавляем
     }
     
     # Проверяем project_id
@@ -179,31 +198,39 @@ def update_fault(
     db.commit()
     db.refresh(fault)
     
+    # Записываем историю
     author = current_user.username or "system"
-
-    # Сопоставление полей с человекочитаемыми названиями
     field_labels = {
         "title": "Название",
         "description": "Описание",
         "severity": "Важность",
         "status": "Статус",
-        "project_id": "Проект"
+        "project_id": "Проект",
+        "linked_knowledge_ids": "Связанные статьи"  # ✅ Добавляем
     }
     
     for field, old_value in old_values.items():
         new_value = getattr(fault, field, None)
         
         if field == "project_id":
-            # Для project_id храним названия проектов
             old_project = db.query(Project).filter(Project.id == old_value).first()
             new_project = db.query(Project).filter(Project.id == new_value).first()
             old_value_str = old_project.name if old_project else "Без проекта"
             new_value_str = new_project.name if new_project else "Без проекта"
+        elif field == "linked_knowledge_ids":
+            # ✅ Для связанных статей показываем названия
+            old_ids = [int(id.strip()) for id in old_value.split(',') if id.strip()] if old_value else []
+            new_ids = [int(id.strip()) for id in new_value.split(',') if id.strip()] if new_value else []
+            
+            old_articles = db.query(KnowledgeBase).filter(KnowledgeBase.id.in_(old_ids)).all() if old_ids else []
+            new_articles = db.query(KnowledgeBase).filter(KnowledgeBase.id.in_(new_ids)).all() if new_ids else []
+            
+            old_value_str = ', '.join([a.title for a in old_articles]) if old_articles else "Нет статей"
+            new_value_str = ', '.join([a.title for a in new_articles]) if new_articles else "Нет статей"
         else:
             old_value_str = str(old_value) if old_value is not None else ""
             new_value_str = str(new_value) if new_value is not None else ""
         
-        # ✅ Проверяем, изменилось ли значение
         if old_value_str != new_value_str:
             log_history(
                 db=db,

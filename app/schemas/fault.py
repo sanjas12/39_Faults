@@ -53,6 +53,7 @@ class FaultBase(BaseModel):
     description: Optional[str] = Field(None, max_length=2000)
     severity: SeverityEnum = SeverityEnum.MINOR
     project_id: Optional[int] = Field(None, description="ID проекта (может быть null)")
+    linked_knowledge_ids: Optional[str] = Field(None, description="ID статей через запятую")
 
     @validator("title")
     def title_not_empty(cls, v: str) -> str:  # noqa: N805
@@ -62,6 +63,7 @@ class FaultBase(BaseModel):
 
 class FaultCreate(FaultBase):
     """Схема для создания неисправности."""
+    pass
 
 
 class FaultUpdate(BaseModel):
@@ -72,6 +74,7 @@ class FaultUpdate(BaseModel):
     severity: Optional[SeverityEnum] = None
     status: Optional[StatusEnum] = None
     project_id: Optional[int] = None
+    linked_knowledge_ids: Optional[str] = Field(None, description="ID статей через запятую")
 
     @validator("title")
     def title_not_empty(cls, v: Optional[str]) -> Optional[str]:  # noqa: N805
@@ -90,6 +93,7 @@ class FaultResponse(FaultBase):
     resolved_at: Optional[datetime] = None
     project: Optional[ProjectResponse] = None
     comments: List[CommentResponse] = []
+    linked_knowledge: Optional[List[dict]] = None  # Связанные статьи
 
     class Config:
         """Конфигурация Pydantic-модели."""
