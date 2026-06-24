@@ -15,7 +15,7 @@ from app.core.security import verify_password, create_access_token
 from app.models.all_models import User
 
 from _version import __version__
-from app.api import auth, comments, faults, projects, history
+from app.api import auth, comments, faults, projects, history, knowledge_base
 
 app = FastAPI(
     title="Faults", description="Отслеживание неисправностей", version=__version__
@@ -42,6 +42,7 @@ app.include_router(projects.router, prefix="/api")
 app.include_router(comments.router, prefix="/api")
 app.include_router(auth.router, prefix="/api")
 app.include_router(history.router, prefix="/api")
+app.include_router(knowledge_base.router, prefix="/api")
 
 
 def _render_page(

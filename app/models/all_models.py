@@ -109,3 +109,22 @@ class FaultHistory(Base):
 
     def __repr__(self):
         return f"<FaultHistory(id={self.id}, fault_id={self.fault_id}, type='{self.event_type}')>"
+
+
+class KnowledgeBase(Base):
+    __tablename__ = "knowledge_base"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(200), nullable=False, index=True)
+    content = Column(Text, nullable=False)  # Markdown формат
+    tags = Column(String(200), nullable=True)  # Теги через запятую
+    category = Column(String(100), nullable=True)  # Категория: инструкция, решение, документация
+    author = Column(String(100), nullable=False, default="system")
+    related_faults = Column(String(500), nullable=True)  # ID неисправностей через запятую
+    is_published = Column(Boolean, default=True)
+    views = Column(Integer, default=0)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    def __repr__(self):
+        return f"<KnowledgeBase(id={self.id}, title='{self.title[:30]}...')>"

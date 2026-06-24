@@ -88,3 +88,50 @@
     background: #888;
     border-radius: 10px;
 }
+
+/* Стили для базы знаний */
+.article-card {
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.article-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+.article-card .card-title {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+#previewContent,
+#editPreviewContent {
+    min-height: 200px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+#previewContent h2,
+#editPreviewContent h2 {
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+}
+
+#previewContent h3,
+#editPreviewContent h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.3rem;
+}
+
+#previewContent ul,
+#editPreviewContent ul {
+    padding-left: 20px;
+}
+
+#previewContent li,
+#editPreviewContent li {
+    margin-bottom: 2px;
+}

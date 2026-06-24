@@ -1,6 +1,6 @@
 from app.core.database import SessionLocal
 from app.core.security import get_password_hash
-from app.models.all_models import Fault, Project, User, UserRole, FaultComment, FaultHistory
+from app.models.all_models import Fault, Project, User, UserRole, FaultComment, FaultHistory, KnowledgeBase
 from datetime import datetime, timedelta
 import random
 
@@ -231,6 +231,82 @@ def seed_data():
                 db.add(fault)
                 faults.append(fault)
                 
+
+        # ===== СОЗДАЁМ СТАТЬИ ДЛЯ БАЗЫ ЗНАНИЙ =====
+        print("   📚 Создаём статьи для базы знаний...")
+
+        knowledge_articles = [
+            {
+                "title": "Как устранить ошибку PLC 0xE4",
+                "content": """# Ошибка PLC 0xE4
+
+        ## Причина
+        Ошибка возникает при перегреве блока питания контроллера.
+
+        ## Решение
+        1. Отключите питание
+        2. Проверьте вентиляцию
+        3. Замените термопасту
+        4. Включите питание
+
+        ## Профилактика
+        Проводите чистку каждые 3 месяца.""",
+                "category": "Решение",
+                "tags": "plc, ошибка, контроллер",
+                "author": "admin"
+            },
+            {
+                "title": "Настройка SCADA для нефтепровода",
+                "content": """# Настройка SCADA
+
+        ## Шаг 1: Установка
+        Скачайте дистрибутив с сайта производителя.
+
+        ## Шаг 2: Конфигурация
+        Откройте файл `config.ini` и настройте параметры.
+
+        ## Шаг 3: Подключение
+        Настройте подключение к контроллерам.""",
+                "category": "Инструкция",
+                "tags": "scada, настройка, нефтепровод",
+                "author": "engineer"
+            },
+            {
+                "title": "Диагностика датчика давления",
+                "content": """# Диагностика датчика давления
+
+        ## Симптомы
+        - Нестабильные показания
+        - Потеря связи
+
+        ## Проверка
+        1. Проверьте питание
+        2. Проверьте кабель
+        3. Проверьте калибровку
+
+        ## Замена
+        При неисправности замените датчик.""",
+                "category": "Документация",
+                "tags": "датчик, давление, диагностика",
+                "author": "engineer2"
+            }
+        ]
+
+        for article_data in knowledge_articles:
+            article = KnowledgeBase(
+                title=article_data["title"],
+                content=article_data["content"],
+                category=article_data["category"],
+                tags=article_data["tags"],
+                author=article_data["author"],
+                is_published=True
+            )
+            db.add(article)
+
+        print(f"   ✅ Созданы статьи для базы знаний")        
+
+
+
         db.flush()
         print(f"   ✅ Создано {len(faults)} неисправностей")
 

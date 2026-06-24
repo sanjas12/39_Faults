@@ -1,0 +1,525 @@
+{% extends "base.html" %}
+
+{% block title %}База знаний{% endblock %}
+{% block page_title %}База знаний{% endblock %}
+{% set active_page = 'knowledge' %}
+
+{% block content %}
+<!-- Панель поиска -->
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Поиск статей...">
+                    <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    <button class="btn btn-outline-secondary" type="button" id="clearSearchBtn">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="categoryFilter">
+                    <option value="">Все категории</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" id="tagFilter">
+                    <option value="">Все теги</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#createArticleModal">
+                    <i class="bi bi-plus-circle"></i> Создать
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Список статей -->
+<div class="row" id="articlesContainer">
+    <div class="col-12 text-center text-muted">Загрузка статей...</div>
+</div>
+
+<!-- Модальное окно создания статьи -->
+<div class="modal fade" id="createArticleModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Создать статью</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createArticleForm">
+                    <div class="mb-3">
+                        <label class="form-label">Заголовок *</label>
+                        <input type="text" class="form-control" id="articleTitle" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Содержание (Markdown) *</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <textarea class="form-control" id="articleContent" rows="8" placeholder="Введите Markdown..."></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="border p-2" id="previewContent" style="min-height: 200px; background: #f8f9fa;">
+                                    <em class="text-muted">Предпросмотр...</em>
+                                </div>
+                            </div>
+                        </div>
+                        <small class="text-muted">Поддерживается Markdown: # Заголовок, **жирный**, *курсив*, [ссылка](url)</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Категория</label>
+                        <input type="text" class="form-control" id="articleCategory" placeholder="Инструкция, Решение, Документация...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Теги (через запятую)</label>
+                        <input type="text" class="form-control" id="articleTags" placeholder="python, fastapi, ошибка">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Связанные неисправности (ID через запятую)</label>
+                        <input type="text" class="form-control" id="articleRelated" placeholder="1, 5, 12">
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="articlePublished" checked>
+                        <label class="form-check-label">Опубликовать</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="saveArticleBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно просмотра статьи -->
+<div class="modal fade" id="viewArticleModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewTitle">Заголовок</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2">
+                    <span class="badge bg-secondary" id="viewCategory">Категория</span>
+                    <span class="badge bg-info" id="viewTags">Теги</span>
+                    <span class="badge bg-light text-dark" id="viewViews">👁️ 0</span>
+                </div>
+                <div id="viewContent" style="min-height: 200px;"></div>
+                <hr>
+                <div class="text-muted small">
+                    <span id="viewAuthor">Автор</span> • 
+                    <span id="viewDate">Дата</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline-primary btn-sm" id="viewEditBtn">
+                    <i class="bi bi-pencil"></i> Редактировать
+                </button>
+                <button class="btn btn-outline-danger btn-sm" id="viewDeleteBtn">
+                    <i class="bi bi-trash"></i> Удалить
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно редактирования -->
+<div class="modal fade" id="editArticleModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редактировать статью</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editArticleForm">
+                    <input type="hidden" id="editArticleId">
+                    <div class="mb-3">
+                        <label class="form-label">Заголовок *</label>
+                        <input type="text" class="form-control" id="editTitle" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Содержание (Markdown) *</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <textarea class="form-control" id="editContent" rows="8"></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="border p-2" id="editPreviewContent" style="min-height: 200px; background: #f8f9fa;">
+                                    <em class="text-muted">Предпросмотр...</em>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Категория</label>
+                        <input type="text" class="form-control" id="editCategory">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Теги (через запятую)</label>
+                        <input type="text" class="form-control" id="editTags">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Связанные неисправности (ID через запятую)</label>
+                        <input type="text" class="form-control" id="editRelated">
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="editPublished">
+                        <label class="form-check-label">Опубликовать</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="updateArticleBtn">Обновить</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Глобальные переменные
+let allArticles = [];
+let currentArticleId = null;
+
+// Простой Markdown-парсер
+function parseMarkdown(text) {
+    if (!text) return '';
+    
+    let html = text;
+    // Заголовки
+    html = html.replace(/^### (.*$)/gim, '<h4>$1</h4>');
+    html = html.replace(/^## (.*$)/gim, '<h3>$1</h3>');
+    html = html.replace(/^# (.*$)/gim, '<h2>$1</h2>');
+    // Жирный
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    // Курсив
+    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    // Ссылки
+    html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>');
+    // Списки
+    html = html.replace(/^\s*-\s(.*$)/gim, '<li>$1</li>');
+    html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+    // Переносы строк
+    html = html.replace(/\n/g, '<br>');
+    return html;
+}
+
+// ======= ЗАГРУЗКА ДАННЫХ =======
+
+async function loadArticles() {
+    try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        const params = new URLSearchParams();
+        const search = document.getElementById('searchInput').value.trim();
+        if (search) params.append('search', search);
+        
+        const category = document.getElementById('categoryFilter').value;
+        if (category) params.append('category', category);
+        
+        const tag = document.getElementById('tagFilter').value;
+        if (tag) params.append('tag', tag);
+        
+        const response = await axios.get(`/api/knowledge?${params.toString()}`);
+        allArticles = response.data;
+        renderArticles(allArticles);
+    } catch (error) {
+        console.error('Ошибка загрузки статей:', error);
+        document.getElementById('articlesContainer').innerHTML = `
+            <div class="col-12 text-center text-danger">Ошибка загрузки статей</div>
+        `;
+    }
+}
+
+async function loadFilters() {
+    try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        // Загружаем категории
+        const catResponse = await axios.get('/api/knowledge/categories');
+        const categories = catResponse.data || [];
+        const catSelect = document.getElementById('categoryFilter');
+        catSelect.innerHTML = '<option value="">Все категории</option>';
+        categories.forEach(c => {
+            if (c) {
+                const option = document.createElement('option');
+                option.value = c;
+                option.textContent = c;
+                catSelect.appendChild(option);
+            }
+        });
+        
+        // Загружаем теги
+        const tagResponse = await axios.get('/api/knowledge/tags');
+        const tags = tagResponse.data || [];
+        const tagSelect = document.getElementById('tagFilter');
+        tagSelect.innerHTML = '<option value="">Все теги</option>';
+        tags.forEach(t => {
+            if (t) {
+                const option = document.createElement('option');
+                option.value = t;
+                option.textContent = t;
+                tagSelect.appendChild(option);
+            }
+        });
+    } catch (error) {
+        console.error('Ошибка загрузки фильтров:', error);
+    }
+}
+
+// ======= ОТОБРАЖЕНИЕ СТАТЕЙ =======
+
+function renderArticles(articles) {
+    const container = document.getElementById('articlesContainer');
+    
+    if (articles.length === 0) {
+        container.innerHTML = `
+            <div class="col-12 text-center text-muted py-4">
+                <i class="bi bi-journal" style="font-size: 48px;"></i>
+                <p class="mt-2">Статьи не найдены</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = articles.map(article => `
+        <div class="col-md-6 col-lg-4 mb-3">
+            <div class="card article-card h-100" onclick="viewArticle(${article.id})">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <h5 class="card-title">${article.title}</h5>
+                        ${article.is_published ? 
+                            '<span class="badge bg-success">Опубликовано</span>' : 
+                            '<span class="badge bg-secondary">Черновик</span>'
+                        }
+                    </div>
+                    <p class="card-text small text-muted">
+                        ${article.content ? article.content.slice(0, 150) + (article.content.length > 150 ? '...' : '') : ''}
+                    </p>
+                    <div class="mt-2">
+                        ${article.category ? `<span class="badge bg-primary">${article.category}</span>` : ''}
+                        ${article.tags ? article.tags.split(',').slice(0, 3).map(t => 
+                            `<span class="badge bg-secondary">${t.trim()}</span>`
+                        ).join(' ') : ''}
+                        ${article.tags && article.tags.split(',').length > 3 ? `<span class="badge bg-secondary">+${article.tags.split(',').length - 3}</span>` : ''}
+                    </div>
+                    <div class="mt-2 small text-muted">
+                        <i class="bi bi-eye"></i> ${article.views} • 
+                        <i class="bi bi-person"></i> ${article.author} • 
+                        ${new Date(article.created_at).toLocaleDateString('ru-RU')}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ======= CRUD ОПЕРАЦИИ =======
+
+// Создание статьи
+document.getElementById('saveArticleBtn').addEventListener('click', async function() {
+    const title = document.getElementById('articleTitle').value.trim();
+    const content = document.getElementById('articleContent').value.trim();
+    
+    if (!title || !content) {
+        alert('Заголовок и содержание обязательны!');
+        return;
+    }
+    
+    const data = {
+        title: title,
+        content: content,
+        category: document.getElementById('articleCategory').value.trim() || null,
+        tags: document.getElementById('articleTags').value.trim() || null,
+        related_faults: document.getElementById('articleRelated').value.trim() || null,
+        is_published: document.getElementById('articlePublished').checked
+    };
+    
+    try {
+        await axios.post('/api/knowledge', data);
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('createArticleModal'));
+        modal.hide();
+        document.getElementById('createArticleForm').reset();
+        document.getElementById('previewContent').innerHTML = '<em class="text-muted">Предпросмотр...</em>';
+        
+        await loadArticles();
+        alert('Статья создана!');
+    } catch (error) {
+        console.error('Ошибка создания:', error);
+        alert('Ошибка: ' + (error.response?.data?.detail || error.message));
+    }
+});
+
+// Просмотр статьи
+async function viewArticle(id) {
+    try {
+        const response = await axios.get(`/api/knowledge/${id}`);
+        const article = response.data;
+        currentArticleId = id;
+        
+        document.getElementById('viewTitle').textContent = article.title;
+        document.getElementById('viewContent').innerHTML = parseMarkdown(article.content);
+        document.getElementById('viewCategory').textContent = article.category || 'Без категории';
+        document.getElementById('viewTags').textContent = article.tags || 'Без тегов';
+        document.getElementById('viewViews').textContent = `👁️ ${article.views}`;
+        document.getElementById('viewAuthor').textContent = `👤 ${article.author}`;
+        document.getElementById('viewDate').textContent = new Date(article.created_at).toLocaleString('ru-RU');
+        document.getElementById('viewCategory').style.display = article.category ? 'inline-block' : 'none';
+        document.getElementById('viewTags').style.display = article.tags ? 'inline-block' : 'none';
+        
+        const modal = new bootstrap.Modal(document.getElementById('viewArticleModal'));
+        modal.show();
+    } catch (error) {
+        console.error('Ошибка загрузки статьи:', error);
+        alert('Ошибка при загрузке статьи');
+    }
+}
+
+// Редактирование из просмотра
+document.getElementById('viewEditBtn').addEventListener('click', function() {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('viewArticleModal'));
+    modal.hide();
+    setTimeout(() => editArticle(currentArticleId), 300);
+});
+
+// Редактирование
+async function editArticle(id) {
+    try {
+        const response = await axios.get(`/api/knowledge/${id}`);
+        const article = response.data;
+        
+        document.getElementById('editArticleId').value = article.id;
+        document.getElementById('editTitle').value = article.title;
+        document.getElementById('editContent').value = article.content;
+        document.getElementById('editCategory').value = article.category || '';
+        document.getElementById('editTags').value = article.tags || '';
+        document.getElementById('editRelated').value = article.related_faults || '';
+        document.getElementById('editPublished').checked = article.is_published;
+        document.getElementById('editPreviewContent').innerHTML = parseMarkdown(article.content);
+        
+        const modal = new bootstrap.Modal(document.getElementById('editArticleModal'));
+        modal.show();
+    } catch (error) {
+        console.error('Ошибка загрузки статьи:', error);
+        alert('Ошибка при загрузке статьи');
+    }
+}
+
+document.getElementById('updateArticleBtn').addEventListener('click', async function() {
+    const id = parseInt(document.getElementById('editArticleId').value);
+    const title = document.getElementById('editTitle').value.trim();
+    const content = document.getElementById('editContent').value.trim();
+    
+    if (!title || !content) {
+        alert('Заголовок и содержание обязательны!');
+        return;
+    }
+    
+    const data = {
+        title: title,
+        content: content,
+        category: document.getElementById('editCategory').value.trim() || null,
+        tags: document.getElementById('editTags').value.trim() || null,
+        related_faults: document.getElementById('editRelated').value.trim() || null,
+        is_published: document.getElementById('editPublished').checked
+    };
+    
+    try {
+        await axios.put(`/api/knowledge/${id}`, data);
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('editArticleModal'));
+        modal.hide();
+        
+        await loadArticles();
+        alert('Статья обновлена!');
+    } catch (error) {
+        console.error('Ошибка обновления:', error);
+        alert('Ошибка: ' + (error.response?.data?.detail || error.message));
+    }
+});
+
+// Удаление из просмотра
+document.getElementById('viewDeleteBtn').addEventListener('click', function() {
+    if (!currentArticleId) return;
+    if (!confirm('Вы уверены, что хотите удалить эту статью?')) return;
+    
+    deleteArticle(currentArticleId);
+});
+
+async function deleteArticle(id) {
+    try {
+        await axios.delete(`/api/knowledge/${id}`);
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('viewArticleModal'));
+        if (modal) modal.hide();
+        
+        await loadArticles();
+        alert('Статья удалена!');
+    } catch (error) {
+        console.error('Ошибка удаления:', error);
+        alert('Ошибка при удалении');
+    }
+}
+
+// ======= ПРЕДПРОСМОТР MARKDOWN =======
+
+document.getElementById('articleContent').addEventListener('input', function() {
+    document.getElementById('previewContent').innerHTML = parseMarkdown(this.value) || '<em class="text-muted">Предпросмотр...</em>';
+});
+
+document.getElementById('editContent').addEventListener('input', function() {
+    document.getElementById('editPreviewContent').innerHTML = parseMarkdown(this.value) || '<em class="text-muted">Предпросмотр...</em>';
+});
+
+// ======= ПОИСК И ФИЛЬТРЫ =======
+
+function applyFilters() {
+    loadArticles();
+}
+
+document.getElementById('searchBtn').addEventListener('click', applyFilters);
+document.getElementById('clearSearchBtn').addEventListener('click', function() {
+    document.getElementById('searchInput').value = '';
+    applyFilters();
+});
+document.getElementById('searchInput').addEventListener('keyup', function(e) {
+    if (e.key === 'Enter') applyFilters();
+});
+document.getElementById('categoryFilter').addEventListener('change', applyFilters);
+document.getElementById('tagFilter').addEventListener('change', applyFilters);
+
+// ======= ИНИЦИАЛИЗАЦИЯ =======
+
+document.addEventListener('DOMContentLoaded', async function() {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+        window.location.href = '/login';
+        return;
+    }
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    
+    await loadFilters();
+    await loadArticles();
+});
+</script>
+{% endblock %}
