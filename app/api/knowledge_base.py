@@ -17,10 +17,11 @@ def create_article(
     current_user: UserResponse = Depends(get_current_user)
 ):
     """Создать статью в базе знаний"""
-    db_article = KnowledgeBase(
-        **article.model_dump(),
-        author=current_user.username
-    )
+    # ✅ Получаем данные и добавляем автора
+    data = article.model_dump()
+    data['author'] = current_user.username
+    
+    db_article = KnowledgeBase(**data)
     db.add(db_article)
     db.commit()
     db.refresh(db_article)

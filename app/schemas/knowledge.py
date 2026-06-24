@@ -11,7 +11,8 @@ class KnowledgeBaseBase(BaseModel):
     is_published: bool = True
 
 class KnowledgeBaseCreate(KnowledgeBaseBase):
-    author: str = "system"
+    # ✅ Убираем author, он будет добавлен на бэкенде
+    pass
 
 class KnowledgeBaseUpdate(BaseModel):
     title: Optional[str] = Field(None, min_length=1, max_length=200)
