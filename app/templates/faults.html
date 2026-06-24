@@ -11,9 +11,12 @@
         <div class="row g-3">
             <div class="col-md-4">
                 <div class="input-group">
-                    <input type="text" class="form-control" id="searchInput" placeholder="Поиск по названию...">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Поиск по названию или описанию...">
                     <button class="btn btn-outline-secondary" type="button" id="searchBtn">
                         <i class="bi bi-search"></i>
+                    </button>
+                    <button class="btn btn-outline-secondary" type="button" id="clearSearchBtn" title="Очистить поиск">
+                        <i class="bi bi-x-circle"></i>
                     </button>
                 </div>
             </div>
@@ -227,66 +230,87 @@ let allFaultsData = [];
 // Загрузка проектов для фильтров
 async function loadProjectsForFilters() {
     try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+        
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
         const response = await axios.get('/api/projects');
         allProjects = response.data;
-
+        
         // Заполняем выпадающие списки проектов
         const selects = ['projectFilter', 'faultProject', 'editFaultProject'];
         selects.forEach(id => {
             const select = document.getElementById(id);
             if (!select) return;
-
-            // Сохраняем текущее значение
+            
             const currentValue = select.value;
-
-            // Очищаем, но оставляем первый option
             select.innerHTML = '<option value="">Без проекта</option>';
-
+            
             allProjects.forEach(p => {
                 const option = document.createElement('option');
                 option.value = p.id;
                 option.textContent = p.name;
                 select.appendChild(option);
             });
-
-            // Восстанавливаем значение
+            
             select.value = currentValue;
         });
     } catch (error) {
         console.error('Ошибка загрузки проектов:', error);
+        if (error.response?.status === 401) {
+            window.location.href = '/login';
+        }
     }
 }
 
-// Загрузка неисправностей
-async function loadFaults() {
+// Загрузка неисправностей с поиском
+async function loadFaults(searchTerm = '') {
     try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+        
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
         // Собираем параметры фильтров
         const params = new URLSearchParams();
-
+        
         const status = document.getElementById('statusFilter').value;
         if (status) params.append('status', status);
-
+        
         const severity = document.getElementById('severityFilter').value;
         if (severity) params.append('severity', severity);
-
+        
         const project = document.getElementById('projectFilter').value;
         if (project) params.append('project_id', project);
-
-        const search = document.getElementById('searchInput').value.trim();
-        if (search) params.append('search', search);
-
-        params.append('limit', '1000'); // Загружаем все для фильтрации на клиенте
-
+        
+        // ✅ Добавляем поиск
+        if (searchTerm) {
+            params.append('search', searchTerm);
+        }
+        
+        params.append('limit', '1000');
+        
         const response = await axios.get(`/api/faults?${params.toString()}`);
         allFaultsData = response.data;
-
-        // Обновляем счётчик
+        
         document.getElementById('faultsCount').textContent = `Всего: ${allFaultsData.length}`;
-
-        // Рендерим таблицу
+        
+        // Сбрасываем пагинацию
+        currentPage = 1;
         renderTable();
     } catch (error) {
         console.error('Ошибка загрузки неисправностей:', error);
+        if (error.response?.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
         document.getElementById('faultsList').innerHTML = `
             <tr><td colspan="7" class="text-center text-danger">Ошибка загрузки данных</td></tr>
         `;
@@ -300,7 +324,7 @@ function renderTable() {
     const start = (currentPage - 1) * itemsPerPage;
     const end = start + itemsPerPage;
     const pageItems = allFaultsData.slice(start, end);
-
+    
     if (pageItems.length === 0) {
         tbody.innerHTML = `
             <tr>
@@ -313,7 +337,7 @@ function renderTable() {
         updatePagination();
         return;
     }
-
+    
     tbody.innerHTML = pageItems.map((fault, index) => {
         const projectName = fault.project?.name || 'Без проекта';
         const severityColors = {
@@ -340,13 +364,13 @@ function renderTable() {
             minor: 'Незначительная',
             trivial: 'Тривиальная'
         };
-
+        
         return `
             <tr class="fault-row" data-id="${fault.id}">
                 <td>${start + index + 1}</td>
                 <td>
                     <a href="/faults/${fault.id}" class="text-decoration-none fw-bold">
-                        ${fault.title}
+                        ${fault.title.length > 50 ? fault.title.slice(0, 50) + '...' : fault.title}
                     </a>
                 </td>
                 <td>
@@ -378,7 +402,7 @@ function renderTable() {
             </tr>
         `;
     }).join('');
-
+    
     updatePagination();
 }
 
@@ -389,15 +413,15 @@ function updatePagination() {
     const currentPageSpan = document.getElementById('currentPage');
     const prevBtn = document.getElementById('prevPage');
     const nextBtn = document.getElementById('nextPage');
-
+    
     currentPageSpan.textContent = currentPage;
-
+    
     if (currentPage <= 1) {
         prevBtn.parentElement.classList.add('disabled');
     } else {
         prevBtn.parentElement.classList.remove('disabled');
     }
-
+    
     if (currentPage >= totalPages || totalPages === 0) {
         nextBtn.parentElement.classList.add('disabled');
     } else {
@@ -422,6 +446,28 @@ document.getElementById('nextPage').addEventListener('click', function(e) {
     }
 });
 
+// ======= ПОИСК =======
+
+// Поиск по нажатию кнопки
+document.getElementById('searchBtn').addEventListener('click', function() {
+    const search = document.getElementById('searchInput').value.trim();
+    loadFaults(search);
+});
+
+// Поиск по Enter
+document.getElementById('searchInput').addEventListener('keyup', function(e) {
+    if (e.key === 'Enter') {
+        const search = document.getElementById('searchInput').value.trim();
+        loadFaults(search);
+    }
+});
+
+// Очистка поиска
+document.getElementById('clearSearchBtn').addEventListener('click', function() {
+    document.getElementById('searchInput').value = '';
+    loadFaults('');
+});
+
 // ======= CRUD ОПЕРАЦИИ =======
 
 // Создание неисправности
@@ -431,27 +477,36 @@ document.getElementById('saveFaultBtn').addEventListener('click', async function
         alert('Название неисправности обязательно!');
         return;
     }
-
+    
     const data = {
         title: title,
         description: document.getElementById('faultDescription').value.trim() || null,
         severity: document.getElementById('faultSeverity').value,
         project_id: parseInt(document.getElementById('faultProject').value) || null
     };
-
+    
     try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
         await axios.post('/api/faults', data);
-
+        
         const modal = bootstrap.Modal.getInstance(document.getElementById('createFaultModal'));
         modal.hide();
         document.getElementById('createFaultForm').reset();
-
+        
         await loadFaults();
-
-        // Показываем уведомление
         alert('Неисправность создана!');
     } catch (error) {
         console.error('Ошибка создания:', error);
+        if (error.response?.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
         alert('Ошибка: ' + (error.response?.data?.detail || error.message));
     }
 });
@@ -459,20 +514,31 @@ document.getElementById('saveFaultBtn').addEventListener('click', async function
 // Редактирование
 async function editFault(id) {
     try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
         const response = await axios.get(`/api/faults/${id}`);
         const fault = response.data;
-
+        
         document.getElementById('editFaultId').value = fault.id;
         document.getElementById('editFaultTitle').value = fault.title;
         document.getElementById('editFaultDescription').value = fault.description || '';
         document.getElementById('editFaultSeverity').value = fault.severity;
         document.getElementById('editFaultStatus').value = fault.status;
         document.getElementById('editFaultProject').value = fault.project_id || '';
-
+        
         const modal = new bootstrap.Modal(document.getElementById('editFaultModal'));
         modal.show();
     } catch (error) {
         console.error('Ошибка загрузки:', error);
+        if (error.response?.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
         alert('Ошибка при загрузке данных');
     }
 }
@@ -480,12 +546,12 @@ async function editFault(id) {
 document.getElementById('updateFaultBtn').addEventListener('click', async function() {
     const id = parseInt(document.getElementById('editFaultId').value);
     const title = document.getElementById('editFaultTitle').value.trim();
-
+    
     if (!title) {
         alert('Название неисправности обязательно!');
         return;
     }
-
+    
     const data = {
         title: title,
         description: document.getElementById('editFaultDescription').value.trim() || null,
@@ -493,17 +559,28 @@ document.getElementById('updateFaultBtn').addEventListener('click', async functi
         status: document.getElementById('editFaultStatus').value,
         project_id: parseInt(document.getElementById('editFaultProject').value) || null
     };
-
+    
     try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
         await axios.patch(`/api/faults/${id}`, data);
-
+        
         const modal = bootstrap.Modal.getInstance(document.getElementById('editFaultModal'));
         modal.hide();
-
+        
         await loadFaults();
         alert('Неисправность обновлена!');
     } catch (error) {
         console.error('Ошибка обновления:', error);
+        if (error.response?.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
         alert('Ошибка: ' + (error.response?.data?.detail || error.message));
     }
 });
@@ -512,27 +589,38 @@ document.getElementById('updateFaultBtn').addEventListener('click', async functi
 function deleteFault(id) {
     const fault = allFaultsData.find(f => f.id === id);
     if (!fault) return;
-
+    
     document.getElementById('deleteFaultTitle').textContent = fault.title;
     currentDeleteId = id;
-
+    
     const modal = new bootstrap.Modal(document.getElementById('deleteFaultModal'));
     modal.show();
 }
 
 document.getElementById('confirmDeleteFaultBtn').addEventListener('click', async function() {
     if (!currentDeleteId) return;
-
+    
     try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
         await axios.delete(`/api/faults/${currentDeleteId}`);
-
+        
         const modal = bootstrap.Modal.getInstance(document.getElementById('deleteFaultModal'));
         modal.hide();
-
+        
         await loadFaults();
         alert('Неисправность удалена!');
     } catch (error) {
         console.error('Ошибка удаления:', error);
+        if (error.response?.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
         alert('Ошибка: ' + (error.response?.data?.detail || error.message));
     }
 });
@@ -540,35 +628,30 @@ document.getElementById('confirmDeleteFaultBtn').addEventListener('click', async
 // ======= ФИЛЬТРЫ =======
 
 function applyFilters() {
+    const search = document.getElementById('searchInput').value.trim();
     currentPage = 1;
-    loadFaults();
+    loadFaults(search);
 }
 
 document.getElementById('statusFilter').addEventListener('change', applyFilters);
 document.getElementById('severityFilter').addEventListener('change', applyFilters);
 document.getElementById('projectFilter').addEventListener('change', applyFilters);
-document.getElementById('searchBtn').addEventListener('click', applyFilters);
-document.getElementById('searchInput').addEventListener('keyup', function(e) {
-    if (e.key === 'Enter') applyFilters();
-});
-
-// Сброс фильтров
-document.getElementById('statusFilter').addEventListener('dblclick', function() {
-    this.value = '';
-    applyFilters();
-});
-document.getElementById('severityFilter').addEventListener('dblclick', function() {
-    this.value = '';
-    applyFilters();
-});
-document.getElementById('projectFilter').addEventListener('dblclick', function() {
-    this.value = '';
-    applyFilters();
-});
 
 // ======= ИНИЦИАЛИЗАЦИЯ =======
 
 document.addEventListener('DOMContentLoaded', async function() {
+    console.log('🚀 Загрузка страницы неисправностей');
+    
+    // Проверяем авторизацию
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+        console.warn('🔒 Нет токена, редирект на логин');
+        window.location.href = '/login';
+        return;
+    }
+    
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    
     await loadProjectsForFilters();
     await loadFaults();
 });

@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -60,16 +60,17 @@ def list_projects(
     Получение списка проектов с возможностью поиска и пагинации.
     """
     query = db.query(Project)
-
-    # Поиск по названию или клиенту
+    
+    # ✅ Регистронезависимый поиск
     if search:
         search_pattern = f"%{search}%"
         query = query.filter(
             or_(
-                Project.name.ilike(search_pattern), Project.client.ilike(search_pattern)
+                func.lower(Project.name).like(func.lower(search_pattern)),
+                func.lower(Project.client).like(func.lower(search_pattern))
             )
         )
-
+    
     # Сортировка по дате создания (новые сверху)
     query = query.order_by(Project.created_at.desc())
 

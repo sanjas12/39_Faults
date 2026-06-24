@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import or_, func
 
 from app.core.database import get_db
 from app.models.all_models import Fault, Project
@@ -58,14 +59,14 @@ def list_faults(
     severity: Optional[SeverityEnum] = Query(None, description="Фильтр по важности"),
     project_id: Optional[int] = Query(None, description="Фильтр по проекту"),
     search: Optional[str] = Query(None, description="Поиск по названию"),
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_db)
 ):
     """
     Получение списка неисправностей с фильтрацией и поиском.
     """
     # Подгружаем связанный проект
     query = db.query(Fault).options(joinedload(Fault.project))
-
+    
     # Фильтры
     if status:
         query = query.filter(Fault.status == status)
@@ -73,19 +74,24 @@ def list_faults(
         query = query.filter(Fault.severity == severity)
     if project_id:
         query = query.filter(Fault.project_id == project_id)
-
-    # Поиск по названию
+    
+    # ✅ Поиск по названию (регистронезависимый)
     if search:
         search_pattern = f"%{search}%"
-        query = query.filter(Fault.title.ilike(search_pattern))
-
+        query = query.filter(
+            or_(
+                func.lower(Fault.title).like(func.lower(search_pattern)),
+                func.lower(Fault.description).like(func.lower(search_pattern))
+            )
+        )
+    
     # Сортировка: сначала критические, потом по дате создания
     query = query.order_by(
         # Сортируем по важности (critical → major → minor → trivial)
         Fault.severity.desc(),
-        Fault.created_at.desc(),
+        Fault.created_at.desc()
     )
-
+    
     faults = query.offset(skip).limit(limit).all()
     return faults
 
