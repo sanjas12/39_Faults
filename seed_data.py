@@ -1,6 +1,6 @@
 from app.core.database import SessionLocal
 from app.core.security import get_password_hash
-from app.models.all_models import Fault, Project, User, UserRole, FaultComment
+from app.models.all_models import Fault, Project, User, UserRole, FaultComment, FaultHistory
 from datetime import datetime, timedelta
 import random
 
@@ -177,8 +177,6 @@ def seed_data():
         statuses = ["open", "in_progress", "review", "closed"]
         severities = ["critical", "major", "minor", "trivial"]
         
-        fault_id_counter = 1
-        
         # Генерируем неисправности для каждого проекта
         for i, project in enumerate(projects):
             # Для каждого проекта создаём от 3 до 7 неисправностей
@@ -224,7 +222,7 @@ def seed_data():
                     severity = random.choice(severities)
                 
                 fault = Fault(
-                    title=title[:200],  # Ограничиваем длину
+                    title=title[:200],
                     description=description[:500],
                     severity=severity,
                     status=status,
@@ -236,7 +234,90 @@ def seed_data():
         db.flush()
         print(f"   ✅ Создано {len(faults)} неисправностей")
 
+        # ===== СОЗДАЁМ ИСТОРИЮ ДЛЯ НЕИСПРАВНОСТЕЙ =====
+        print("   📝 Создаём историю для неисправностей...")
+        
+        history_authors = ["admin", "engineer", "engineer2", "manager", "operator"]
+        status_labels = {
+            "open": "Открыта",
+            "in_progress": "В работе",
+            "review": "На проверке",
+            "closed": "Закрыта"
+        }
+        severity_labels = {
+            "critical": "Критическая",
+            "major": "Серьёзная",
+            "minor": "Незначительная",
+            "trivial": "Тривиальная"
+        }
+        
+        for fault in faults:
+            # 1. Создание неисправности
+            author = random.choice(history_authors)
+            created_date = fault.created_at - timedelta(days=random.randint(0, 3))
+            
+            creation_history = FaultHistory(
+                fault_id=fault.id,
+                event_type="creation",
+                field="creation",
+                old_value=None,
+                new_value=f"Создана неисправность: {fault.title}",
+                author=author,
+                created_at=created_date
+            )
+            db.add(creation_history)
+            
+            # 2. Если статус изменился — добавляем историю изменений статуса
+            if fault.status != "open" and random.random() > 0.3:
+                status_change_date = created_date + timedelta(hours=random.randint(1, 24))
+                new_status = fault.status
+                old_status = "open"
+                
+                if new_status == "in_progress":
+                    old_status = "open"
+                elif new_status == "review":
+                    old_status = random.choice(["open", "in_progress"])
+                elif new_status == "closed":
+                    old_status = random.choice(["open", "in_progress", "review"])
+                
+                status_history = FaultHistory(
+                    fault_id=fault.id,
+                    event_type="field_change",
+                    field="Статус",
+                    old_value=status_labels.get(old_status, old_status),
+                    new_value=status_labels.get(new_status, new_status),
+                    author=random.choice(history_authors),
+                    created_at=status_change_date
+                )
+                db.add(status_history)
+            
+            # 3. Если важность изменилась — добавляем историю
+            if fault.severity != "minor" and random.random() > 0.5:
+                severity_change_date = created_date + timedelta(hours=random.randint(2, 48))
+                old_severity = random.choice(["minor", "major"])
+                new_severity = fault.severity
+                
+                if new_severity == "critical":
+                    old_severity = random.choice(["major", "minor"])
+                elif new_severity == "major":
+                    old_severity = random.choice(["minor", "trivial"])
+                
+                severity_history = FaultHistory(
+                    fault_id=fault.id,
+                    event_type="field_change",
+                    field="Важность",
+                    old_value=severity_labels.get(old_severity, old_severity),
+                    new_value=severity_labels.get(new_severity, new_severity),
+                    author=random.choice(history_authors),
+                    created_at=severity_change_date
+                )
+                db.add(severity_history)
+
+        print(f"   ✅ Создана история для неисправностей")
+
         # ===== СОЗДАЁМ КОММЕНТАРИИ =====
+        print("   💬 Создаём комментарии...")
+        
         comment_authors = ["engineer", "engineer2", "manager", "operator"]
         comment_texts = [
             "Проверил, подтверждаю проблему.",
@@ -277,11 +358,13 @@ def seed_data():
         total_projects = db.query(Project).count()
         total_faults = db.query(Fault).count()
         total_comments = db.query(FaultComment).count()
+        total_history = db.query(FaultHistory).count()
         
         print(f"   👤 Пользователей: {total_users}")
         print(f"   📁 Проектов: {total_projects}")
         print(f"   🐛 Неисправностей: {total_faults}")
         print(f"   💬 Комментариев: {total_comments}")
+        print(f"   📜 Записей истории: {total_history}")
         
         print("\n   📊 Статусы неисправностей:")
         for status in ["open", "in_progress", "review", "closed"]:

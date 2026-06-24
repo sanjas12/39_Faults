@@ -44,11 +44,23 @@ def create_fault(fault: FaultCreate, db: Session = Depends(get_db)):
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Проект с ID {fault.project_id} не найден",
             )
-
+    
     db_fault = Fault(**fault.model_dump())
     db.add(db_fault)
     db.commit()
     db.refresh(db_fault)
+    
+    # ✅ Записываем в историю создание
+    log_history(
+        db=db,
+        fault_id=db_fault.id,
+        event_type="creation",
+        field="creation",
+        old_value=None,
+        new_value=f"Создана неисправность: {db_fault.title}",
+        author=current_user.username
+    )
+    
     return db_fault
 
 
@@ -167,11 +179,20 @@ def update_fault(
     db.commit()
     db.refresh(fault)
     
-    # ✅ Записываем историю изменений
     author = current_user.username or "system"
+
+    # Сопоставление полей с человекочитаемыми названиями
+    field_labels = {
+        "title": "Название",
+        "description": "Описание",
+        "severity": "Важность",
+        "status": "Статус",
+        "project_id": "Проект"
+    }
     
     for field, old_value in old_values.items():
         new_value = getattr(fault, field, None)
+        
         if field == "project_id":
             # Для project_id храним названия проектов
             old_project = db.query(Project).filter(Project.id == old_value).first()
@@ -179,14 +200,16 @@ def update_fault(
             old_value_str = old_project.name if old_project else "Без проекта"
             new_value_str = new_project.name if new_project else "Без проекта"
         else:
-            old_value_str = str(old_value) if old_value is not None else None
-            new_value_str = str(new_value) if new_value is not None else None
+            old_value_str = str(old_value) if old_value is not None else ""
+            new_value_str = str(new_value) if new_value is not None else ""
         
-        if old_value_str != new_value_str and new_value_str is not None:
+        # ✅ Проверяем, изменилось ли значение
+        if old_value_str != new_value_str:
             log_history(
                 db=db,
                 fault_id=fault.id,
-                field=field,
+                event_type="field_change",
+                field=field_labels.get(field, field),
                 old_value=old_value_str,
                 new_value=new_value_str,
                 author=author
@@ -254,18 +277,25 @@ def get_faults_by_project(
 def log_history(
     db: Session,
     fault_id: int,
-    field: str,
-    old_value: Optional[str],
-    new_value: Optional[str],
+    event_type: str,  # field_change, creation, comment
+    field: Optional[str] = None,
+    old_value: Optional[str] = None,
+    new_value: Optional[str] = None,
     author: str = "system"
 ):
-    """Запись изменения в историю"""
-    history = FaultHistory(
-        fault_id=fault_id,
-        field=field,
-        old_value=old_value,
-        new_value=new_value,
-        author=author
-    )
-    db.add(history)
-    db.commit()
+    """Запись события в историю"""
+    try:
+        history = FaultHistory(
+            fault_id=fault_id,
+            event_type=event_type,
+            field=field,
+            old_value=old_value,
+            new_value=new_value,
+            author=author
+        )
+        db.add(history)
+        db.commit()
+        print(f"✅ История записана: {event_type} - {field} - {old_value} -> {new_value}")
+    except Exception as e:
+        print(f"❌ Ошибка записи истории: {e}")
+        db.rollback()

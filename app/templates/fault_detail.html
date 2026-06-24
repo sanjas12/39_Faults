@@ -376,14 +376,35 @@ document.getElementById('addCommentBtn').addEventListener('click', async functio
 async function updateStatus(status) {
     if (!currentFault) return;
     try {
-        await axios.patch(`/api/faults/${faultId}`, { status });
+        console.log(`📤 Отправка запроса: PATCH /api/faults/${faultId}`, { status });
+        
+        const response = await axios.patch(`/api/faults/${faultId}`, { status });
+        console.log('📥 Ответ:', response.data);
+        
         await loadFaultDetail();
-        alert('Статус обновлён!');
+        // ✅ Показываем уведомление об успехе
+        showNotification(`Статус изменён на "${getStatusLabel(status)}"`, 'success');
     } catch (error) {
-        console.error('Ошибка обновления статуса:', error);
-        alert('Ошибка при обновлении статуса');
+        console.error('❌ Ошибка обновления статуса:', error);
+        alert('Ошибка при обновлении статуса: ' + (error.response?.data?.detail || error.message));
     }
 }
+
+function getStatusLabel(status) {
+    const labels = {
+        'open': 'Открыта',
+        'in_progress': 'В работе',
+        'review': 'На проверке',
+        'closed': 'Закрыта'
+    };
+    return labels[status] || status;
+}
+
+function showNotification(message, type = 'info') {
+    // Простое уведомление
+    alert(message);
+}
+
 
 async function updateSeverity(severity) {
     if (!currentFault) return;
@@ -470,33 +491,81 @@ async function loadHistory() {
             return;
         }
         
+        // Иконки для разных типов событий
+        const eventIcons = {
+            'creation': 'bi-plus-circle',
+            'field_change': 'bi-pencil-square',
+            'comment': 'bi-chat'
+        };
+        
+        // Цвета для разных типов событий
+        const eventColors = {
+            'creation': 'text-success',
+            'field_change': 'text-primary',
+            'comment': 'text-info'
+        };
+        
         // Поля с русскими названиями
         const fieldLabels = {
             'status': 'Статус',
             'severity': 'Важность',
             'project_id': 'Проект',
             'title': 'Название',
-            'description': 'Описание'
+            'description': 'Описание',
+            'creation': 'Создание',
+            'comment': 'Комментарий'
         };
         
-        historyList.innerHTML = history.map(h => `
-            <div class="history-item mb-2 p-2 border-bottom" style="font-size: 0.85rem;">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <strong>${h.author}</strong>
-                        <span class="text-muted">изменил(а)</span>
-                        <span class="fw-bold">${fieldLabels[h.field] || h.field}</span>
-                    </div>
-                    <small class="text-muted">${new Date(h.created_at).toLocaleString('ru-RU')}</small>
-                </div>
-                <div class="mt-1">
+        // Человекочитаемые названия событий
+        const eventLabels = {
+            'creation': 'создал(а) неисправность',
+            'field_change': 'изменил(а)',
+            'comment': 'добавил(а) комментарий'
+        };
+        
+        historyList.innerHTML = history.map(h => {
+            const icon = eventIcons[h.event_type] || 'bi-info-circle';
+            const colorClass = eventColors[h.event_type] || 'text-secondary';
+            const eventLabel = eventLabels[h.event_type] || 'изменил(а)';
+            
+            let content = '';
+            
+            if (h.event_type === 'creation') {
+                content = `
+                    <span class="fw-bold">${h.new_value}</span>
+                `;
+            } else if (h.event_type === 'comment') {
+                content = `
+                    <span class="text-muted">${h.new_value}</span>
+                `;
+            } else {
+                const fieldLabel = fieldLabels[h.field] || h.field;
+                content = `
+                    <span class="fw-bold">${fieldLabel}</span>
                     <span class="text-muted">было:</span>
                     <span class="text-danger text-decoration-line-through">${h.old_value || 'пусто'}</span>
                     <span class="text-muted"> → </span>
                     <span class="text-success">${h.new_value || 'пусто'}</span>
+                `;
+            }
+            
+            return `
+                <div class="history-item mb-2 p-2 border-bottom" style="font-size: 0.85rem;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <i class="bi ${icon} ${colorClass} me-1"></i>
+                            <strong>${h.author}</strong>
+                            <span class="text-muted">${eventLabel}</span>
+                            ${h.event_type !== 'creation' && h.event_type !== 'comment' ? '' : ''}
+                        </div>
+                        <small class="text-muted">${new Date(h.created_at).toLocaleString('ru-RU')}</small>
+                    </div>
+                    <div class="mt-1">
+                        ${content}
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
         
     } catch (error) {
         console.error('Ошибка загрузки истории:', error);
@@ -505,6 +574,5 @@ async function loadHistory() {
         `;
     }
 }
-
 </script>
 {% endblock %}
