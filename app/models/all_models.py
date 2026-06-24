@@ -71,6 +71,7 @@ class Fault(Base):
     comments = relationship(
         "FaultComment", back_populates="fault", cascade="all, delete-orphan"
     )
+    history = relationship("FaultHistory", back_populates="fault", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Fault(id={self.id}, title='{self.title[:30]}...')>"
@@ -97,8 +98,13 @@ class FaultHistory(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     fault_id = Column(Integer, ForeignKey("faults.id"), nullable=False)
-    field = Column(String(50), nullable=False)  # status, severity, project_id
-    old_value = Column(String(200), nullable=True)
-    new_value = Column(String(200), nullable=True)
+    field = Column(String(50), nullable=False)  # status, severity, project_id, title, description
+    old_value = Column(String(500), nullable=True)
+    new_value = Column(String(500), nullable=True)
     author = Column(String(100), nullable=False, default="system")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    fault = relationship("Fault", back_populates="history")
+
+    def __repr__(self):
+        return f"<FaultHistory(id={self.id}, fault_id={self.fault_id}, field='{self.field}')>"

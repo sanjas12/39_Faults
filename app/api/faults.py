@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_, func
 
 from app.core.database import get_db
-from app.models.all_models import Fault, Project
+from app.core.security import get_current_user
+from app.models.all_models import Fault, Project, FaultHistory
 from app.schemas.fault import (
     FaultCreate,
     FaultResponse,
@@ -14,6 +15,8 @@ from app.schemas.fault import (
     SeverityEnum,
     StatusEnum,
 )
+from app.schemas.user import UserResponse 
+
 
 router = APIRouter(prefix="/faults", tags=["faults"])
 
@@ -121,41 +124,74 @@ def get_fault(fault_id: int, db: Session = Depends(get_db)):
     "/{fault_id}", response_model=FaultResponse, summary="Обновить неисправность"
 )
 def update_fault(
-    fault_id: int, fault_update: FaultUpdate, db: Session = Depends(get_db)
+    fault_id: int,
+    fault_update: FaultUpdate,
+    db: Session = Depends(get_db),
+    current_user: UserResponse = Depends(get_current_user)  # ✅ Добавить
 ):
-    """
-    Частичное обновление неисправности.
-    """
+    """Частичное обновление неисправности с записью в историю"""
     fault = db.query(Fault).filter(Fault.id == fault_id).first()
     if not fault:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Неисправность с ID {fault_id} не найдена",
+            detail=f"Неисправность с ID {fault_id} не найдена"
         )
-
-    # Если меняем project_id, проверяем существование проекта
-    if fault_update.project_id is not None and fault_update.project_id:
-        project = (
-            db.query(Project).filter(Project.id == fault_update.project_id).first()
-        )
-        if not project:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Проект с ID {fault_update.project_id} не найден",
-            )
-        # Если project_id = None, просто снимаем привязку
-
-    # Обновляем только переданные поля
+    
+    # Сохраняем старые значения для истории
+    old_values = {
+        "title": fault.title,
+        "description": fault.description,
+        "severity": fault.severity,
+        "status": fault.status,
+        "project_id": fault.project_id
+    }
+    
+    # Проверяем project_id
+    if fault_update.project_id is not None:
+        if fault_update.project_id:
+            project = db.query(Project).filter(Project.id == fault_update.project_id).first()
+            if not project:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Проект с ID {fault_update.project_id} не найден"
+                )
+    
+    # Обновляем поля
     update_data = fault_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(fault, field, value)
-
-    # Если статус стал "closed", устанавливаем resolved_at
+    
     if fault_update.status == StatusEnum.CLOSED:
         fault.resolved_at = datetime.utcnow()
-
+    
     db.commit()
     db.refresh(fault)
+    
+    # ✅ Записываем историю изменений
+    author = current_user.username or "system"
+    
+    for field, old_value in old_values.items():
+        new_value = getattr(fault, field, None)
+        if field == "project_id":
+            # Для project_id храним названия проектов
+            old_project = db.query(Project).filter(Project.id == old_value).first()
+            new_project = db.query(Project).filter(Project.id == new_value).first()
+            old_value_str = old_project.name if old_project else "Без проекта"
+            new_value_str = new_project.name if new_project else "Без проекта"
+        else:
+            old_value_str = str(old_value) if old_value is not None else None
+            new_value_str = str(new_value) if new_value is not None else None
+        
+        if old_value_str != new_value_str and new_value_str is not None:
+            log_history(
+                db=db,
+                fault_id=fault.id,
+                field=field,
+                old_value=old_value_str,
+                new_value=new_value_str,
+                author=author
+            )
+    
     return fault
 
 
@@ -213,3 +249,23 @@ def get_faults_by_project(
     )
 
     return faults
+
+
+def log_history(
+    db: Session,
+    fault_id: int,
+    field: str,
+    old_value: Optional[str],
+    new_value: Optional[str],
+    author: str = "system"
+):
+    """Запись изменения в историю"""
+    history = FaultHistory(
+        fault_id=fault_id,
+        field=field,
+        old_value=old_value,
+        new_value=new_value,
+        author=author
+    )
+    db.add(history)
+    db.commit()

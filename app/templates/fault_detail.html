@@ -210,6 +210,9 @@ async function loadFaultDetail() {
         // Загружаем комментарии
         await loadComments();
         
+        // Загружаем историю изменений
+        await loadHistory();
+
         // Загружаем проекты для редактирования
         await loadProjects();
         
@@ -445,5 +448,63 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Загрузка детальной страницы неисправности #' + faultId);
     loadFaultDetail();
 });
+
+
+// ======= ИСТОРИЯ =======
+async function loadHistory() {
+    try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        const response = await axios.get(`/api/faults/${faultId}/history`);
+        const history = response.data || [];
+        
+        const historyList = document.getElementById('historyList');
+        
+        if (history.length === 0) {
+            historyList.innerHTML = '<p class="text-muted text-center">Нет истории изменений</p>';
+            return;
+        }
+        
+        // Поля с русскими названиями
+        const fieldLabels = {
+            'status': 'Статус',
+            'severity': 'Важность',
+            'project_id': 'Проект',
+            'title': 'Название',
+            'description': 'Описание'
+        };
+        
+        historyList.innerHTML = history.map(h => `
+            <div class="history-item mb-2 p-2 border-bottom" style="font-size: 0.85rem;">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <strong>${h.author}</strong>
+                        <span class="text-muted">изменил(а)</span>
+                        <span class="fw-bold">${fieldLabels[h.field] || h.field}</span>
+                    </div>
+                    <small class="text-muted">${new Date(h.created_at).toLocaleString('ru-RU')}</small>
+                </div>
+                <div class="mt-1">
+                    <span class="text-muted">было:</span>
+                    <span class="text-danger text-decoration-line-through">${h.old_value || 'пусто'}</span>
+                    <span class="text-muted"> → </span>
+                    <span class="text-success">${h.new_value || 'пусто'}</span>
+                </div>
+            </div>
+        `).join('');
+        
+    } catch (error) {
+        console.error('Ошибка загрузки истории:', error);
+        document.getElementById('historyList').innerHTML = `
+            <p class="text-danger text-center">Ошибка загрузки истории</p>
+        `;
+    }
+}
+
 </script>
 {% endblock %}

@@ -46,3 +46,45 @@
     font-size: 0.7rem;
     display: block;
 }
+
+/* История изменений */
+.history-item {
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.history-item:hover {
+    background-color: #e9ecef;
+}
+
+.history-item .text-danger {
+    color: #dc3545 !important;
+}
+
+.history-item .text-success {
+    color: #28a745 !important;
+}
+
+.history-item .text-muted {
+    font-size: 0.8rem;
+}
+
+#historyList {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+#historyList::-webkit-scrollbar {
+    width: 4px;
+}
+
+#historyList::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+#historyList::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
