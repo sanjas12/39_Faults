@@ -1,74 +1,89 @@
-39_Faults
- ┣ app
- ┃ ┣ api
- ┃ ┃ ┣ auth.py
- ┃ ┃ ┣ comments.py
- ┃ ┃ ┣ dashboard.py
- ┃ ┃ ┣ faults.py
- ┃ ┃ ┣ knowledge_base.py
- ┃ ┃ ┣ projects.py
- ┃ ┃ ┗ __init__.py
- ┃ ┣ core
- ┃ ┃ ┣ config.py
- ┃ ┃ ┣ database.py
- ┃ ┃ ┣ security.py
- ┃ ┃ ┗ __init__.py
- ┃ ┣ models
- ┃ ┃ ┣ all_models.py
- ┃ ┃ ┣ project.py
- ┃ ┃ ┗ __init__.py
- ┃ ┣ schemas
- ┃ ┃ ┣ comment.py
- ┃ ┃ ┣ fault.py
- ┃ ┃ ┣ project.py
- ┃ ┃ ┣ user.py
- ┃ ┃ ┗ __init__.py
- ┃ ┣ services
- ┃ ┃ ┣ escalation.py
- ┃ ┃ ┣ notifications.py
- ┃ ┃ ┣ search.py
- ┃ ┃ ┗ __init__.py
- ┃ ┣ static
- ┃ ┃ ┣ css
- ┃ ┃ ┃ ┗ style.css
- ┃ ┃ ┗ js
- ┃ ┃ ┃ ┗ app.js
- ┃ ┣ templates
- ┃ ┃ ┣ base.html
- ┃ ┃ ┣ dashboard.html
- ┃ ┃ ┣ faults.html
- ┃ ┃ ┣ fault_detail.html
- ┃ ┃ ┣ kanban.html
- ┃ ┃ ┣ knowledge_base.html
- ┃ ┃ ┣ login.html
- ┃ ┃ ┗ projects.html
- ┃ ┣ main.py
- ┃ ┗ __init__.py
- ┣ bugs
- ┃ ┗ bug-001.md
- ┣ docs
- ┃ ┣ Context.md
- ┃ ┣ Promt.md
- ┃ ┣ RelNote.txt
- ┃ ┗ Start.md
- ┣ logs
- ┣ scripts
- ┃ ┣ init_env.sh
- ┃ ┣ run_pip.sh
- ┃ ┣ run_pip_network.sh
- ┃ ┣ run_uv.sh
- ┃ ┗ toexe.sh
- ┣ .gitattributes
- ┣ .gitignore
- ┣ .pre-commit-config.yaml
- ┣ .python-version
- ┣ build.py
- ┣ faults.db
- ┣ init_db.py
- ┣ migrate_db.py
- ┣ pyproject.toml
- ┣ Readme.md
- ┣ requirements.txt
- ┣ seed_data.py
- ┣ uv.lock
- ┗ _version.py
+39_Faults/
+├── app/
+│   ├── api/
+│   │   ├── __init__.py
+│   │   ├── auth.py              # JWT авторизация, регистрация, вход
+│   │   ├── comments.py          # Комментарии к неисправностям
+│   │   ├── dashboard.py         # Дашборд (статистика)
+│   │   ├── faults.py            # CRUD неисправностей + история
+│   │   ├── history.py           # История изменений неисправностей
+│   │   ├── knowledge_base.py    # База знаний (CRUD статей)
+│   │   └── projects.py          # CRUD проектов
+│   │
+│   ├── core/
+│   │   ├── __init__.py
+│   │   ├── config.py            # Настройки приложения
+│   │   ├── database.py          # Подключение к БД
+│   │   └── security.py          # JWT, хеширование, авторизация
+│   │
+│   ├── models/
+│   │   ├── __init__.py
+│   │   └── all_models.py        # Все модели: User, Project, Fault, FaultComment, FaultHistory, KnowledgeBase
+│   │
+│   ├── schemas/
+│   │   ├── __init__.py
+│   │   ├── comment.py           # Pydantic-схемы комментариев
+│   │   ├── fault.py             # Pydantic-схемы неисправностей
+│   │   ├── history.py           # Pydantic-схемы истории
+│   │   ├── knowledge.py         # Pydantic-схемы базы знаний
+│   │   ├── project.py           # Pydantic-схемы проектов
+│   │   └── user.py              # Pydantic-схемы пользователей
+│   │
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── escalation.py        # Автоэскалация (SLA)
+│   │   ├── notifications.py     # Уведомления
+│   │   └── search.py            # Поиск по базе знаний
+│   │
+│   ├── static/
+│   │   ├── css/
+│   │   │   └── style.css        # Кастомные стили
+│   │   └── js/
+│   │       └── app.js           # JavaScript (авторизация, API)
+│   │
+│   ├── templates/
+│   │   ├── base.html            # Базовый шаблон с навигацией
+│   │   ├── dashboard.html       # Дашборд со статистикой
+│   │   ├── faults.html          # Список неисправностей (с фильтрами)
+│   │   ├── fault_detail.html    # Детальная страница неисправности
+│   │   ├── kanban.html          # Kanban-доска
+│   │   ├── knowledge_base.html  # Список статей базы знаний
+│   │   ├── knowledge_article.html # Детальная страница статьи
+│   │   ├── login.html           # Страница входа
+│   │   ├── projects.html        # Список проектов
+│   │   └── register.html        # Страница регистрации
+│   │
+│   ├── __init__.py
+│   └── main.py                  # Точка входа FastAPI
+│
+├── migrations/                  # Alembic миграции
+├── scripts/                     # Вспомогательные скрипты
+│   ├── init_env.sh
+│   ├── run_pip.sh
+│   ├── run_pip_network.sh
+│   ├── run_uv.sh
+│   └── toexe.sh
+│
+├── tests/                       # Тесты
+├── bugs/
+│   └── bug-001.md
+├── docs/
+│   ├── Context.md
+│   ├── Promt.md
+│   ├── RelNote.txt
+│   └── Start.md
+├── logs/
+├── .gitattributes
+├── .gitignore
+├── .pre-commit-config.yaml
+├── .python-version              # Версия Python 3.8.10
+├── _version.py                  # Версия приложения
+├── build.py
+├── faults.db                    # SQLite база данных
+├── init_db.py                   # Инициализация БД
+├── migrate_db.py                # Миграции БД
+├── pyproject.toml               # uv зависимости
+├── requirements.txt             # pip зависимости
+├── seed_data.py                 # Наполнение БД тестовыми данными
+├── uv.lock                      # uv lock-файл
+└── Readme.md                    # Документация
