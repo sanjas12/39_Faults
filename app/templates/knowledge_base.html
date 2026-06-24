@@ -303,7 +303,7 @@ function renderArticles(articles) {
     
     container.innerHTML = articles.map(article => `
         <div class="col-md-6 col-lg-4 mb-3">
-            <div class="card article-card h-100" onclick="viewArticle(${article.id})">
+            <div class="card article-card h-100" onclick="viewArticle(${article.id})" style="cursor: pointer;">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
                         <h5 class="card-title">${article.title}</h5>
@@ -321,6 +321,10 @@ function renderArticles(articles) {
                             `<span class="badge bg-secondary">${t.trim()}</span>`
                         ).join(' ') : ''}
                         ${article.tags && article.tags.split(',').length > 3 ? `<span class="badge bg-secondary">+${article.tags.split(',').length - 3}</span>` : ''}
+                        ${article.linked_faults && article.linked_faults.length > 0 ? 
+                            `<span class="badge bg-danger"><i class="bi bi-bug"></i> ${article.linked_faults.length}</span>` : 
+                            ''
+                        }
                     </div>
                     <div class="mt-2 small text-muted">
                         <i class="bi bi-eye"></i> ${article.views} • 
@@ -370,29 +374,9 @@ document.getElementById('saveArticleBtn').addEventListener('click', async functi
     }
 });
 
-// Просмотр статьи
+// ======= ПРОСМОТР СТАТЬИ (открытие в новой странице) =======
 async function viewArticle(id) {
-    try {
-        const response = await axios.get(`/api/knowledge/${id}`);
-        const article = response.data;
-        currentArticleId = id;
-        
-        document.getElementById('viewTitle').textContent = article.title;
-        document.getElementById('viewContent').innerHTML = parseMarkdown(article.content);
-        document.getElementById('viewCategory').textContent = article.category || 'Без категории';
-        document.getElementById('viewTags').textContent = article.tags || 'Без тегов';
-        document.getElementById('viewViews').textContent = `👁️ ${article.views}`;
-        document.getElementById('viewAuthor').textContent = `👤 ${article.author}`;
-        document.getElementById('viewDate').textContent = new Date(article.created_at).toLocaleString('ru-RU');
-        document.getElementById('viewCategory').style.display = article.category ? 'inline-block' : 'none';
-        document.getElementById('viewTags').style.display = article.tags ? 'inline-block' : 'none';
-        
-        const modal = new bootstrap.Modal(document.getElementById('viewArticleModal'));
-        modal.show();
-    } catch (error) {
-        console.error('Ошибка загрузки статьи:', error);
-        alert('Ошибка при загрузке статьи');
-    }
+    window.location.href = `/knowledge/${id}`;
 }
 
 // Редактирование из просмотра

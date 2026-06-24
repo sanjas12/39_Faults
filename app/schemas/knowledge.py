@@ -28,6 +28,7 @@ class KnowledgeBaseResponse(KnowledgeBaseBase):
     views: int
     created_at: datetime
     updated_at: Optional[datetime] = None
+    linked_faults: Optional[List[dict]] = None
     
     class Config:
         from_attributes = True

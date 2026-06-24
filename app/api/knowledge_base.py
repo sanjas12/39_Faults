@@ -4,7 +4,7 @@ from sqlalchemy import or_, func
 from typing import List, Optional
 from app.core.database import get_db
 from app.core.security import get_current_user
-from app.models.all_models import KnowledgeBase
+from app.models.all_models import KnowledgeBase, Fault
 from app.schemas.knowledge import KnowledgeBaseCreate, KnowledgeBaseUpdate, KnowledgeBaseResponse
 from app.schemas.user import UserResponse
 
@@ -57,7 +57,24 @@ def list_articles(
     
     query = query.order_by(KnowledgeBase.created_at.desc())
     articles = query.offset(skip).limit(limit).all()
-    return articles
+    
+    # Добавляем связанные неисправности для каждой статьи
+    result = []
+    for article in articles:
+        linked_faults = []
+        if article.related_faults:
+            ids = [int(id.strip()) for id in article.related_faults.split(',') if id.strip()]
+            if ids:
+                faults = db.query(Fault).filter(Fault.id.in_(ids)).all()
+                linked_faults = [
+                    {"id": f.id, "title": f.title, "status": f.status}
+                    for f in faults
+                ]
+        response = KnowledgeBaseResponse.model_validate(article)
+        response.linked_faults = linked_faults
+        result.append(response)
+    
+    return result
 
 @router.get("/{article_id}", response_model=KnowledgeBaseResponse)
 def get_article(
@@ -65,7 +82,7 @@ def get_article(
     db: Session = Depends(get_db),
     current_user: UserResponse = Depends(get_current_user)
 ):
-    """Получить статью по ID"""
+    """Получить статью по ID с загрузкой связанных неисправностей"""
     article = db.query(KnowledgeBase).filter(KnowledgeBase.id == article_id).first()
     if not article:
         raise HTTPException(
@@ -78,7 +95,26 @@ def get_article(
     db.commit()
     db.refresh(article)
     
-    return article
+    # Загружаем связанные неисправности
+    linked_faults = []
+    if article.related_faults:
+        ids = [int(id.strip()) for id in article.related_faults.split(',') if id.strip()]
+        if ids:
+            faults = db.query(Fault).filter(Fault.id.in_(ids)).all()
+            linked_faults = [
+                {
+                    "id": f.id,
+                    "title": f.title,
+                    "status": f.status,
+                    "severity": f.severity
+                }
+                for f in faults
+            ]
+    
+    # Добавляем связанные неисправности в ответ
+    response = KnowledgeBaseResponse.model_validate(article)
+    response.linked_faults = linked_faults
+    return response
 
 @router.put("/{article_id}", response_model=KnowledgeBaseResponse)
 def update_article(

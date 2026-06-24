@@ -1,0 +1,444 @@
+{% extends "base.html" %}
+
+{% block title %}Статья{% endblock %}
+{% block page_title %}
+    <div class="d-flex justify-content-between align-items-center">
+        <span>Статья базы знаний</span>
+        <div>
+            <button class="btn btn-outline-secondary btn-sm" onclick="history.back()">
+                <i class="bi bi-arrow-left"></i> Назад
+            </button>
+        </div>
+    </div>
+{% endblock %}
+{% set active_page = 'knowledge' %}
+
+{% block content %}
+<div id="articleDetail">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h4 id="articleTitle" class="card-title">Загрузка...</h4>
+                        <div>
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick="editArticle()">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteArticle()">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <span class="badge bg-secondary" id="articleCategory">Категория</span>
+                        <span class="badge bg-info" id="articleTags">Теги</span>
+                        <span class="badge bg-light text-dark" id="articleViews">👁️ 0</span>
+                        <span class="badge" id="articleStatus">Опубликовано</span>
+                    </div>
+                    
+                    <div id="articleContent" class="article-content" style="min-height: 200px;">
+                        Загрузка содержимого...
+                    </div>
+                    
+                    <hr>
+                    <div class="text-muted small">
+                        <span id="articleAuthor">Автор</span> • 
+                        <span id="articleDate">Дата</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ===== СВЯЗАННЫЕ НЕИСПРАВНОСТИ ===== -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-bug"></i> Связанные неисправности</h5>
+                    <button class="btn btn-sm btn-outline-primary" onclick="showLinkFaultModal()">
+                        <i class="bi bi-link"></i> Привязать
+                    </button>
+                </div>
+                <div class="card-body" id="linkedFaultsList">
+                    <p class="text-muted text-center">Нет связанных неисправностей</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0">Быстрые действия</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary btn-sm" onclick="editArticle()">
+                            <i class="bi bi-pencil"></i> Редактировать
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" onclick="deleteArticle()">
+                            <i class="bi bi-trash"></i> Удалить
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== МОДАЛЬНОЕ ОКНО ДЛЯ ПРИВЯЗКИ НЕИСПРАВНОСТЕЙ ===== -->
+<div class="modal fade" id="linkFaultModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Привязать неисправности</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">Выберите неисправности для привязки к этой статье</p>
+                <div id="faultSelectList">
+                    <div class="text-center text-muted">Загрузка неисправностей...</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="saveLinkedFaultsBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно редактирования -->
+<div class="modal fade" id="editArticleModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редактировать статью</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editArticleForm">
+                    <input type="hidden" id="editArticleId">
+                    <div class="mb-3">
+                        <label class="form-label">Заголовок *</label>
+                        <input type="text" class="form-control" id="editTitle" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Содержание (Markdown) *</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <textarea class="form-control" id="editContent" rows="8"></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="border p-2" id="editPreviewContent" style="min-height: 200px; background: #f8f9fa;">
+                                    <em class="text-muted">Предпросмотр...</em>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Категория</label>
+                        <input type="text" class="form-control" id="editCategory">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Теги (через запятую)</label>
+                        <input type="text" class="form-control" id="editTags">
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="editPublished">
+                        <label class="form-check-label">Опубликовать</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="updateArticleBtn">Обновить</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const articleId = {{ article_id }};
+let currentArticle = null;
+
+// ======= ПАРСЕР MARKDOWN =======
+function parseMarkdown(text) {
+    if (!text) return '';
+    let html = text;
+    html = html.replace(/^### (.*$)/gim, '<h4>$1</h4>');
+    html = html.replace(/^## (.*$)/gim, '<h3>$1</h3>');
+    html = html.replace(/^# (.*$)/gim, '<h2>$1</h2>');
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>');
+    html = html.replace(/^\s*-\s(.*$)/gim, '<li>$1</li>');
+    html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+    html = html.replace(/\n/g, '<br>');
+    return html;
+}
+
+// ======= ЗАГРУЗКА ДАННЫХ =======
+async function loadArticle() {
+    try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        const response = await axios.get(`/api/knowledge/${articleId}`);
+        currentArticle = response.data;
+        
+        document.getElementById('articleTitle').textContent = currentArticle.title;
+        document.getElementById('articleContent').innerHTML = parseMarkdown(currentArticle.content);
+        document.getElementById('articleCategory').textContent = currentArticle.category || 'Без категории';
+        document.getElementById('articleTags').textContent = currentArticle.tags || 'Без тегов';
+        document.getElementById('articleViews').textContent = `👁️ ${currentArticle.views}`;
+        document.getElementById('articleStatus').textContent = currentArticle.is_published ? 'Опубликовано' : 'Черновик';
+        document.getElementById('articleStatus').className = `badge ${currentArticle.is_published ? 'bg-success' : 'bg-secondary'}`;
+        document.getElementById('articleAuthor').textContent = `👤 ${currentArticle.author}`;
+        document.getElementById('articleDate').textContent = new Date(currentArticle.created_at).toLocaleString('ru-RU');
+        
+        // Загружаем связанные неисправности
+        await loadLinkedFaults();
+        
+    } catch (error) {
+        console.error('Ошибка загрузки статьи:', error);
+        if (error.response?.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+        document.getElementById('articleContent').innerHTML = `
+            <p class="text-danger">Ошибка загрузки статьи: ${error.message}</p>
+            <button class="btn btn-sm btn-outline-primary" onclick="loadArticle()">Обновить</button>
+        `;
+    }
+}
+
+// ======= СВЯЗАННЫЕ НЕИСПРАВНОСТИ =======
+async function loadLinkedFaults() {
+    try {
+        const response = await axios.get(`/api/knowledge/${articleId}`);
+        const article = response.data;
+        
+        const container = document.getElementById('linkedFaultsList');
+        const linked = article.linked_faults || [];
+        
+        if (linked.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center">Нет связанных неисправностей</p>';
+            return;
+        }
+        
+        const statusLabels = {
+            'open': 'Открыта',
+            'in_progress': 'В работе',
+            'review': 'На проверке',
+            'closed': 'Закрыта'
+        };
+        const statusColors = {
+            'open': 'danger',
+            'in_progress': 'warning',
+            'review': 'primary',
+            'closed': 'success'
+        };
+        const severityLabels = {
+            'critical': 'Критическая',
+            'major': 'Серьёзная',
+            'minor': 'Незначительная',
+            'trivial': 'Тривиальная'
+        };
+        const severityColors = {
+            'critical': 'danger',
+            'major': 'warning',
+            'minor': 'info',
+            'trivial': 'secondary'
+        };
+        
+        container.innerHTML = linked.map(f => `
+            <div class="fault-link-item mb-2 p-2 border rounded">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <a href="/faults/${f.id}" class="text-decoration-none fw-bold">
+                            #${f.id} ${f.title}
+                        </a>
+                        <span class="badge bg-${statusColors[f.status] || 'secondary'}">${statusLabels[f.status] || f.status}</span>
+                        <span class="badge bg-${severityColors[f.severity] || 'secondary'}">${severityLabels[f.severity] || f.severity}</span>
+                    </div>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeFaultLink(${f.id})">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+        
+    } catch (error) {
+        console.error('Ошибка загрузки связанных неисправностей:', error);
+        document.getElementById('linkedFaultsList').innerHTML = `
+            <p class="text-danger text-center">Ошибка загрузки</p>
+        `;
+    }
+}
+
+async function showLinkFaultModal() {
+    try {
+        const response = await axios.get('/api/faults?limit=100');
+        const faults = response.data || [];
+        
+        const articleResponse = await axios.get(`/api/knowledge/${articleId}`);
+        const currentLinkedIds = articleResponse.data.linked_faults?.map(f => f.id) || [];
+        
+        const container = document.getElementById('faultSelectList');
+        
+        if (faults.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center">Нет неисправностей</p>';
+            return;
+        }
+        
+        container.innerHTML = faults.map(f => `
+            <div class="form-check mb-2">
+                <input class="form-check-input fault-checkbox" type="checkbox" 
+                       value="${f.id}" id="fault_${f.id}"
+                       ${currentLinkedIds.includes(f.id) ? 'checked' : ''}>
+                <label class="form-check-label" for="fault_${f.id}">
+                    <strong>#${f.id} ${f.title}</strong>
+                    <span class="badge bg-${f.status === 'open' ? 'danger' : f.status === 'in_progress' ? 'warning' : 'success'}">${f.status}</span>
+                </label>
+            </div>
+        `).join('');
+        
+        const modal = new bootstrap.Modal(document.getElementById('linkFaultModal'));
+        modal.show();
+        
+    } catch (error) {
+        console.error('Ошибка загрузки неисправностей:', error);
+        alert('Ошибка при загрузке неисправностей');
+    }
+}
+
+document.getElementById('saveLinkedFaultsBtn').addEventListener('click', async function() {
+    const checkboxes = document.querySelectorAll('.fault-checkbox:checked');
+    const ids = Array.from(checkboxes).map(cb => parseInt(cb.value));
+    
+    try {
+        await axios.put(`/api/knowledge/${articleId}`, {
+            related_faults: ids.join(',')
+        });
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('linkFaultModal'));
+        modal.hide();
+        
+        await loadLinkedFaults();
+        showNotification('✅ Неисправности привязаны к статье!');
+    } catch (error) {
+        console.error('Ошибка привязки неисправностей:', error);
+        alert('Ошибка при привязке неисправностей');
+    }
+});
+
+async function removeFaultLink(faultId) {
+    if (!confirm('Отвязать эту неисправность от статьи?')) return;
+    
+    try {
+        const response = await axios.get(`/api/knowledge/${articleId}`);
+        const currentIds = response.data.linked_faults?.map(f => f.id) || [];
+        const newIds = currentIds.filter(id => id !== faultId);
+        
+        await axios.put(`/api/knowledge/${articleId}`, {
+            related_faults: newIds.join(',')
+        });
+        
+        await loadLinkedFaults();
+        showNotification('ℹ️ Неисправность отвязана');
+    } catch (error) {
+        console.error('Ошибка отвязки неисправности:', error);
+        alert('Ошибка при отвязке неисправности');
+    }
+}
+
+// ======= РЕДАКТИРОВАНИЕ =======
+function editArticle() {
+    if (!currentArticle) return;
+    
+    document.getElementById('editArticleId').value = currentArticle.id;
+    document.getElementById('editTitle').value = currentArticle.title;
+    document.getElementById('editContent').value = currentArticle.content;
+    document.getElementById('editCategory').value = currentArticle.category || '';
+    document.getElementById('editTags').value = currentArticle.tags || '';
+    document.getElementById('editPublished').checked = currentArticle.is_published;
+    document.getElementById('editPreviewContent').innerHTML = parseMarkdown(currentArticle.content);
+    
+    const modal = new bootstrap.Modal(document.getElementById('editArticleModal'));
+    modal.show();
+}
+
+document.getElementById('updateArticleBtn').addEventListener('click', async function() {
+    const id = parseInt(document.getElementById('editArticleId').value);
+    const title = document.getElementById('editTitle').value.trim();
+    const content = document.getElementById('editContent').value.trim();
+    
+    if (!title || !content) {
+        alert('Заголовок и содержание обязательны!');
+        return;
+    }
+    
+    const data = {
+        title: title,
+        content: content,
+        category: document.getElementById('editCategory').value.trim() || null,
+        tags: document.getElementById('editTags').value.trim() || null,
+        is_published: document.getElementById('editPublished').checked
+    };
+    
+    try {
+        await axios.put(`/api/knowledge/${id}`, data);
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('editArticleModal'));
+        modal.hide();
+        
+        await loadArticle();
+        showNotification('✅ Статья обновлена!');
+    } catch (error) {
+        console.error('Ошибка обновления:', error);
+        alert('Ошибка при обновлении статьи');
+    }
+});
+
+// ======= УДАЛЕНИЕ =======
+async function deleteArticle() {
+    if (!confirm('Вы уверены, что хотите удалить эту статью?')) return;
+    
+    try {
+        await axios.delete(`/api/knowledge/${articleId}`);
+        alert('Статья удалена!');
+        window.location.href = '/knowledge';
+    } catch (error) {
+        console.error('Ошибка удаления:', error);
+        alert('Ошибка при удалении статьи');
+    }
+}
+
+// ======= УВЕДОМЛЕНИЯ =======
+function showNotification(message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 end-0 m-3';
+    alertDiv.style.zIndex = '9999';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    setTimeout(() => alertDiv.remove(), 3000);
+}
+
+// ======= ИНИЦИАЛИЗАЦИЯ =======
+document.addEventListener('DOMContentLoaded', function() {
+    loadArticle();
+});
+
+
+
+
+</script>
+{% endblock %}
