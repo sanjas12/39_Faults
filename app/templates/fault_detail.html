@@ -226,14 +226,11 @@ async function loadFaultDetail() {
     console.log('🔄 Загрузка неисправности #' + faultId);
     
     try {
-        // Проверяем токен
         const token = localStorage.getItem('auth_token');
         if (!token) {
-            console.warn('🔒 Нет токена, редирект на логин');
             window.location.href = '/login';
             return;
         }
-        
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         
         const response = await axios.get(`/api/faults/${faultId}`);
@@ -241,6 +238,9 @@ async function loadFaultDetail() {
         
         console.log('✅ Неисправность загружена:', currentFault);
         renderFault(currentFault);
+        
+        // ✅ Загружаем связанные статьи из currentFault
+        renderLinkedKnowledge(currentFault.linked_knowledge || []);
         
         // Загружаем комментарии
         await loadComments();
@@ -253,18 +253,45 @@ async function loadFaultDetail() {
         
     } catch (error) {
         console.error('❌ Ошибка загрузки неисправности:', error);
-        
         if (error.response?.status === 401) {
             window.location.href = '/login';
             return;
         }
-        
         document.getElementById('faultTitle').textContent = '⚠️ Ошибка загрузки';
         document.getElementById('faultDescription').innerHTML = `
             <p class="text-danger">Не удалось загрузить неисправность: ${error.message}</p>
             <button class="btn btn-sm btn-outline-primary" onclick="loadFaultDetail()">Обновить</button>
         `;
     }
+}
+
+// ======= СВЯЗАННЫЕ СТАТЬИ =======
+function renderLinkedKnowledge(linked) {
+    const container = document.getElementById('linkedKnowledgeList');
+    
+    if (!linked || linked.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center">Нет связанных статей</p>';
+        return;
+    }
+    
+    container.innerHTML = linked.map(a => `
+        <div class="knowledge-link-item mb-2 p-2 border rounded">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <a href="#" onclick="viewKnowledgeArticle(${a.id})" class="text-decoration-none fw-bold">
+                        ${a.title}
+                    </a>
+                    ${a.category ? `<span class="badge bg-primary">${a.category}</span>` : ''}
+                    ${a.tags ? a.tags.split(',').slice(0, 2).map(t => 
+                        `<span class="badge bg-secondary">${t.trim()}</span>`
+                    ).join(' ') : ''}
+                </div>
+                <button class="btn btn-sm btn-outline-danger" onclick="removeKnowledgeLink(${a.id})">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
 }
 
 async function loadProjects() {
@@ -353,42 +380,10 @@ function renderFault(fault) {
 
 // ======= СВЯЗАННЫЕ СТАТЬИ =======
 async function loadLinkedKnowledge() {
-    try {
-        const response = await axios.get(`/api/faults/${faultId}`);
-        const fault = response.data;
-        
-        const container = document.getElementById('linkedKnowledgeList');
-        const linked = fault.linked_knowledge || [];
-        
-        if (linked.length === 0) {
-            container.innerHTML = '<p class="text-muted text-center">Нет связанных статей</p>';
-            return;
-        }
-        
-        container.innerHTML = linked.map(a => `
-            <div class="knowledge-link-item mb-2 p-2 border rounded">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <a href="#" onclick="viewKnowledgeArticle(${a.id})" class="text-decoration-none fw-bold">
-                            ${a.title}
-                        </a>
-                        ${a.category ? `<span class="badge bg-primary">${a.category}</span>` : ''}
-                        ${a.tags ? a.tags.split(',').slice(0, 2).map(t => 
-                            `<span class="badge bg-secondary">${t.trim()}</span>`
-                        ).join(' ') : ''}
-                    </div>
-                    <button class="btn btn-sm btn-outline-danger" onclick="removeKnowledgeLink(${a.id})">
-                        <i class="bi bi-x"></i>
-                    </button>
-                </div>
-            </div>
-        `).join('');
-        
-    } catch (error) {
-        console.error('Ошибка загрузки связанных статей:', error);
-        document.getElementById('linkedKnowledgeList').innerHTML = `
-            <p class="text-danger text-center">Ошибка загрузки статей</p>
-        `;
+    // Эта функция больше не нужна, данные берутся из currentFault
+    // Оставляем только для совместимости, но перенаправляем на renderLinkedKnowledge
+    if (currentFault) {
+        renderLinkedKnowledge(currentFault.linked_knowledge || []);
     }
 }
 
@@ -397,8 +392,8 @@ async function showLinkKnowledgeModal() {
         const response = await axios.get('/api/knowledge?limit=100');
         const articles = response.data || [];
         
-        const faultResponse = await axios.get(`/api/faults/${faultId}`);
-        const currentLinkedIds = faultResponse.data.linked_knowledge?.map(a => a.id) || [];
+        // ✅ Используем currentFault вместо отдельного запроса
+        const currentLinkedIds = currentFault?.linked_knowledge?.map(a => a.id) || [];
         
         const container = document.getElementById('knowledgeSelectList');
         
