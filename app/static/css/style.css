@@ -135,3 +135,22 @@
 #editPreviewContent li {
     margin-bottom: 2px;
 }
+
+/* Ссылка на проект в карточке неисправности */
+#projectLink {
+    transition: all 0.2s;
+}
+
+#projectLink:hover {
+    color: #0d6efd !important;
+    text-decoration: underline !important;
+}
+
+#projectLink .bi-box-arrow-up-right {
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+#projectLink:hover .bi-box-arrow-up-right {
+    opacity: 1;
+}

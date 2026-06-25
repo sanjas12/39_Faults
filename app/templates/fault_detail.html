@@ -39,7 +39,12 @@
                     <div class="row g-2 mb-3">
                         <div class="col-md-4">
                             <small class="text-muted">Проект:</small>
-                            <div id="faultProject">Загрузка...</div>
+                            <div id="faultProject">
+                                <a href="#" id="projectLink" class="text-decoration-none fw-bold">
+                                    <span id="projectNameDisplay">Загрузка...</span>
+                                    <i class="bi bi-box-arrow-up-right ms-1" style="font-size: 0.8rem;"></i>
+                                </a>
+                            </div>
                         </div>
                         <div class="col-md-4">
                             <small class="text-muted">Важность:</small>
@@ -174,6 +179,10 @@
                         <button class="btn btn-outline-danger btn-sm" onclick="updateSeverity('critical')">
                             <i class="bi bi-exclamation-triangle"></i> Поднять до критической
                         </button>
+                        <!-- ✅ Кнопка перехода в проект -->
+                        <a href="#" id="goToProjectBtn" class="btn btn-outline-info btn-sm" style="display: none;">
+                            <i class="bi bi-box-arrow-up-right"></i> Перейти в проект
+                        </a>
                     </div>
                 </div>
             </div>
@@ -284,6 +293,22 @@ function renderFault(fault) {
     document.getElementById('faultDescription').innerHTML = fault.description || '<span class="text-muted">Нет описания</span>';
     
     const projectName = fault.project?.name || 'Без проекта';
+    const projectId = fault.project?.id || null;
+    
+    const projectLink = document.getElementById('projectLink');
+    const projectNameDisplay = document.getElementById('projectNameDisplay');
+    
+    if (projectId) {
+        projectLink.href = `/projects/${projectId}`;
+        projectNameDisplay.textContent = projectName;
+        projectLink.style.display = 'inline';
+    } else {
+        projectNameDisplay.textContent = 'Без проекта';
+        projectLink.href = '#';
+        projectLink.style.display = 'inline';
+        projectLink.style.cursor = 'default';
+        projectLink.style.color = '#6c757d';
+    }
     document.getElementById('faultProject').innerHTML = `<span class="badge bg-secondary">${projectName}</span>`;
     
     const severityLabels = {
@@ -322,6 +347,16 @@ function renderFault(fault) {
         </span>
     `;
     
+    // Показываем кнопку перехода в проект
+        const goToProjectBtn = document.getElementById('goToProjectBtn');
+    if (fault.project?.id) {
+        goToProjectBtn.href = `/projects/${fault.project.id}`;
+        goToProjectBtn.style.display = 'block';
+    } else {
+        goToProjectBtn.style.display = 'none';
+    }    
+
+
     document.getElementById('faultCreated').textContent = fault.created_at 
         ? new Date(fault.created_at).toLocaleString('ru-RU') 
         : 'Неизвестно';
