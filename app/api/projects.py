@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.security import get_current_user, require_engineer
-from app.models.all_models import Fault, Project
+from app.models.all_models import Fault, Project, ProjectHistory
 from app.schemas.project import ProjectCreate, ProjectResponse, ProjectUpdate
 from app.schemas.user import UserResponse
 
@@ -43,6 +43,18 @@ def create_project(
     db.add(db_project)
     db.commit()
     db.refresh(db_project)
+
+        # ✅ Записываем в историю создание проекта
+    log_project_history(
+        db=db,
+        project_id=db_project.id,
+        event_type="creation",
+        field="creation",
+        old_value=None,
+        new_value=f"Создан проект: {db_project.name}",
+        author=current_user.username
+    )
+
     return db_project
 
 
@@ -134,6 +146,33 @@ def update_project(
 
     db.commit()
     db.refresh(project)
+
+    # Записываем историю изменений
+    author = current_user.username or "system"
+    field_labels = {
+        "name": "Название",
+        "description": "Описание",
+        "client": "Клиент",
+        "unit": "Блок",
+        "type": "Тип"
+    }
+
+    for field, old_value in old_values.items():
+        new_value = getattr(project, field, None)
+        old_value_str = str(old_value) if old_value is not None else ""
+        new_value_str = str(new_value) if new_value is not None else ""
+        
+        if old_value_str != new_value_str:
+            log_project_history(
+                db=db,
+                project_id=project.id,
+                event_type="field_change",
+                field=field_labels.get(field, field),
+                old_value=old_value_str or "пусто",
+                new_value=new_value_str or "пусто",
+                author=author
+            )
+
     return project
 
 
@@ -206,3 +245,25 @@ def get_project_stats(
     }
 
     return stats
+
+
+def log_project_history(
+    db: Session,
+    project_id: int,
+    event_type: str,
+    field: Optional[str] = None,
+    old_value: Optional[str] = None,
+    new_value: Optional[str] = None,
+    author: str = "system"
+):
+    """Запись события в историю проекта"""
+    history = ProjectHistory(
+        project_id=project_id,
+        event_type=event_type,
+        field=field,
+        old_value=old_value,
+        new_value=new_value,
+        author=author
+    )
+    db.add(history)
+    db.commit()

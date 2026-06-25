@@ -1,0 +1,446 @@
+{% extends "base.html" %}
+
+{% block title %}Проект {{ project_name }}{% endblock %}
+{% block page_title %}
+    <div class="d-flex justify-content-between align-items-center">
+        <span id="projectTitle">Проект: Загрузка...</span>
+        <div>
+            <button class="btn btn-outline-secondary btn-sm" onclick="history.back()">
+                <i class="bi bi-arrow-left"></i> Назад
+            </button>
+            <button class="btn btn-sm btn-outline-primary" onclick="editProject()">
+                <i class="bi bi-pencil"></i> Редактировать
+            </button>
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteProject()">
+                <i class="bi bi-trash"></i> Удалить
+            </button>
+        </div>
+    </div>
+{% endblock %}
+{% set active_page = 'projects' %}
+
+{% block content %}
+<div id="projectDetail">
+    <div class="row">
+        <!-- Основная информация -->
+        <div class="col-md-8">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <small class="text-muted">Название:</small>
+                            <h4 id="projectName">Загрузка...</h4>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted">Клиент:</small>
+                            <p id="projectClient">Загрузка...</p>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted">Блок:</small>
+                            <p id="projectUnit">Загрузка...</p>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted">Тип:</small>
+                            <p id="projectType">Загрузка...</p>
+                        </div>
+                        <div class="col-12">
+                            <small class="text-muted">Описание:</small>
+                            <p id="projectDescription">Загрузка...</p>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted">Создан:</small>
+                            <p id="projectCreated">Загрузка...</p>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted">Обновлён:</small>
+                            <p id="projectUpdated">Загрузка...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Статистика проекта -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Статистика неисправностей</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center" id="projectStats">
+                        <div class="col-3">
+                            <div class="border rounded p-2">
+                                <h3 id="statTotal">0</h3>
+                                <small class="text-muted">Всего</small>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="border rounded p-2">
+                                <h3 id="statOpen" class="text-danger">0</h3>
+                                <small class="text-muted">Открыты</small>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="border rounded p-2">
+                                <h3 id="statInProgress" class="text-warning">0</h3>
+                                <small class="text-muted">В работе</small>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="border rounded p-2">
+                                <h3 id="statClosed" class="text-success">0</h3>
+                                <small class="text-muted">Закрыты</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Список неисправностей проекта -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-bug"></i> Неисправности проекта</h5>
+                    <span class="badge bg-primary" id="faultsCount">0</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Название</th>
+                                    <th>Важность</th>
+                                    <th>Статус</th>
+                                    <th>Создана</th>
+                                </tr>
+                            </thead>
+                            <tbody id="projectFaultsList">
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">Загрузка...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Боковая панель: История изменений -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-clock-history"></i> История изменений</h6>
+                </div>
+                <div class="card-body" id="historyList" style="max-height: 500px; overflow-y: auto;">
+                    <p class="text-muted text-center">Загрузка истории...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно редактирования -->
+<div class="modal fade" id="editProjectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редактировать проект</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editProjectForm">
+                    <input type="hidden" id="editProjectId">
+                    <div class="mb-3">
+                        <label class="form-label">Название *</label>
+                        <input type="text" class="form-control" id="editName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Клиент</label>
+                        <input type="text" class="form-control" id="editClient">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Блок</label>
+                        <input type="number" class="form-control" id="editUnit">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Тип</label>
+                        <input type="text" class="form-control" id="editType" placeholder="САРЗ, САУ, ...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Описание</label>
+                        <textarea class="form-control" id="editDescription" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="updateProjectBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const projectId = {{ project_id }};
+
+// ======= ЗАГРУЗКА ДАННЫХ =======
+async function loadProjectDetail() {
+    try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+        // Загружаем данные проекта
+        const projectRes = await axios.get(`/api/projects/${projectId}`);
+        const project = projectRes.data;
+        renderProject(project);
+
+        // Загружаем статистику
+        const statsRes = await axios.get(`/api/projects/${projectId}/stats`);
+        renderStats(statsRes.data);
+
+        // Загружаем неисправности проекта
+        const faultsRes = await axios.get(`/api/faults?project_id=${projectId}`);
+        renderFaults(faultsRes.data);
+
+        // Загружаем историю
+        await loadHistory();
+    } catch (error) {
+        console.error('Ошибка загрузки проекта:', error);
+        if (error.response?.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+        document.getElementById('projectName').textContent = '⚠️ Ошибка загрузки';
+    }
+}
+
+// ======= ОТОБРАЖЕНИЕ ДАННЫХ =======
+function renderProject(project) {
+    document.getElementById('projectTitle').textContent = `Проект: ${project.name}`;
+    document.getElementById('projectName').textContent = project.name;
+    document.getElementById('projectClient').textContent = project.client || 'Не указан';
+    document.getElementById('projectUnit').textContent = project.unit || 'Не указан';
+    document.getElementById('projectType').textContent = project.type || 'Не указан';
+    document.getElementById('projectDescription').textContent = project.description || 'Нет описания';
+    document.getElementById('projectCreated').textContent = new Date(project.created_at).toLocaleString('ru-RU');
+    document.getElementById('projectUpdated').textContent = project.updated_at 
+        ? new Date(project.updated_at).toLocaleString('ru-RU') 
+        : 'Не обновлялся';
+
+    // Заполняем форму редактирования
+    document.getElementById('editProjectId').value = project.id;
+    document.getElementById('editName').value = project.name;
+    document.getElementById('editClient').value = project.client || '';
+    document.getElementById('editUnit').value = project.unit || '';
+    document.getElementById('editType').value = project.type || '';
+    document.getElementById('editDescription').value = project.description || '';
+}
+
+function renderStats(stats) {
+    document.getElementById('statTotal').textContent = stats.total || 0;
+    document.getElementById('statOpen').textContent = stats.by_status?.open || 0;
+    document.getElementById('statInProgress').textContent = stats.by_status?.in_progress || 0;
+    document.getElementById('statClosed').textContent = stats.by_status?.closed || 0;
+}
+
+function renderFaults(faults) {
+    const tbody = document.getElementById('projectFaultsList');
+    document.getElementById('faultsCount').textContent = faults.length;
+
+    if (faults.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Нет неисправностей</td></tr>';
+        return;
+    }
+
+    const severityColors = {
+        critical: 'danger',
+        major: 'warning',
+        minor: 'info',
+        trivial: 'secondary'
+    };
+    const statusColors = {
+        open: 'danger',
+        in_progress: 'warning',
+        review: 'primary',
+        closed: 'success'
+    };
+    const statusLabels = {
+        open: 'Открыта',
+        in_progress: 'В работе',
+        review: 'На проверке',
+        closed: 'Закрыта'
+    };
+    const severityLabels = {
+        critical: 'Критическая',
+        major: 'Серьёзная',
+        minor: 'Незначительная',
+        trivial: 'Тривиальная'
+    };
+
+    tbody.innerHTML = faults.map(f => `
+        <tr>
+            <td>${f.id}</td>
+            <td>
+                <a href="/faults/${f.id}" class="text-decoration-none">
+                    ${f.title}
+                </a>
+            </td>
+            <td>
+                <span class="badge bg-${severityColors[f.severity] || 'secondary'}">
+                    ${severityLabels[f.severity] || f.severity}
+                </span>
+            </td>
+            <td>
+                <span class="badge bg-${statusColors[f.status] || 'secondary'}">
+                    ${statusLabels[f.status] || f.status}
+                </span>
+            </td>
+            <td>
+                <small class="text-muted">${new Date(f.created_at).toLocaleDateString('ru-RU')}</small>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// ======= ИСТОРИЯ =======
+async function loadHistory() {
+    try {
+        const response = await axios.get(`/api/projects/${projectId}/history`);
+        const history = response.data || [];
+        const historyList = document.getElementById('historyList');
+
+        if (history.length === 0) {
+            historyList.innerHTML = '<p class="text-muted text-center">Нет истории</p>';
+            return;
+        }
+
+        const eventIcons = {
+            'creation': 'bi-plus-circle',
+            'field_change': 'bi-pencil-square',
+            'fault_added': 'bi-bug',
+            'fault_closed': 'bi-check-circle'
+        };
+        const eventColors = {
+            'creation': 'text-success',
+            'field_change': 'text-primary',
+            'fault_added': 'text-danger',
+            'fault_closed': 'text-success'
+        };
+        const eventLabels = {
+            'creation': 'создал(а) проект',
+            'field_change': 'изменил(а)',
+            'fault_added': 'добавлена неисправность',
+            'fault_closed': 'закрыта неисправность'
+        };
+
+        historyList.innerHTML = history.map(h => {
+            const icon = eventIcons[h.event_type] || 'bi-info-circle';
+            const colorClass = eventColors[h.event_type] || 'text-secondary';
+            const eventLabel = eventLabels[h.event_type] || 'изменил(а)';
+
+            let content = '';
+            if (h.event_type === 'creation') {
+                content = `<span class="fw-bold">${h.new_value}</span>`;
+            } else {
+                content = `
+                    <span class="fw-bold">${h.field}</span>
+                    <span class="text-muted">было:</span>
+                    <span class="text-danger text-decoration-line-through">${h.old_value || 'пусто'}</span>
+                    <span class="text-muted"> → </span>
+                    <span class="text-success">${h.new_value || 'пусто'}</span>
+                `;
+            }
+
+            return `
+                <div class="history-item mb-2 p-2 border-bottom" style="font-size: 0.85rem;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <i class="bi ${icon} ${colorClass} me-1"></i>
+                            <strong>${h.author}</strong>
+                            <span class="text-muted">${eventLabel}</span>
+                        </div>
+                        <small class="text-muted">${new Date(h.created_at).toLocaleString('ru-RU')}</small>
+                    </div>
+                    <div class="mt-1">${content}</div>
+                </div>
+            `;
+        }).join('');
+
+    } catch (error) {
+        console.error('Ошибка загрузки истории:', error);
+        document.getElementById('historyList').innerHTML = `
+            <p class="text-danger text-center">Ошибка загрузки истории</p>
+        `;
+    }
+}
+
+// ======= РЕДАКТИРОВАНИЕ =======
+function editProject() {
+    const modal = new bootstrap.Modal(document.getElementById('editProjectModal'));
+    modal.show();
+}
+
+document.getElementById('updateProjectBtn').addEventListener('click', async function() {
+    const id = parseInt(document.getElementById('editProjectId').value);
+    const data = {
+        name: document.getElementById('editName').value.trim(),
+        client: document.getElementById('editClient').value.trim() || null,
+        unit: parseInt(document.getElementById('editUnit').value) || null,
+        type: document.getElementById('editType').value.trim() || null,
+        description: document.getElementById('editDescription').value.trim() || null
+    };
+
+    if (!data.name) {
+        alert('Название обязательно!');
+        return;
+    }
+
+    try {
+        await axios.put(`/api/projects/${id}`, data);
+        const modal = bootstrap.Modal.getInstance(document.getElementById('editProjectModal'));
+        modal.hide();
+        await loadProjectDetail();
+        showNotification('✅ Проект обновлён!');
+    } catch (error) {
+        console.error('Ошибка обновления:', error);
+        alert('Ошибка: ' + (error.response?.data?.detail || error.message));
+    }
+});
+
+// ======= УДАЛЕНИЕ =======
+async function deleteProject() {
+    if (!confirm('Вы уверены, что хотите удалить этот проект и все связанные неисправности?')) return;
+
+    try {
+        await axios.delete(`/api/projects/${projectId}`);
+        alert('Проект удалён!');
+        window.location.href = '/projects';
+    } catch (error) {
+        console.error('Ошибка удаления:', error);
+        alert('Ошибка: ' + (error.response?.data?.detail || error.message));
+    }
+}
+
+// ======= УВЕДОМЛЕНИЯ =======
+function showNotification(message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 end-0 m-3';
+    alertDiv.style.zIndex = '9999';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    setTimeout(() => alertDiv.remove(), 3000);
+}
+
+// ======= ИНИЦИАЛИЗАЦИЯ =======
+document.addEventListener('DOMContentLoaded', function() {
+    loadProjectDetail();
+});
+</script>
+{% endblock %}

@@ -44,12 +44,30 @@ class Project(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # Связь с неисправностями (один проект → много неисправностей)
-    faults = relationship(
-        "Fault", back_populates="project", cascade="all, delete-orphan"
-    )
+    faults = relationship("Fault", back_populates="project", cascade="all, delete-orphan")
+    # Связь с историей
+    history = relationship("ProjectHistory", back_populates="project", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Project(id={self.id}, name='{self.name}')>"
+
+
+class ProjectHistory(Base):
+    __tablename__ = "project_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
+    event_type = Column(String(50), nullable=False, default="field_change")  # creation, field_change, fault_added, fault_closed
+    field = Column(String(50), nullable=True)
+    old_value = Column(String(500), nullable=True)
+    new_value = Column(String(500), nullable=True)
+    author = Column(String(100), nullable=False, default="system")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    project = relationship("Project", back_populates="history")
+
+    def __repr__(self):
+        return f"<ProjectHistory(id={self.id}, project_id={self.project_id}, type='{self.event_type}')>"
 
 
 class Fault(Base):
