@@ -1,32 +1,67 @@
 {% extends "base.html" %}
 
 {% block title %}Проекты{% endblock %}
-{% block page_title %}Управление проектами{% endblock %}
-{% set active_page = 'projects' %}
-
-{% block content %}
-<div class="row mb-3">
-    <div class="col-md-6">
-        <div class="input-group">
-            <input type="text" class="form-control" id="searchInput" placeholder="Поиск проектов...">
-            <button class="btn btn-outline-secondary" type="button" id="searchBtn">
-                <i class="bi bi-search"></i>
-            </button>
-        </div>
-    </div>
-    <div class="col-md-6 text-end">
+{% block page_title %}
+    <div class="d-flex justify-content-between align-items-center">
+        <span>Управление проектами <span class="text-muted" id="projectsCount">(0)</span></span>
         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createProjectModal">
             <i class="bi bi-plus-circle"></i> Создать проект
         </button>
     </div>
+{% endblock %}
+{% set active_page = 'projects' %}
+
+{% block content %}
+<!-- Панель фильтров -->
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Поиск по названию...">
+                    <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    <button class="btn btn-outline-secondary" type="button" id="clearSearchBtn" title="Очистить">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" id="stationFilter">
+                    <option value="">Все станции</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" id="unitFilter">
+                    <option value="">Все блоки</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" id="typeFilter">
+                    <option value="">Все типы</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+                        <i class="bi bi-plus-circle"></i> Создать
+                    </button>
+                    <button class="btn btn-outline-secondary" id="resetFiltersBtn" title="Сбросить фильтры">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
+<!-- Список проектов -->
 <div class="row" id="projectsContainer">
-    <!-- Проекты будут загружены через JavaScript -->
     <div class="col-12 text-center text-muted">Загрузка проектов...</div>
 </div>
 
-<!-- Модальное окно для создания проекта -->
+<!-- ===== МОДАЛЬНОЕ ОКНО СОЗДАНИЯ ПРОЕКТА ===== -->
 <div class="modal fade" id="createProjectModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -37,11 +72,23 @@
             <div class="modal-body">
                 <form id="createProjectForm">
                     <div class="mb-3">
-                        <label for="projectName" class="form-label">Название проекта *</label>
+                        <label for="projectName" class="form-label">Название *</label>
                         <input type="text" class="form-control" id="projectName" required>
                     </div>
                     <div class="mb-3">
-                        <label for="projectClient" class="form-label">Клиент - Станция</label>
+                        <label for="projectStation" class="form-label">Станция</label>
+                        <input type="text" class="form-control" id="projectStation" placeholder="Кольская, Смоленская, ...">
+                    </div>
+                    <div class="mb-3">
+                        <label for="projectUnit" class="form-label">Блок</label>
+                        <input type="number" class="form-control" id="projectUnit" placeholder="1, 2, 3, ...">
+                    </div>
+                    <div class="mb-3">
+                        <label for="projectType" class="form-label">Тип</label>
+                        <input type="text" class="form-control" id="projectType" placeholder="САРЗ, САУ, ...">
+                    </div>
+                    <div class="mb-3">
+                        <label for="projectClient" class="form-label">Клиент</label>
                         <input type="text" class="form-control" id="projectClient">
                     </div>
                     <div class="mb-3">
@@ -58,7 +105,7 @@
     </div>
 </div>
 
-<!-- Модальное окно для редактирования проекта -->
+<!-- ===== МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ ===== -->
 <div class="modal fade" id="editProjectModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -70,11 +117,23 @@
                 <form id="editProjectForm">
                     <input type="hidden" id="editProjectId">
                     <div class="mb-3">
-                        <label for="editProjectName" class="form-label">Название проекта *</label>
+                        <label for="editProjectName" class="form-label">Название *</label>
                         <input type="text" class="form-control" id="editProjectName" required>
                     </div>
                     <div class="mb-3">
-                        <label for="editProjectClient" class="form-label">Клиент - Станция</label>
+                        <label for="editProjectStation" class="form-label">Станция</label>
+                        <input type="text" class="form-control" id="editProjectStation" placeholder="Кольская, Смоленская, ...">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editProjectUnit" class="form-label">Блок</label>
+                        <input type="number" class="form-control" id="editProjectUnit" placeholder="1, 2, 3, ...">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editProjectType" class="form-label">Тип</label>
+                        <input type="text" class="form-control" id="editProjectType" placeholder="САРЗ, САУ, ...">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editProjectClient" class="form-label">Клиент</label>
                         <input type="text" class="form-control" id="editProjectClient">
                     </div>
                     <div class="mb-3">
@@ -91,7 +150,7 @@
     </div>
 </div>
 
-<!-- Модальное окно подтверждения удаления -->
+<!-- ===== МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ УДАЛЕНИЯ ===== -->
 <div class="modal fade" id="deleteProjectModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -114,19 +173,99 @@
 
 {% block scripts %}
 <script>
-// Глобальная переменная для хранения проектов
+// ======= ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ =======
 let allProjects = [];
 let currentDeleteId = null;
 
-// Загрузка проектов
-async function loadProjects(search = '') {
+// ======= ЗАГРУЗКА ФИЛЬТРОВ =======
+async function loadFilters() {
     try {
-        const url = search ? `/api/projects?search=${encodeURIComponent(search)}` : '/api/projects';
-        const response = await axios.get(url);
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        // Загружаем станции
+        const stationsRes = await axios.get('/api/projects/stations/');
+        const stations = stationsRes.data || [];
+        const stationSelect = document.getElementById('stationFilter');
+        stationSelect.innerHTML = '<option value="">Все станции</option>';
+        stations.forEach(s => {
+            if (s) {
+                const option = document.createElement('option');
+                option.value = s;
+                option.textContent = s;
+                stationSelect.appendChild(option);
+            }
+        });
+        
+        // Загружаем типы
+        const typesRes = await axios.get('/api/projects/types/');
+        const types = typesRes.data || [];
+        const typeSelect = document.getElementById('typeFilter');
+        typeSelect.innerHTML = '<option value="">Все типы</option>';
+        types.forEach(t => {
+            if (t) {
+                const option = document.createElement('option');
+                option.value = t;
+                option.textContent = t;
+                typeSelect.appendChild(option);
+            }
+        });
+        
+        // Загружаем блоки
+        const unitsRes = await axios.get('/api/projects/units/');
+        const units = unitsRes.data || [];
+        const unitSelect = document.getElementById('unitFilter');
+        unitSelect.innerHTML = '<option value="">Все блоки</option>';
+        units.forEach(u => {
+            if (u) {
+                const option = document.createElement('option');
+                option.value = u;
+                option.textContent = `Блок ${u}`;
+                unitSelect.appendChild(option);
+            }
+        });
+    } catch (error) {
+        console.error('Ошибка загрузки фильтров:', error);
+    }
+}
+
+// ======= ЗАГРУЗКА ПРОЕКТОВ =======
+async function loadProjects() {
+    try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        const params = new URLSearchParams();
+        
+        const search = document.getElementById('searchInput').value.trim();
+        if (search) params.append('search', search);
+        
+        const station = document.getElementById('stationFilter').value;
+        if (station) params.append('station', station);
+        
+        const unit = document.getElementById('unitFilter').value;
+        if (unit) params.append('unit', unit);
+        
+        const type = document.getElementById('typeFilter').value;
+        if (type) params.append('type', type);
+        
+        const response = await axios.get(`/api/projects?${params.toString()}`);
         allProjects = response.data;
         renderProjects(allProjects);
+        
+        // Обновляем счётчик
+        document.getElementById('projectsCount').textContent = `(${allProjects.length})`;
     } catch (error) {
         console.error('Ошибка загрузки проектов:', error);
+        if (error.response?.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
         document.getElementById('projectsContainer').innerHTML = `
             <div class="col-12 text-center text-danger">
                 <i class="bi bi-exclamation-triangle"></i> Ошибка загрузки проектов
@@ -135,15 +274,18 @@ async function loadProjects(search = '') {
     }
 }
 
-// Отображение проектов
+// ======= ОТОБРАЖЕНИЕ ПРОЕКТОВ =======
 function renderProjects(projects) {
     const container = document.getElementById('projectsContainer');
     
     if (projects.length === 0) {
         container.innerHTML = `
-            <div class="col-12 text-center text-muted">
+            <div class="col-12 text-center text-muted py-4">
                 <i class="bi bi-folder-plus" style="font-size: 48px;"></i>
-                <p class="mt-2">Нет проектов. Создайте первый проект!</p>
+                <p class="mt-2">Проекты не найдены</p>
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+                    <i class="bi bi-plus-circle"></i> Создать первый проект
+                </button>
             </div>
         `;
         return;
@@ -156,7 +298,7 @@ function renderProjects(projects) {
                     <div class="d-flex justify-content-between align-items-start">
                         <h5 class="card-title">${project.name}</h5>
                         <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" onclick="event.stopPropagation();">
                                 <i class="bi bi-three-dots-vertical"></i>
                             </button>
                             <ul class="dropdown-menu">
@@ -177,7 +319,8 @@ function renderProjects(projects) {
                     ${project.client ? `<p class="text-muted small mb-1"><i class="bi bi-building"></i> ${project.client}</p>` : ''}
                     ${project.station ? `<p class="text-muted small mb-1"><i class="bi bi-geo-alt"></i> ${project.station}</p>` : ''}
                     ${project.unit ? `<p class="text-muted small mb-1"><i class="bi bi-hash"></i> Блок ${project.unit}</p>` : ''}
-                    ${project.description ? `<p class="card-text small">${project.description}</p>` : ''}
+                    ${project.type ? `<p class="text-muted small mb-1"><i class="bi bi-tag"></i> ${project.type}</p>` : ''}
+                    ${project.description ? `<p class="card-text small">${project.description.length > 80 ? project.description.slice(0, 80) + '...' : project.description}</p>` : ''}
                     
                     <div class="mt-2">
                         <span class="badge bg-primary" id="faults-count-${project.id}">
@@ -192,15 +335,16 @@ function renderProjects(projects) {
         </div>
     `).join('');
     
+    // Загружаем количество неисправностей
     loadFaultsCount(projects);
 }
 
-// Загрузка количества неисправностей
+// ======= ЗАГРУЗКА КОЛИЧЕСТВА НЕИСПРАВНОСТЕЙ =======
 async function loadFaultsCount(projects) {
     try {
-        const faultsResponse = await axios.get('/api/faults');
-        const faults = faultsResponse.data;
-
+        const response = await axios.get('/api/faults');
+        const faults = response.data || [];
+        
         projects.forEach(project => {
             const count = faults.filter(f => f.project_id === project.id).length;
             const element = document.getElementById(`faults-count-${project.id}`);
@@ -213,53 +357,79 @@ async function loadFaultsCount(projects) {
     }
 }
 
-// Создание проекта
-async function createProject() {
-    const name = document.getElementById('projectName').value.trim();
-    const client = document.getElementById('projectClient').value.trim();
-    const description = document.getElementById('projectDescription').value.trim();
+// ======= ФИЛЬТРЫ =======
+function applyFilters() {
+    loadProjects();
+}
 
+// События фильтров
+document.getElementById('stationFilter').addEventListener('change', applyFilters);
+document.getElementById('unitFilter').addEventListener('change', applyFilters);
+document.getElementById('typeFilter').addEventListener('change', applyFilters);
+document.getElementById('searchBtn').addEventListener('click', applyFilters);
+document.getElementById('clearSearchBtn').addEventListener('click', function() {
+    document.getElementById('searchInput').value = '';
+    applyFilters();
+});
+document.getElementById('searchInput').addEventListener('keyup', function(e) {
+    if (e.key === 'Enter') applyFilters();
+});
+
+// Сброс всех фильтров
+document.getElementById('resetFiltersBtn').addEventListener('click', function() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('stationFilter').value = '';
+    document.getElementById('unitFilter').value = '';
+    document.getElementById('typeFilter').value = '';
+    applyFilters();
+});
+
+// ======= СОЗДАНИЕ ПРОЕКТА =======
+document.getElementById('saveProjectBtn').addEventListener('click', async function() {
+    const name = document.getElementById('projectName').value.trim();
     if (!name) {
         alert('Название проекта обязательно!');
         return;
     }
-
+    
+    const data = {
+        name: name,
+        station: document.getElementById('projectStation').value.trim() || null,
+        unit: parseInt(document.getElementById('projectUnit').value) || null,
+        type: document.getElementById('projectType').value.trim() || null,
+        client: document.getElementById('projectClient').value.trim() || null,
+        description: document.getElementById('projectDescription').value.trim() || null
+    };
+    
     try {
-        const response = await axios.post('/api/projects', {
-            name,
-            client: client || null,
-            description: description || null
-        });
-
-        // Закрываем модальное окно
+        await axios.post('/api/projects', data);
+        
         const modal = bootstrap.Modal.getInstance(document.getElementById('createProjectModal'));
         modal.hide();
-
-        // Очищаем форму
         document.getElementById('createProjectForm').reset();
-
-        // Перезагружаем проекты
+        
         await loadProjects();
-
-        // Показываем уведомление
-        alert('Проект успешно создан!');
+        alert('✅ Проект создан!');
     } catch (error) {
         console.error('Ошибка создания проекта:', error);
-        alert('Ошибка при создании проекта: ' + (error.response?.data?.detail || error.message));
+        alert('Ошибка: ' + (error.response?.data?.detail || error.message));
     }
-}
+});
 
-// Редактирование проекта
+// ======= РЕДАКТИРОВАНИЕ ПРОЕКТА =======
 async function editProject(id) {
     try {
         const response = await axios.get(`/api/projects/${id}`);
         const project = response.data;
-
+        
         document.getElementById('editProjectId').value = project.id;
         document.getElementById('editProjectName').value = project.name;
+        document.getElementById('editProjectStation').value = project.station || '';
+        document.getElementById('editProjectUnit').value = project.unit || '';
+        document.getElementById('editProjectType').value = project.type || '';
         document.getElementById('editProjectClient').value = project.client || '';
         document.getElementById('editProjectDescription').value = project.description || '';
-
+        
         const modal = new bootstrap.Modal(document.getElementById('editProjectModal'));
         modal.show();
     } catch (error) {
@@ -268,86 +438,78 @@ async function editProject(id) {
     }
 }
 
-// Обновление проекта
-async function updateProject() {
+document.getElementById('updateProjectBtn').addEventListener('click', async function() {
     const id = parseInt(document.getElementById('editProjectId').value);
     const name = document.getElementById('editProjectName').value.trim();
-    const client = document.getElementById('editProjectClient').value.trim();
-    const description = document.getElementById('editProjectDescription').value.trim();
-
+    
     if (!name) {
         alert('Название проекта обязательно!');
         return;
     }
-
+    
+    const data = {
+        name: name,
+        station: document.getElementById('editProjectStation').value.trim() || null,
+        unit: parseInt(document.getElementById('editProjectUnit').value) || null,
+        type: document.getElementById('editProjectType').value.trim() || null,
+        client: document.getElementById('editProjectClient').value.trim() || null,
+        description: document.getElementById('editProjectDescription').value.trim() || null
+    };
+    
     try {
-        await axios.put(`/api/projects/${id}`, {
-            name,
-            client: client || null,
-            description: description || null
-        });
-
+        await axios.put(`/api/projects/${id}`, data);
+        
         const modal = bootstrap.Modal.getInstance(document.getElementById('editProjectModal'));
         modal.hide();
-
+        
         await loadProjects();
-        alert('Проект успешно обновлён!');
+        alert('✅ Проект обновлён!');
     } catch (error) {
         console.error('Ошибка обновления проекта:', error);
-        alert('Ошибка при обновлении проекта: ' + (error.response?.data?.detail || error.message));
+        alert('Ошибка: ' + (error.response?.data?.detail || error.message));
     }
-}
+});
 
-// Удаление проекта
+// ======= УДАЛЕНИЕ ПРОЕКТА =======
 function deleteProject(id) {
     const project = allProjects.find(p => p.id === id);
     if (!project) return;
-
+    
     document.getElementById('deleteProjectName').textContent = project.name;
     currentDeleteId = id;
-
+    
     const modal = new bootstrap.Modal(document.getElementById('deleteProjectModal'));
     modal.show();
 }
 
-// Подтверждение удаления
-async function confirmDelete() {
+document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
     if (!currentDeleteId) return;
-
+    
     try {
         await axios.delete(`/api/projects/${currentDeleteId}`);
-
+        
         const modal = bootstrap.Modal.getInstance(document.getElementById('deleteProjectModal'));
         modal.hide();
-
+        
         await loadProjects();
-        alert('Проект успешно удалён!');
+        alert('✅ Проект удалён!');
     } catch (error) {
         console.error('Ошибка удаления проекта:', error);
-        alert('Ошибка при удалении проекта: ' + (error.response?.data?.detail || error.message));
-    }
-}
-
-// Поиск проектов
-document.getElementById('searchBtn').addEventListener('click', function() {
-    const search = document.getElementById('searchInput').value.trim();
-    loadProjects(search);
-});
-
-document.getElementById('searchInput').addEventListener('keyup', function(e) {
-    if (e.key === 'Enter') {
-        document.getElementById('searchBtn').click();
+        alert('Ошибка: ' + (error.response?.data?.detail || error.message));
     }
 });
 
-// Обработчики кнопок
-document.getElementById('saveProjectBtn').addEventListener('click', createProject);
-document.getElementById('updateProjectBtn').addEventListener('click', updateProject);
-document.getElementById('confirmDeleteBtn').addEventListener('click', confirmDelete);
-
-// Загрузка при открытии страницы
-document.addEventListener('DOMContentLoaded', function() {
-    loadProjects();
+// ======= ИНИЦИАЛИЗАЦИЯ =======
+document.addEventListener('DOMContentLoaded', async function() {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+        window.location.href = '/login';
+        return;
+    }
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    
+    await loadFilters();
+    await loadProjects();
 });
 </script>
 {% endblock %}

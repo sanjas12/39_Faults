@@ -62,18 +62,31 @@ def create_project(
     "/", response_model=List[ProjectResponse], summary="Получить список проектов"
 )
 def list_projects(
-    skip: int = Query(0, ge=0, description="Сколько пропустить"),
-    limit: int = Query(100, ge=1, le=1000, description="Сколько вернуть"),
+    skip: int = 0,
+    limit: int = 100,
     search: Optional[str] = Query(None, description="Поиск по названию или клиенту"),
+    station: Optional[str] = Query(None, description="Фильтр по станции"),      # ✅ Добавляем
+    unit: Optional[int] = Query(None, description="Фильтр по номеру блока"),    # ✅ Добавляем
+    type: Optional[str] = Query(None, description="Фильтр по типу проекта"),    # ✅ Добавляем
     db: Session = Depends(get_db),
-    current_user: UserResponse = Depends(get_current_user),  # Все авторизованные
+    current_user: UserResponse = Depends(get_current_user)
 ):
-    """
-    Получение списка проектов с возможностью поиска и пагинации.
-    """
+    """Получить список проектов с фильтрацией"""
     query = db.query(Project)
     
-    # ✅ Регистронезависимый поиск
+    # ✅ Фильтр по станции
+    if station:
+        query = query.filter(Project.station == station)
+    
+    # ✅ Фильтр по номеру блока
+    if unit is not None:
+        query = query.filter(Project.unit == unit)
+    
+    # ✅ Фильтр по типу
+    if type:
+        query = query.filter(Project.type == type)
+    
+    # Поиск по названию или клиенту
     if search:
         search_pattern = f"%{search}%"
         query = query.filter(
@@ -83,9 +96,6 @@ def list_projects(
             )
         )
     
-    # Сортировка по дате создания (новые сверху)
-    query = query.order_by(Project.created_at.desc())
-
     projects = query.offset(skip).limit(limit).all()
     return projects
 
@@ -255,6 +265,35 @@ def get_project_stats(
 
     return stats
 
+@router.get("/stations/", response_model=List[str])
+def get_stations(
+    db: Session = Depends(get_db),
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Получить список всех станций"""
+    stations = db.query(Project.station).distinct().all()
+    return [s[0] for s in stations if s[0]]
+
+
+@router.get("/types/", response_model=List[str])
+def get_types(
+    db: Session = Depends(get_db),
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Получить список всех типов проектов"""
+    types = db.query(Project.type).distinct().all()
+    return [t[0] for t in types if t[0]]
+
+
+@router.get("/units/", response_model=List[int])
+def get_units(
+    db: Session = Depends(get_db),
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Получить список всех номеров блоков"""
+    units = db.query(Project.unit).distinct().all()
+    return [u[0] for u in units if u[0] is not None]
+
 
 def log_project_history(
     db: Session,
@@ -276,3 +315,6 @@ def log_project_history(
     )
     db.add(history)
     db.commit()
+
+
+    
