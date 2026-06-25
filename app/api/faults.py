@@ -7,7 +7,7 @@ from sqlalchemy import or_, func
 
 from app.core.database import get_db
 from app.core.security import get_current_user
-from app.models.all_models import Fault, Project, FaultHistory, KnowledgeBase
+from app.models.all_models import Fault, Project, FaultHistory, KnowledgeBase, User
 from app.schemas.fault import (
     FaultCreate,
     FaultResponse,
@@ -16,6 +16,7 @@ from app.schemas.fault import (
     StatusEnum,
 )
 from app.schemas.user import UserResponse 
+from app.services.email_service import email_service
 
 
 router = APIRouter(prefix="/faults", tags=["faults"])
@@ -44,13 +45,37 @@ def create_fault(fault: FaultCreate, db: Session = Depends(get_db)):
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Проект с ID {fault.project_id} не найден",
             )
-    
+
     db_fault = Fault(**fault.model_dump())
     db.add(db_fault)
     db.commit()
     db.refresh(db_fault)
-    
-    # ✅ Записываем в историю создание
+
+    # Отправляем уведомления
+    try:
+        # Получаем всех пользователей (кроме создателя)
+        recipients = db.query(User).filter(User.id != current_user.id).all()
+        recipient_emails = [u.email for u in recipients if u.is_active and u.email]
+
+        # Название проекта
+        project_name = "Без проекта"
+        if db_fault.project_id:
+            project = db.query(Project).filter(Project.id == db_fault.project_id).first()
+            if project:
+                project_name = project.name
+
+        if recipient_emails:
+            email_service.send_fault_created(
+                fault=db_fault,
+                project_name=project_name,
+                user_name=current_user.username,
+                recipients=recipient_emails
+            )
+    except Exception as e:
+        print(f"❌ Ошибка отправки уведомлений: {e}")
+
+
+    # Записываем в историю создание
     log_history(
         db=db,
         fault_id=db_fault.id,
@@ -59,8 +84,8 @@ def create_fault(fault: FaultCreate, db: Session = Depends(get_db)):
         old_value=None,
         new_value=f"Создана неисправность: {db_fault.title}",
         author=current_user.username
-    )
-    
+            )
+
     return db_fault
 
 
@@ -208,10 +233,18 @@ def update_fault(
         "project_id": "Проект",
         "linked_knowledge_ids": "Связанные статьи"
     }
+
+    # После обновления, если изменился статус — отправляем уведомление
+    status_changed = False
+    new_status = None
     
     for field, old_value in old_values.items():
         new_value = getattr(fault, field, None)
         
+        if field == "status" and old_value_str != new_value_str:
+            status_changed = True
+            new_status = new_value_str
+
         if field == "project_id":
             old_project = db.query(Project).filter(Project.id == old_value).first()
             new_project = db.query(Project).filter(Project.id == new_value).first()
@@ -264,9 +297,25 @@ def update_fault(
                 author=author
             )
     
-    # В функции update_fault, после обновления связанных статей:
+    # Отправляем уведомление об изменении статус
+    if status_changed and new_status:
+        try:
+            # Получаем всех пользователей
+            recipients = db.query(User).filter(User.id != current_user.id).all()
+            recipient_emails = [u.email for u in recipients if u.is_active and u.email]
 
-    # ✅ Записываем в историю изменения связанных статей
+            if recipient_emails:
+                email_service.send_fault_status_changed(
+                    fault=fault,
+                    new_status=new_status,
+                    user_name=current_user.username,
+                    recipients=recipient_emails
+                )
+        except Exception as e:
+            print(f"❌ Ошибка отправки уведомлений: {e}")
+
+
+    # Записываем в историю изменения связанных статей
     if field == "linked_knowledge_ids" and old_value_str != new_value_str:
         # Дополнительная запись в историю для каждой привязанной/отвязанной статьи
         old_ids = [int(id.strip()) for id in old_value.split(',') if id.strip()] if old_value else []
@@ -300,7 +349,6 @@ def update_fault(
                     new_value=None,
                     author=author
                 )
-    
     return fault
 
 

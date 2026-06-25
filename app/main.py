@@ -156,3 +156,8 @@ def register_page(request: Request) -> HTMLResponse:
 def knowledge_article_detail(request: Request, article_id: int):
     """Страница просмотра статьи"""
     return _render_page(request, "knowledge_article.html", active_page="knowledge", article_id=article_id)
+
+
+@app.get("/settings")
+def settings_page(request: Request):
+    return _render_page(request, "settings.html", active_page="settings")

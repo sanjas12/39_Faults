@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Настройки уведомлений{% endblock %}
+{% block page_title %}Настройки{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Настройки уведомлений</h5>
+            </div>
+            <div class="card-body">
+                <form id="notificationSettingsForm">
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="notifyCreation" checked>
+                        <label class="form-check-label" for="notifyCreation">
+                            Уведомлять о создании неисправностей
+                        </label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="notifyStatus" checked>
+                        <label class="form-check-label" for="notifyStatus">
+                            Уведомлять об изменении статуса
+                        </label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="notifyComments" checked>
+                        <label class="form-check-label" for="notifyComments">
+                            Уведомлять о новых комментариях
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Сохранить настройки</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
