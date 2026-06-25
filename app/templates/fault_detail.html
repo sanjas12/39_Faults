@@ -238,17 +238,10 @@ async function loadFaultDetail() {
         
         console.log('✅ Неисправность загружена:', currentFault);
         renderFault(currentFault);
-        
-        // ✅ Загружаем связанные статьи из currentFault
         renderLinkedKnowledge(currentFault.linked_knowledge || []);
         
-        // Загружаем комментарии
         await loadComments();
-        
-        // Загружаем историю изменений
         await loadHistory();
-
-        // Загружаем проекты для редактирования
         await loadProjects();
         
     } catch (error) {
@@ -263,6 +256,85 @@ async function loadFaultDetail() {
             <button class="btn btn-sm btn-outline-primary" onclick="loadFaultDetail()">Обновить</button>
         `;
     }
+}
+
+async function loadProjects() {
+    try {
+        const response = await axios.get('/api/projects');
+        allProjects = response.data;
+        
+        const select = document.getElementById('editProject');
+        if (select) {
+            select.innerHTML = '<option value="">Без проекта</option>';
+            allProjects.forEach(p => {
+                const option = document.createElement('option');
+                option.value = p.id;
+                option.textContent = p.name;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки проектов:', error);
+    }
+}
+
+// ======= ОТОБРАЖЕНИЕ ДАННЫХ =======
+function renderFault(fault) {
+    document.getElementById('faultTitle').textContent = fault.title;
+    document.getElementById('faultDescription').innerHTML = fault.description || '<span class="text-muted">Нет описания</span>';
+    
+    const projectName = fault.project?.name || 'Без проекта';
+    document.getElementById('faultProject').innerHTML = `<span class="badge bg-secondary">${projectName}</span>`;
+    
+    const severityLabels = {
+        critical: 'Критическая',
+        major: 'Серьёзная',
+        minor: 'Незначительная',
+        trivial: 'Тривиальная'
+    };
+    const severityColors = {
+        critical: 'danger',
+        major: 'warning',
+        minor: 'info',
+        trivial: 'secondary'
+    };
+    document.getElementById('faultSeverity').innerHTML = `
+        <span class="badge bg-${severityColors[fault.severity] || 'secondary'}">
+            ${severityLabels[fault.severity] || fault.severity}
+        </span>
+    `;
+    
+    const statusLabels = {
+        open: 'Открыта',
+        in_progress: 'В работе',
+        review: 'На проверке',
+        closed: 'Закрыта'
+    };
+    const statusColors = {
+        open: 'danger',
+        in_progress: 'warning',
+        review: 'primary',
+        closed: 'success'
+    };
+    document.getElementById('faultStatus').innerHTML = `
+        <span class="badge bg-${statusColors[fault.status] || 'secondary'}">
+            ${statusLabels[fault.status] || fault.status}
+        </span>
+    `;
+    
+    document.getElementById('faultCreated').textContent = fault.created_at 
+        ? new Date(fault.created_at).toLocaleString('ru-RU') 
+        : 'Неизвестно';
+    document.getElementById('faultResolved').textContent = fault.resolved_at 
+        ? new Date(fault.resolved_at).toLocaleString('ru-RU') 
+        : 'Не закрыта';
+    
+    document.getElementById('editFaultId').value = fault.id;
+    document.getElementById('editTitle').value = fault.title;
+    document.getElementById('editDescription').value = fault.description || '';
+    document.getElementById('editSeverity').value = fault.severity;
+    document.getElementById('editStatus').value = fault.status;
+    document.getElementById('editProject').value = fault.project_id || '';
 }
 
 // ======= СВЯЗАННЫЕ СТАТЬИ =======
@@ -294,107 +366,11 @@ function renderLinkedKnowledge(linked) {
     `).join('');
 }
 
-async function loadProjects() {
-    try {
-        const response = await axios.get('/api/projects');
-        allProjects = response.data;
-        
-        const select = document.getElementById('editProject');
-        if (select) {
-            select.innerHTML = '<option value="">Без проекта</option>';
-            allProjects.forEach(p => {
-                const option = document.createElement('option');
-                option.value = p.id;
-                option.textContent = p.name;
-                select.appendChild(option);
-            });
-        }
-    } catch (error) {
-        console.error('Ошибка загрузки проектов:', error);
-    }
-}
-
-// ======= ОТОБРАЖЕНИЕ ДАННЫХ =======
-function renderFault(fault) {
-    document.getElementById('faultTitle').textContent = fault.title;
-    document.getElementById('faultDescription').innerHTML = fault.description || '<span class="text-muted">Нет описания</span>';
-    
-    // Проект
-    const projectName = fault.project?.name || 'Без проекта';
-    document.getElementById('faultProject').innerHTML = `<span class="badge bg-secondary">${projectName}</span>`;
-    
-    // Важность
-    const severityLabels = {
-        critical: 'Критическая',
-        major: 'Серьёзная',
-        minor: 'Незначительная',
-        trivial: 'Тривиальная'
-    };
-    const severityColors = {
-        critical: 'danger',
-        major: 'warning',
-        minor: 'info',
-        trivial: 'secondary'
-    };
-    document.getElementById('faultSeverity').innerHTML = `
-        <span class="badge bg-${severityColors[fault.severity] || 'secondary'}">
-            ${severityLabels[fault.severity] || fault.severity}
-        </span>
-    `;
-    
-    // Статус
-    const statusLabels = {
-        open: 'Открыта',
-        in_progress: 'В работе',
-        review: 'На проверке',
-        closed: 'Закрыта'
-    };
-    const statusColors = {
-        open: 'danger',
-        in_progress: 'warning',
-        review: 'primary',
-        closed: 'success'
-    };
-    document.getElementById('faultStatus').innerHTML = `
-        <span class="badge bg-${statusColors[fault.status] || 'secondary'}">
-            ${statusLabels[fault.status] || fault.status}
-        </span>
-    `;
-    
-    // Даты
-    document.getElementById('faultCreated').textContent = fault.created_at 
-        ? new Date(fault.created_at).toLocaleString('ru-RU') 
-        : 'Неизвестно';
-    document.getElementById('faultResolved').textContent = fault.resolved_at 
-        ? new Date(fault.resolved_at).toLocaleString('ru-RU') 
-        : 'Не закрыта';
-    
-    // Заполняем форму редактирования
-    document.getElementById('editFaultId').value = fault.id;
-    document.getElementById('editTitle').value = fault.title;
-    document.getElementById('editDescription').value = fault.description || '';
-    document.getElementById('editSeverity').value = fault.severity;
-    document.getElementById('editStatus').value = fault.status;
-    document.getElementById('editProject').value = fault.project_id || '';
-}
-
-// ======= СВЯЗАННЫЕ СТАТЬИ =======
-async function loadLinkedKnowledge() {
-    // Эта функция больше не нужна, данные берутся из currentFault
-    // Оставляем только для совместимости, но перенаправляем на renderLinkedKnowledge
-    if (currentFault) {
-        renderLinkedKnowledge(currentFault.linked_knowledge || []);
-    }
-}
-
 async function showLinkKnowledgeModal() {
     try {
         const response = await axios.get('/api/knowledge?limit=100');
         const articles = response.data || [];
-        
-        // ✅ Используем currentFault вместо отдельного запроса
         const currentLinkedIds = currentFault?.linked_knowledge?.map(a => a.id) || [];
-        
         const container = document.getElementById('knowledgeSelectList');
         
         if (articles.length === 0) {
@@ -429,7 +405,7 @@ document.getElementById('saveLinkedKnowledgeBtn').addEventListener('click', asyn
     const ids = Array.from(checkboxes).map(cb => parseInt(cb.value));
     
     try {
-        await axios.patch(`/api/faults/${faultId}`, {
+        const response = await axios.patch(`/api/faults/${faultId}`, {
             linked_knowledge_ids: ids.join(',')
         });
         
@@ -437,12 +413,16 @@ document.getElementById('saveLinkedKnowledgeBtn').addEventListener('click', asyn
         modal.hide();
         
         await loadFaultDetail();
-        await loadLinkedKnowledge();
         
-        showNotification('✅ Статьи привязаны к неисправности!');
+        const added = response.data.linked_knowledge || [];
+        if (added.length > 0) {
+            showNotification(`✅ Привязано ${added.length} статей к неисправности!`);
+        } else {
+            showNotification('ℹ️ Все статьи отвязаны');
+        }
     } catch (error) {
         console.error('Ошибка привязки статей:', error);
-        alert('Ошибка при привязке статей');
+        alert('Ошибка при привязке статей: ' + (error.response?.data?.detail || error.message));
     }
 });
 
@@ -450,15 +430,14 @@ async function removeKnowledgeLink(articleId) {
     if (!confirm('Отвязать эту статью от неисправности?')) return;
     
     try {
-        const response = await axios.get(`/api/faults/${faultId}`);
-        const currentIds = response.data.linked_knowledge?.map(a => a.id) || [];
+        const currentIds = currentFault?.linked_knowledge?.map(a => a.id) || [];
         const newIds = currentIds.filter(id => id !== articleId);
         
         await axios.patch(`/api/faults/${faultId}`, {
             linked_knowledge_ids: newIds.join(',')
         });
         
-        await loadLinkedKnowledge();
+        await loadFaultDetail();
         showNotification('ℹ️ Статья отвязана');
     } catch (error) {
         console.error('Ошибка отвязки статьи:', error);
@@ -500,7 +479,6 @@ async function loadComments() {
     }
 }
 
-// Добавление комментария
 document.getElementById('addCommentBtn').addEventListener('click', async function() {
     const content = document.getElementById('commentContent').value.trim();
     if (!content) {

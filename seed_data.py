@@ -423,6 +423,34 @@ def seed_data():
                 
         print(f"   ✅ Созданы комментарии к неисправностям")
 
+        # ===== СОЗДАЁМ СВЯЗИ МЕЖДУ СТАТЬЯМИ И НЕИСПРАВНОСТЯМИ =====
+        print("   🔗 Создаём связи между статьями и неисправностями...")
+
+        # Получаем все статьи и неисправности
+        all_articles = db.query(KnowledgeBase).all()
+        all_faults = db.query(Fault).all()
+
+        if all_articles and all_faults:
+            # Для каждой статьи привязываем 1-3 случайные неисправности
+            for article in all_articles:
+                num_faults = random.randint(1, min(3, len(all_faults)))
+                selected_faults = random.sample(all_faults, num_faults)
+                fault_ids = [f.id for f in selected_faults]
+                article.related_faults = ','.join([str(id) for id in fault_ids])
+                db.add(article)
+                
+                # Обновляем linked_knowledge_ids в неисправностях
+                for fault in selected_faults:
+                    existing_ids = [int(id.strip()) for id in fault.linked_knowledge_ids.split(',') if id.strip()] if fault.linked_knowledge_ids else []
+                    if article.id not in existing_ids:
+                        existing_ids.append(article.id)
+                        fault.linked_knowledge_ids = ','.join([str(id) for id in existing_ids])
+                        db.add(fault)
+            
+            db.commit()
+            print(f"   ✅ Созданы связи между статьями и неисправностями")
+
+
         db.commit()
 
         # ===== ВЫВОД СТАТИСТИКИ =====

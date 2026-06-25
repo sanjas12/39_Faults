@@ -174,7 +174,7 @@ def update_fault(
         "severity": fault.severity,
         "status": fault.status,
         "project_id": fault.project_id,
-        "linked_knowledge_ids": fault.linked_knowledge_ids or ""  # ✅ Добавляем
+        "linked_knowledge_ids": fault.linked_knowledge_ids or ""
     }
     
     # Проверяем project_id
@@ -198,7 +198,7 @@ def update_fault(
     db.commit()
     db.refresh(fault)
     
-    # Записываем историю
+    # ✅ Записываем историю и обновляем связанные статьи
     author = current_user.username or "system"
     field_labels = {
         "title": "Название",
@@ -206,7 +206,7 @@ def update_fault(
         "severity": "Важность",
         "status": "Статус",
         "project_id": "Проект",
-        "linked_knowledge_ids": "Связанные статьи"  # ✅ Добавляем
+        "linked_knowledge_ids": "Связанные статьи"
     }
     
     for field, old_value in old_values.items():
@@ -218,15 +218,37 @@ def update_fault(
             old_value_str = old_project.name if old_project else "Без проекта"
             new_value_str = new_project.name if new_project else "Без проекта"
         elif field == "linked_knowledge_ids":
-            # ✅ Для связанных статей показываем названия
+            # ✅ Обновляем связанные статьи
             old_ids = [int(id.strip()) for id in old_value.split(',') if id.strip()] if old_value else []
             new_ids = [int(id.strip()) for id in new_value.split(',') if id.strip()] if new_value else []
             
+            # Получаем названия статей
             old_articles = db.query(KnowledgeBase).filter(KnowledgeBase.id.in_(old_ids)).all() if old_ids else []
             new_articles = db.query(KnowledgeBase).filter(KnowledgeBase.id.in_(new_ids)).all() if new_ids else []
             
             old_value_str = ', '.join([a.title for a in old_articles]) if old_articles else "Нет статей"
             new_value_str = ', '.join([a.title for a in new_articles]) if new_articles else "Нет статей"
+            
+            # ✅ Обновляем related_faults в статьях
+            # 1. Удаляем эту неисправность из старых статей
+            for article in old_articles:
+                if article.id not in new_ids:
+                    article_fault_ids = [int(id.strip()) for id in article.related_faults.split(',') if id.strip()] if article.related_faults else []
+                    if fault_id in article_fault_ids:
+                        article_fault_ids.remove(fault_id)
+                        article.related_faults = ','.join([str(id) for id in article_fault_ids]) if article_fault_ids else None
+                        db.add(article)
+            
+            # 2. Добавляем эту неисправность в новые статьи
+            for article in new_articles:
+                if article.id not in old_ids:
+                    article_fault_ids = [int(id.strip()) for id in article.related_faults.split(',') if id.strip()] if article.related_faults else []
+                    if fault_id not in article_fault_ids:
+                        article_fault_ids.append(fault_id)
+                        article.related_faults = ','.join([str(id) for id in article_fault_ids])
+                        db.add(article)
+            
+            db.commit()
         else:
             old_value_str = str(old_value) if old_value is not None else ""
             new_value_str = str(new_value) if new_value is not None else ""
@@ -241,6 +263,43 @@ def update_fault(
                 new_value=new_value_str,
                 author=author
             )
+    
+    # В функции update_fault, после обновления связанных статей:
+
+    # ✅ Записываем в историю изменения связанных статей
+    if field == "linked_knowledge_ids" and old_value_str != new_value_str:
+        # Дополнительная запись в историю для каждой привязанной/отвязанной статьи
+        old_ids = [int(id.strip()) for id in old_value.split(',') if id.strip()] if old_value else []
+        new_ids = [int(id.strip()) for id in new_value.split(',') if id.strip()] if new_value else []
+        
+        added_ids = [id for id in new_ids if id not in old_ids]
+        removed_ids = [id for id in old_ids if id not in new_ids]
+        
+        if added_ids:
+            added_articles = db.query(KnowledgeBase).filter(KnowledgeBase.id.in_(added_ids)).all()
+            for article in added_articles:
+                log_history(
+                    db=db,
+                    fault_id=fault.id,
+                    event_type="field_change",
+                    field="Привязана статья",
+                    old_value=None,
+                    new_value=article.title,
+                    author=author
+                )
+        
+        if removed_ids:
+            removed_articles = db.query(KnowledgeBase).filter(KnowledgeBase.id.in_(removed_ids)).all()
+            for article in removed_articles:
+                log_history(
+                    db=db,
+                    fault_id=fault.id,
+                    event_type="field_change",
+                    field="Отвязана статья",
+                    old_value=article.title,
+                    new_value=None,
+                    author=author
+                )
     
     return fault
 
