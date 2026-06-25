@@ -22,49 +22,60 @@ from app.services.email_service import email_service
 router = APIRouter(prefix="/faults", tags=["faults"])
 
 
-@router.post(
-    "/",
-    response_model=FaultResponse,
-    status_code=status.HTTP_201_CREATED,
-    summary="Создать новую неисправность",
-)
-def create_fault(fault: FaultCreate, db: Session = Depends(get_db)):
-    """
-    Создание новой неисправности.
-
-    - **title**: Название неисправности (обязательно)
-    - **description**: Описание (опционально)
-    - **severity**: Важность (critical, major, minor, trivial)
-    - **project_id**: ID проекта (опционально)
-    """
-    # Если указан project_id, проверяем существование проекта
+@router.post("/", response_model=FaultResponse, status_code=status.HTTP_201_CREATED, summary="Создать новую неисправность")
+def create_fault(
+    fault: FaultCreate,
+    db: Session = Depends(get_db),
+    current_user: UserResponse = Depends(get_current_user)  # ✅ Параметр должен быть здесь
+):
+    """Создание новой неисправности с отправкой уведомлений"""
+    
+    # Проверяем проект
     if fault.project_id:
         project = db.query(Project).filter(Project.id == fault.project_id).first()
         if not project:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Проект с ID {fault.project_id} не найден",
+                detail=f"Проект с ID {fault.project_id} не найден"
             )
-
+    
+    # Создаём неисправность
     db_fault = Fault(**fault.model_dump())
     db.add(db_fault)
     db.commit()
     db.refresh(db_fault)
-
-    # Отправляем уведомления
+    
+    # ✅ Записываем в историю создание (используем current_user)
     try:
-        # Получаем всех пользователей (кроме создателя)
-        recipients = db.query(User).filter(User.id != current_user.id).all()
-        recipient_emails = [u.email for u in recipients if u.is_active and u.email]
-
+        log_history(
+            db=db,
+            fault_id=db_fault.id,
+            event_type="creation",
+            field="creation",
+            old_value=None,
+            new_value=f"Создана неисправность: {db_fault.title}",
+            author=current_user.username  # ✅ current_user определён
+        )
+    except Exception as e:
+        print(f"❌ Ошибка записи истории: {e}")
+    
+    # ✅ Отправляем уведомления
+    try:
+        # Получаем всех активных пользователей (кроме создателя)
+        recipients = db.query(User).filter(
+            User.id != current_user.id,
+            User.is_active == True
+        ).all()
+        recipient_emails = [u.email for u in recipients if u.email]
+        
         # Название проекта
         project_name = "Без проекта"
         if db_fault.project_id:
             project = db.query(Project).filter(Project.id == db_fault.project_id).first()
             if project:
                 project_name = project.name
-
-        if recipient_emails:
+        
+        if recipient_emails and email_service.enabled:
             email_service.send_fault_created(
                 fault=db_fault,
                 project_name=project_name,
@@ -73,7 +84,7 @@ def create_fault(fault: FaultCreate, db: Session = Depends(get_db)):
             )
     except Exception as e:
         print(f"❌ Ошибка отправки уведомлений: {e}")
-
+    
 
     # Записываем в историю создание
     log_history(
