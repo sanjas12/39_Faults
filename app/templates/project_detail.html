@@ -36,6 +36,10 @@
                             <p id="projectClient">Загрузка...</p>
                         </div>
                         <div class="col-md-6">
+                            <small class="text-muted">Станция:</small>
+                            <p id="projectStation">Загрузка...</p>
+                        </div>
+                        <div class="col-md-6">
                             <small class="text-muted">Блок:</small>
                             <p id="projectUnit">Загрузка...</p>
                         </div>
@@ -153,16 +157,20 @@
                         <input type="text" class="form-control" id="editName" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Клиент</label>
-                        <input type="text" class="form-control" id="editClient">
+                        <label class="form-label">Станция</label>
+                        <input type="text" class="form-control" id="editStation" placeholder="Кольская, Смоленская, ...">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Блок</label>
-                        <input type="number" class="form-control" id="editUnit">
+                        <input type="number" class="form-control" id="editUnit" placeholder="1, 2, 3, ...">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Тип</label>
                         <input type="text" class="form-control" id="editType" placeholder="САРЗ, САУ, ...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Клиент</label>
+                        <input type="text" class="form-control" id="editClient">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Описание</label>
@@ -223,6 +231,7 @@ function renderProject(project) {
     document.getElementById('projectTitle').textContent = `Проект: ${project.name}`;
     document.getElementById('projectName').textContent = project.name;
     document.getElementById('projectClient').textContent = project.client || 'Не указан';
+    document.getElementById('projectStation').textContent = project.station || 'Не указана';
     document.getElementById('projectUnit').textContent = project.unit || 'Не указан';
     document.getElementById('projectType').textContent = project.type || 'Не указан';
     document.getElementById('projectDescription').textContent = project.description || 'Нет описания';
@@ -235,6 +244,7 @@ function renderProject(project) {
     document.getElementById('editProjectId').value = project.id;
     document.getElementById('editName').value = project.name;
     document.getElementById('editClient').value = project.client || '';
+    document.getElementById('editStation').value = project.station || ''; 
     document.getElementById('editUnit').value = project.unit || '';
     document.getElementById('editType').value = project.type || '';
     document.getElementById('editDescription').value = project.description || '';

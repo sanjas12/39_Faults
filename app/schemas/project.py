@@ -1,20 +1,16 @@
-"""Pydantic-схемы для сущности «Проект»."""
-
+from pydantic import BaseModel, Field, validator
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field, validator
-
 
 class ProjectBase(BaseModel):
-    """Базовая схема проекта с общими полями."""
-
     name: str = Field(..., min_length=1, max_length=200, description="Название проекта")
-    description: Optional[str] = Field(
-        None, max_length=1000, description="Описание проекта"
-    )
+    description: Optional[str] = Field(None, max_length=1000, description="Описание проекта")
     client: Optional[str] = Field(None, max_length=200, description="Клиент")
-
+    station: Optional[str] = Field(None, max_length=200, description="Станция")  # ✅ Добавляем
+    unit: Optional[int] = Field(None, description="Номер блока")                  # ✅ Оставляем
+    type: Optional[str] = Field(None, max_length=200, description="Тип системы")
+    
     @validator("name")
     @classmethod
     def name_not_empty(cls, v: str) -> str:
@@ -25,8 +21,7 @@ class ProjectBase(BaseModel):
 
 
 class ProjectCreate(ProjectBase):
-    """Схема для создания проекта."""
-
+    pass
 
 class ProjectUpdate(BaseModel):
     """Схема для обновления проекта (все поля опциональны)."""
@@ -34,13 +29,14 @@ class ProjectUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=200)
     description: Optional[str] = Field(None, max_length=1000)
     client: Optional[str] = Field(None, max_length=200)
-
-    @validator("name")
-    @classmethod
-    def name_not_empty(cls, v: Optional[str]) -> Optional[str]:
-        """Запрещает пустое или состоящее из пробелов название, если оно передано."""
-        if v is not None and not v.strip():
-            raise ValueError("Название проекта не может быть пустым")
+    station: Optional[str] = Field(None, max_length=200)  # ✅ Добавляем
+    unit: Optional[int] = Field(None)
+    type: Optional[str] = Field(None, max_length=200)
+    
+    @validator('name')
+    def name_not_empty(cls, v):
+        if v is not None and (not v or not v.strip()):
+            raise ValueError('Название проекта не может быть пустым')
         return v.strip() if v else v
 
 
@@ -50,7 +46,7 @@ class ProjectResponse(ProjectBase):
     id: int
     created_at: datetime
     updated_at: Optional[datetime] = None
-
+    
     class Config:
         """Настройки Pydantic-модели."""
 

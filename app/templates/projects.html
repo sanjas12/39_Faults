@@ -138,7 +138,7 @@ async function loadProjects(search = '') {
 // Отображение проектов
 function renderProjects(projects) {
     const container = document.getElementById('projectsContainer');
-
+    
     if (projects.length === 0) {
         container.innerHTML = `
             <div class="col-12 text-center text-muted">
@@ -148,7 +148,7 @@ function renderProjects(projects) {
         `;
         return;
     }
-
+    
     container.innerHTML = projects.map(project => `
         <div class="col-md-6 col-lg-4 mb-3">
             <div class="card project-card h-100" onclick="window.location.href='/projects/${project.id}'" style="cursor: pointer;">
@@ -161,22 +161,24 @@ function renderProjects(projects) {
                             </button>
                             <ul class="dropdown-menu">
                                 <li>
-                                    <a class="dropdown-item" href="#" onclick="editProject(${project.id})">
+                                    <a class="dropdown-item" href="#" onclick="event.stopPropagation(); editProject(${project.id})">
                                         <i class="bi bi-pencil"></i> Редактировать
                                     </a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item text-danger" href="#" onclick="deleteProject(${project.id})">
+                                    <a class="dropdown-item text-danger" href="#" onclick="event.stopPropagation(); deleteProject(${project.id})">
                                         <i class="bi bi-trash"></i> Удалить
                                     </a>
                                 </li>
                             </ul>
                         </div>
                     </div>
-
+                    
                     ${project.client ? `<p class="text-muted small mb-1"><i class="bi bi-building"></i> ${project.client}</p>` : ''}
+                    ${project.station ? `<p class="text-muted small mb-1"><i class="bi bi-geo-alt"></i> ${project.station}</p>` : ''}
+                    ${project.unit ? `<p class="text-muted small mb-1"><i class="bi bi-hash"></i> Блок ${project.unit}</p>` : ''}
                     ${project.description ? `<p class="card-text small">${project.description}</p>` : ''}
-
+                    
                     <div class="mt-2">
                         <span class="badge bg-primary" id="faults-count-${project.id}">
                             <i class="bi bi-bug"></i> Загрузка...
@@ -189,8 +191,7 @@ function renderProjects(projects) {
             </div>
         </div>
     `).join('');
-
-    // Загружаем количество неисправностей для каждого проекта
+    
     loadFaultsCount(projects);
 }
 

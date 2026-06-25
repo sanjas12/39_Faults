@@ -110,53 +110,62 @@ def get_project(
     return project
 
 
-@router.put(
-    "/{project_id}", response_model=ProjectResponse, summary="Полностью обновить проект"
-)
+@router.put("/{project_id}", response_model=ProjectResponse)
 def update_project(
-    project_id: int, project_update: ProjectUpdate, db: Session = Depends(get_db)
+    project_id: int,
+    project_update: ProjectUpdate,
+    db: Session = Depends(get_db),
+    current_user: UserResponse = Depends(require_engineer)
 ):
-    """
-    Полное обновление проекта. Все поля обязательны.
-    """
+    """Обновить проект с записью в историю"""
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Проект с ID {project_id} не найден",
+            detail=f"Проект с ID {project_id} не найден"
         )
-
-    # Проверяем, не занято ли имя другим проектом
+    
+    # Сохраняем старые значения
+    old_values = {
+        "name": project.name,
+        "description": project.description or "",
+        "client": project.client or "",
+        "station": project.station or "",  # ✅ Добавляем
+        "unit": project.unit,
+        "type": project.type or ""
+    }
+    
+    # Проверяем имя
     if project_update.name:
-        existing = (
-            db.query(Project)
-            .filter(Project.name == project_update.name, Project.id != project_id)
-            .first()
-        )
+        existing = db.query(Project).filter(
+            Project.name == project_update.name,
+            Project.id != project_id
+        ).first()
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Проект с названием '{project_update.name}' уже существует",
+                detail=f"Проект с названием '{project_update.name}' уже существует"
             )
-
-    # Обновляем только переданные поля
+    
+    # Обновляем поля
     update_data = project_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(project, field, value)
-
+    
     db.commit()
     db.refresh(project)
-
+    
     # Записываем историю изменений
     author = current_user.username or "system"
     field_labels = {
         "name": "Название",
         "description": "Описание",
         "client": "Клиент",
+        "station": "Станция",      # ✅ Добавляем
         "unit": "Блок",
         "type": "Тип"
     }
-
+    
     for field, old_value in old_values.items():
         new_value = getattr(project, field, None)
         old_value_str = str(old_value) if old_value is not None else ""
@@ -172,7 +181,7 @@ def update_project(
                 new_value=new_value_str or "пусто",
                 author=author
             )
-
+    
     return project
 
 

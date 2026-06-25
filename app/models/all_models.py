@@ -38,6 +38,7 @@ class Project(Base):
     name = Column(String(200), nullable=False, index=True)
     description = Column(Text, nullable=True)
     client = Column(String(200), nullable=True)
+    station = Column(String(200), nullable=True)
     type = Column(String(200), nullable=True)
     unit = Column(Integer, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
