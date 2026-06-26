@@ -1,14 +1,16 @@
 import os
 import shutil
 from pathlib import Path
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List
+
 from app.core.database import get_db
 from app.core.security import get_current_user
-from app.models.all_models import Fault, FaultAttachment
-from app.schemas.attachment import AttachmentResponse, AttachmentCreate
+from app.models.all_models import Fault, FaultAttachment, FaultHistory
+from app.schemas.attachment import AttachmentResponse
 from app.schemas.user import UserResponse
 
 router = APIRouter(prefix="/faults/{fault_id}/attachments", tags=["attachments"])
@@ -16,6 +18,28 @@ router = APIRouter(prefix="/faults/{fault_id}/attachments", tags=["attachments"]
 # Папка для хранения файлов
 UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)
+
+
+def log_history(
+    db: Session,
+    fault_id: int,
+    event_type: str,
+    field: str,
+    old_value: str = None,
+    new_value: str = None,
+    author: str = "system"
+):
+    """Запись события в историю"""
+    history = FaultHistory(
+        fault_id=fault_id,
+        event_type=event_type,
+        field=field,
+        old_value=old_value,
+        new_value=new_value,
+        author=author
+    )
+    db.add(history)
+    db.commit()
 
 
 @router.post("/", response_model=AttachmentResponse, status_code=status.HTTP_201_CREATED)
@@ -79,6 +103,17 @@ async def upload_attachment(
     db.add(attachment)
     db.commit()
     db.refresh(attachment)
+
+    # ✅ Записываем в историю
+    log_history(
+        db=db,
+        fault_id=fault_id,
+        event_type="field_change",
+        field="Вложение",
+        old_value=None,
+        new_value=f"Загружен файл: {file.filename} ({description or 'без описания'})",
+        author=current_user.username
+    )
 
     return attachment
 
@@ -156,6 +191,9 @@ def delete_attachment(
             detail="Вложение не найдено"
         )
 
+    # Сохраняем имя файла для истории
+    filename = attachment.filename
+
     # Удаляем файл
     file_path = Path(attachment.file_path)
     if file_path.exists():
@@ -164,5 +202,16 @@ def delete_attachment(
     # Удаляем запись из БД
     db.delete(attachment)
     db.commit()
+
+    # ✅ Записываем в историю
+    log_history(
+        db=db,
+        fault_id=fault_id,
+        event_type="field_change",
+        field="Вложение",
+        old_value=f"Удалён файл: {filename}",
+        new_value=None,
+        author=current_user.username
+    )
 
     return None

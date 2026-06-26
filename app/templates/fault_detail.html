@@ -62,7 +62,7 @@
                 </div>
             </div>
 
-            <!-- ===== 1. ВЛОЖЕНИЯ ===== -->
+            <!-- ===== ВЛОЖЕНИЯ ===== -->
             <div class="card mb-3">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="bi bi-paperclip"></i> Вложения</h5>
@@ -76,7 +76,7 @@
                 </div>
             </div>
 
-            <!-- ===== 2. СВЯЗАННЫЕ СТАТЬИ ИЗ БАЗЫ ЗНАНИЙ ===== -->
+            <!-- ===== СВЯЗАННЫЕ СТАТЬИ ИЗ БАЗЫ ЗНАНИЙ ===== -->
             <div class="card mb-3">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="bi bi-book"></i> Связанные статьи</h5>
@@ -89,7 +89,7 @@
                 </div>
             </div>
 
-            <!-- ===== 3. РЕДАКТИРОВАНИЕ (скрыто по умолчанию) ===== -->
+            <!-- ===== РЕДАКТИРОВАНИЕ (скрыто по умолчанию) ===== -->
             <div class="card mb-3 d-none" id="editForm">
                 <div class="card-body">
                     <h5>Редактирование</h5>
@@ -135,7 +135,7 @@
                 </div>
             </div>
 
-            <!-- ===== 4. КОММЕНТАРИИ ===== -->
+            <!-- ===== КОММЕНТАРИИ ===== -->
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="bi bi-chat-dots"></i> Комментарии</h5>
@@ -237,6 +237,7 @@ const faultId = {{ fault_id }};
 let currentFault = null;
 let allProjects = [];
 let isEditing = false;
+let isUploading = false;  // ✅ Флаг для предотвращения дублирования загрузки
 
 // ======= ЗАГРУЗКА ДАННЫХ =======
 async function loadFaultDetail() {
@@ -490,20 +491,44 @@ async function loadAttachments() {
     }
 }
 
-// Загрузка файлов
+// ======= ЗАГРУЗКА ФАЙЛОВ (с защитой от дублирования) =======
 document.getElementById('fileInput').addEventListener('change', async function(event) {
+    // ✅ Предотвращаем повторные вызовы
+    if (isUploading) {
+        console.log('⏳ Загрузка уже выполняется, пропускаем');
+        return;
+    }
+    
     const files = event.target.files;
     if (files.length === 0) return;
     
-    const formData = new FormData();
-    const description = prompt('Введите описание файла (необязательно):', '');
-    
-    for (const file of files) {
-        formData.append('file', file);
-    }
-    formData.append('description', description || '');
+    // ✅ Блокируем повторные вызовы
+    isUploading = true;
     
     try {
+        // Спрашиваем описание
+        const description = prompt('Введите описание файла (необязательно):', '');
+        
+        // Если пользователь нажал "Отмена" — прерываем
+        if (description === null) {
+            console.log('❌ Загрузка отменена пользователем');
+            document.getElementById('fileInput').value = '';
+            return;
+        }
+        
+        const formData = new FormData();
+        for (const file of files) {
+            formData.append('file', file);
+        }
+        formData.append('description', description || '');
+        
+        // Показываем индикатор загрузки (находим кнопку загрузки)
+        const uploadBtn = document.querySelector('.card-header .btn-outline-primary');
+        if (uploadBtn) {
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Загрузка...';
+        }
+        
         await axios.post(
             `/api/faults/${faultId}/attachments`,
             formData,
@@ -514,12 +539,29 @@ document.getElementById('fileInput').addEventListener('change', async function(e
             }
         );
         
+        // Очищаем input
         document.getElementById('fileInput').value = '';
+        
+        // Перезагружаем списки
         await loadAttachments();
+        await loadHistory();
+        
         showNotification(`✅ Загружено ${files.length} файлов`);
+        
     } catch (error) {
-        console.error('Ошибка загрузки файлов:', error);
+        console.error('❌ Ошибка загрузки файлов:', error);
         alert('Ошибка загрузки файлов: ' + (error.response?.data?.detail || error.message));
+        document.getElementById('fileInput').value = '';
+    } finally {
+        // ✅ Снимаем блокировку
+        isUploading = false;
+        
+        // Восстанавливаем кнопку
+        const uploadBtn = document.querySelector('.card-header .btn-outline-primary');
+        if (uploadBtn) {
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = '<i class="bi bi-upload"></i> Загрузить';
+        }
     }
 });
 
@@ -530,6 +572,7 @@ async function deleteAttachment(attachmentId) {
     try {
         await axios.delete(`/api/faults/${faultId}/attachments/${attachmentId}`);
         await loadAttachments();
+        await loadHistory();
         showNotification('✅ Вложение удалено');
     } catch (error) {
         console.error('Ошибка удаления вложения:', error);
