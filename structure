@@ -64,7 +64,15 @@
 │   ├── run_uv.sh
 │   └── toexe.sh
 │
-├── tests/                       # Тесты
+├── tests/
+│   ├── __init__.py
+│   ├── conftest.py          # Фикстуры
+│   ├── test_auth.py         # Тесты авторизации
+│   ├── test_projects.py     # Тесты проектов
+│   ├── test_faults.py       # Тесты неисправностей
+│   ├── test_comments.py     # Тесты комментариев
+│   ├── test_knowledge.py    # Тесты базы знаний
+│   └── test_history.py      # Тесты истории
 ├── bugs/
 │   └── bug-001.md
 ├── docs/

@@ -35,6 +35,12 @@ wheels/
 *.egg
 MANIFEST
 
+# Тесты
+.pytest_cache/
+htmlcov/
+.coverage
+test_faults.db
+
 # Project
 logs/
 *.db

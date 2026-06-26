@@ -1,2 +1,5 @@
-aiosmtplib 
-email-validator
+pytest
+pytest-asyncio
+pytest-cov
+httpx 
+factory-boy
