@@ -149,3 +149,75 @@ def auth_token(client, test_user):
 def auth_headers(auth_token):
     """Заголовки с токеном авторизации"""
     return {"Authorization": f"Bearer {auth_token}"}
+
+@pytest.fixture(scope="function")
+def test_engineer(db_session):
+    """Создание тестового инженера"""
+    user = User(
+        username="engineer",
+        email="engineer@example.com",
+        password_hash=get_password_hash("eng123"),
+        full_name="Test Engineer",
+        role=UserRole.ENGINEER,
+        is_active=True
+    )
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
+    return user
+
+
+@pytest.fixture(scope="function")
+def engineer_token(client, test_engineer):
+    """Получение JWT токена для инженера"""
+    response = client.post(
+        "/api/auth/login",
+        data={
+            "username": "engineer",
+            "password": "eng123"
+        },
+        headers={"Content-Type": "application/x-www-form-urlencoded"}
+    )
+    return response.json()["access_token"]
+
+
+@pytest.fixture(scope="function")
+def engineer_headers(engineer_token):
+    """Заголовки с токеном инженера"""
+    return {"Authorization": f"Bearer {engineer_token}"}
+
+@pytest.fixture(scope="function")
+def test_admin(db_session):
+    """Создание тестового администратора"""
+    user = User(
+        username="admin",
+        email="admin@example.com",
+        password_hash=get_password_hash("admin123"),
+        full_name="Test Admin",
+        role=UserRole.ADMIN,
+        is_active=True
+    )
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
+    return user
+
+
+@pytest.fixture(scope="function")
+def admin_token(client, test_admin):
+    """Получение JWT токена для админа"""
+    response = client.post(
+        "/api/auth/login",
+        data={
+            "username": "admin",
+            "password": "admin123"
+        },
+        headers={"Content-Type": "application/x-www-form-urlencoded"}
+    )
+    return response.json()["access_token"]
+
+
+@pytest.fixture(scope="function")
+def admin_headers(admin_token):
+    """Заголовки с токеном админа"""
+    return {"Authorization": f"Bearer {admin_token}"}

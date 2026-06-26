@@ -1,8 +1,8 @@
 import pytest
 
 
-def test_create_project(client, auth_headers, test_user):
-    """Тест создания проекта"""
+def test_create_project(client, engineer_headers, test_user):
+    """Тест создания проекта (требуются права ENGINEER)"""
     response = client.post(
         "/api/projects/",
         json={
@@ -13,7 +13,7 @@ def test_create_project(client, auth_headers, test_user):
             "unit": 2,
             "type": "САУ"
         },
-        headers=auth_headers
+        headers=engineer_headers  # ✅ Используем инженера
     )
     
     assert response.status_code == 201
@@ -49,8 +49,8 @@ def test_get_project(client, auth_headers, test_project):
     assert data["name"] == "Тестовый проект"
 
 
-def test_update_project(client, auth_headers, test_project):
-    """Тест обновления проекта"""
+def test_update_project(client, engineer_headers, test_project):
+    """Тест обновления проекта (требуются права ENGINEER)"""
     response = client.put(
         f"/api/projects/{test_project.id}",
         json={
@@ -58,7 +58,7 @@ def test_update_project(client, auth_headers, test_project):
             "description": "Новое описание",
             "client": "Новый клиент"
         },
-        headers=auth_headers
+        headers=engineer_headers  # ✅ Используем инженера
     )
     
     assert response.status_code == 200
@@ -67,11 +67,11 @@ def test_update_project(client, auth_headers, test_project):
     assert data["client"] == "Новый клиент"
 
 
-def test_delete_project(client, auth_headers, test_project):
-    """Тест удаления проекта"""
+def test_delete_project(client, engineer_headers, test_project):
+    """Тест удаления проекта (требуются права ENGINEER)"""
     response = client.delete(
         f"/api/projects/{test_project.id}",
-        headers=auth_headers
+        headers=engineer_headers  # ✅ Используем инженера
     )
     
     assert response.status_code == 204
@@ -79,7 +79,7 @@ def test_delete_project(client, auth_headers, test_project):
     # Проверяем, что проект удалён
     get_response = client.get(
         f"/api/projects/{test_project.id}",
-        headers=auth_headers
+        headers=engineer_headers
     )
     assert get_response.status_code == 404
 
@@ -108,3 +108,18 @@ def test_filter_projects_by_station(client, auth_headers, test_project):
     data = response.json()
     assert len(data) >= 1
     assert all(p["station"] == test_project.station for p in data)
+
+
+def test_create_project_unauthorized(client, auth_headers):
+    """Тест создания проекта без прав ENGINEER (должен вернуть 403)"""
+    response = client.post(
+        "/api/projects/",
+        json={
+            "name": "Проект без прав",
+            "description": "Описание"
+        },
+        headers=auth_headers  # ✅ Обычный пользователь
+    )
+    
+    assert response.status_code == 403
+    assert "Требуются права инженера" in response.json()["detail"]
