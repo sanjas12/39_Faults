@@ -28,4 +28,4 @@ def get_db():  # type: ignore
 # отсюда же). Любой модуль, импортирующий что-либо из database.py,
 # теперь автоматически получает и все модели — Base.metadata.create_all()
 # будет работать корректно в init_db.py, migrate_db.py, seed_data.py и т.д.
-from app.models.all_models import Fault, Project, User, UserRole  # noqa: E402,F401
+# from app.models.all_models import Fault, Project, User, UserRole  # noqa: E402,F401

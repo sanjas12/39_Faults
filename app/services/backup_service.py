@@ -4,12 +4,17 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
+
+# ✅ Импортируем только после того, как путь настроен
 from sqlalchemy.orm import Session
 
-from app.models.all_models import (
-    User, Project, Fault, FaultComment, 
-    FaultHistory, KnowledgeBase
-)
+# ✅ Отложенный импорт для избежания циклических ссылок
+def get_models():
+    from app.models.all_models import (
+        User, Project, Fault, FaultComment, 
+        FaultHistory, KnowledgeBase
+    )
+    return User, Project, Fault, FaultComment, FaultHistory, KnowledgeBase
 
 
 class BackupService:
@@ -20,12 +25,7 @@ class BackupService:
         self.backup_dir.mkdir(exist_ok=True)
 
     def create_backup(self, db: Session) -> Dict:
-        """
-        Создание полного бэкапа базы данных
-        
-        Returns:
-            Dict с информацией о созданном бэкапе
-        """
+        """Создание полного бэкапа базы данных"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_folder = self.backup_dir / f"backup_{timestamp}"
         backup_folder.mkdir(exist_ok=True)
@@ -73,16 +73,18 @@ class BackupService:
 
     def _collect_all_data(self, db: Session) -> Dict:
         """Сбор всех данных из базы"""
+        User, Project, Fault, FaultComment, FaultHistory, KnowledgeBase = get_models()
+        
         return {
-            "users": self._serialize_users(db),
-            "projects": self._serialize_projects(db),
-            "faults": self._serialize_faults(db),
-            "comments": self._serialize_comments(db),
-            "history": self._serialize_history(db),
-            "knowledge": self._serialize_knowledge(db),
+            "users": self._serialize_users(db, User),
+            "projects": self._serialize_projects(db, Project),
+            "faults": self._serialize_faults(db, Fault),
+            "comments": self._serialize_comments(db, FaultComment),
+            "history": self._serialize_history(db, FaultHistory),
+            "knowledge": self._serialize_knowledge(db, KnowledgeBase),
         }
 
-    def _serialize_users(self, db: Session) -> List[Dict]:
+    def _serialize_users(self, db: Session, User) -> List[Dict]:
         """Сериализация пользователей"""
         users = db.query(User).all()
         return [
@@ -91,7 +93,7 @@ class BackupService:
                 "username": u.username,
                 "email": u.email,
                 "full_name": u.full_name,
-                "role": u.role.value if u.role else None,
+                "role": u.role.value if hasattr(u.role, 'value') else str(u.role),
                 "is_active": u.is_active,
                 "created_at": u.created_at.isoformat() if u.created_at else None,
                 "updated_at": u.updated_at.isoformat() if u.updated_at else None,
@@ -99,7 +101,7 @@ class BackupService:
             for u in users
         ]
 
-    def _serialize_projects(self, db: Session) -> List[Dict]:
+    def _serialize_projects(self, db: Session, Project) -> List[Dict]:
         """Сериализация проектов"""
         projects = db.query(Project).all()
         return [
@@ -117,7 +119,7 @@ class BackupService:
             for p in projects
         ]
 
-    def _serialize_faults(self, db: Session) -> List[Dict]:
+    def _serialize_faults(self, db: Session, Fault) -> List[Dict]:
         """Сериализация неисправностей"""
         faults = db.query(Fault).all()
         return [
@@ -135,7 +137,7 @@ class BackupService:
             for f in faults
         ]
 
-    def _serialize_comments(self, db: Session) -> List[Dict]:
+    def _serialize_comments(self, db: Session, FaultComment) -> List[Dict]:
         """Сериализация комментариев"""
         comments = db.query(FaultComment).all()
         return [
@@ -150,7 +152,7 @@ class BackupService:
             for c in comments
         ]
 
-    def _serialize_history(self, db: Session) -> List[Dict]:
+    def _serialize_history(self, db: Session, FaultHistory) -> List[Dict]:
         """Сериализация истории"""
         history = db.query(FaultHistory).all()
         return [
@@ -167,7 +169,7 @@ class BackupService:
             for h in history
         ]
 
-    def _serialize_knowledge(self, db: Session) -> List[Dict]:
+    def _serialize_knowledge(self, db: Session, KnowledgeBase) -> List[Dict]:
         """Сериализация базы знаний"""
         knowledge = db.query(KnowledgeBase).all()
         return [
