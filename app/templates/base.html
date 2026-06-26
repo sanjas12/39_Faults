@@ -12,51 +12,54 @@
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <nav class="col-md-3 col-lg-2 d-md-block bg-dark sidebar" style="min-height: 100vh; padding-top: 20px; width: 280px; flex: 0 0 280px;" aria-label="Основная навигация">
+            <nav class="col-md-3 col-lg-2 d-md-block bg-dark sidebar" id="sidebar" style="min-height: 100vh; padding-top: 20px; width: 280px; flex: 0 0 280px; transition: all 0.3s ease;" aria-label="Основная навигация">
                 <div class="position-sticky" style="width: 100%; height: 100vh; display: flex; flex-direction: column;">
-                    <h3 class="text-white text-center mb-4" style="font-size: 1.3rem;">
-                        <i class="bi bi-gear"></i> Faults
-                    </h3>
+                    <div class="d-flex justify-content-between align-items-center px-3 mb-3">
+                        <h3 class="text-white text-center mb-0" id="sidebarTitle" style="font-size: 1.3rem;">
+                            <i class="bi bi-gear"></i> Faults
+                        </h3>
+                        <button class="btn btn-sm btn-outline-light" id="toggleSidebarBtn" title="Свернуть панель">
+                            <i class="bi bi-chevron-left" id="toggleIcon"></i>
+                        </button>
+                    </div>
+                    
                     <ul class="nav flex-column" style="flex: 1;">
                         <li class="nav-item">
                             <a class="nav-link text-white {% if active_page == 'dashboard' %}active bg-primary{% endif %}" href="/" {% if active_page == 'dashboard' %}aria-current="page"{% endif %}>
-                                <i class="bi bi-speedometer2"></i> Дашборд
+                                <i class="bi bi-speedometer2"></i> <span class="nav-text">Дашборд</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-white {% if active_page == 'kanban' %}active bg-primary{% endif %}" href="/kanban" {% if active_page == 'kanban' %}aria-current="page"{% endif %}>
-                                <i class="bi bi-grid-3x3-gap-fill"></i> Kanban
+                                <i class="bi bi-grid-3x3-gap-fill"></i> <span class="nav-text">Kanban</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-white {% if active_page == 'projects' %}active bg-primary{% endif %}" href="/projects" {% if active_page == 'projects' %}aria-current="page"{% endif %}>
-                                <i class="bi bi-folder"></i> Проекты
+                                <i class="bi bi-folder"></i> <span class="nav-text">Проекты</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-white {% if active_page == 'faults' %}active bg-primary{% endif %}" href="/faults" {% if active_page == 'faults' %}aria-current="page"{% endif %}>
-                                <i class="bi bi-bug"></i> Неисправности
+                                <i class="bi bi-bug"></i> <span class="nav-text">Неисправности</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-white {% if active_page == 'knowledge' %}active bg-primary{% endif %}" href="/knowledge" {% if active_page == 'knowledge' %}aria-current="page"{% endif %}>
-                                <i class="bi bi-book"></i> База знаний
+                                <i class="bi bi-book"></i> <span class="nav-text">База знаний</span>
                             </a>
                         </li>
                     </ul>
                     
-                    <!-- ✅ БЛОК ПОЛЬЗОВАТЕЛЯ (ТОЛЬКО ЗДЕСЬ, ВНУТРИ САЙДБАРА) -->
+                    <!-- Блок пользователя -->
                     <div class="p-2 mt-auto" style="width: 100%; border-top: 1px solid rgba(255,255,255,0.1);">
                         <div class="text-white" id="userContainer" style="width: 100%;">
-                            <!-- Аватар и имя -->
                             <div class="d-flex align-items-center mb-2">
                                 <i class="bi bi-person-circle me-2" style="font-size: 24px; flex-shrink: 0;"></i>
                                 <div id="userInfo" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">
                                     <small>Гость</small>
                                 </div>
                             </div>
-                            
-                            <!-- Кнопки (вертикально) -->
                             <div class="d-flex flex-column gap-1" style="width: 100%;">
                                 <button 
                                     id="logoutBtn" 
@@ -64,10 +67,10 @@
                                     style="display: none; font-size: 0.8rem; padding: 4px 8px;"
                                     onclick="logout()"
                                 >
-                                    <i class="bi bi-box-arrow-right"></i> Выход
+                                    <i class="bi bi-box-arrow-right"></i> <span class="nav-text">Выход</span>
                                 </button>
                                 <a href="/login" class="btn btn-sm btn-outline-light w-100" id="loginLink" style="font-size: 0.8rem; padding: 4px 8px;">
-                                    <i class="bi bi-box-arrow-in-right"></i> Вход
+                                    <i class="bi bi-box-arrow-in-right"></i> <span class="nav-text">Вход</span>
                                 </a>
                             </div>
                         </div>
@@ -76,9 +79,14 @@
             </nav>
 
             <!-- Main content -->
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" style="padding-top: 20px; flex: 1;">
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" id="mainContent" style="padding-top: 20px; flex: 1; transition: all 0.3s ease;">
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">{% block page_title %}Дашборд{% endblock %}</h1>
+                    <div class="d-flex align-items-center">
+                        <button class="btn btn-sm btn-outline-secondary me-2 d-md-none" id="mobileToggleBtn">
+                            <i class="bi bi-list"></i>
+                        </button>
+                        <h1 class="h2">{% block page_title %}Дашборд{% endblock %}</h1>
+                    </div>
                     <div class="btn-toolbar mb-2 mb-md-0">
                         <div class="btn-group me-2">
                             <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.location.reload()" aria-label="Обновить страницу">
@@ -95,6 +103,70 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="/static/js/app.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const toggleBtn = document.getElementById('toggleSidebarBtn');
+            const toggleIcon = document.getElementById('toggleIcon');
+            const sidebarTitle = document.getElementById('sidebarTitle');
+            const navTexts = document.querySelectorAll('.nav-text');
+            const userInfo = document.getElementById('userInfo');
+            
+            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            
+            function toggleSidebar(collapsed) {
+                if (collapsed) {
+                    sidebar.style.width = '60px';
+                    sidebar.style.flex = '0 0 60px';
+                    mainContent.style.marginLeft = '0px';
+                    sidebarTitle.style.display = 'none';
+                    navTexts.forEach(el => el.style.display = 'none');
+                    toggleIcon.className = 'bi bi-chevron-right';
+                    document.querySelectorAll('#userContainer .nav-text').forEach(el => el.style.display = 'none');
+                    sidebar.classList.add('sidebar-collapsed');
+                } else {
+                    sidebar.style.width = '280px';
+                    sidebar.style.flex = '0 0 280px';
+                    mainContent.style.marginLeft = '0px';
+                    sidebarTitle.style.display = 'block';
+                    navTexts.forEach(el => el.style.display = 'inline');
+                    toggleIcon.className = 'bi bi-chevron-left';
+                    document.querySelectorAll('#userContainer .nav-text').forEach(el => el.style.display = 'inline');
+                    sidebar.classList.remove('sidebar-collapsed');
+                }
+                localStorage.setItem('sidebarCollapsed', String(collapsed));
+            }
+            
+            if (isCollapsed) {
+                toggleSidebar(true);
+            }
+            
+            toggleBtn.addEventListener('click', function() {
+                const collapsed = sidebar.style.width === '60px' || sidebar.classList.contains('sidebar-collapsed');
+                toggleSidebar(!collapsed);
+            });
+            
+            // Мобильная кнопка
+            document.getElementById('mobileToggleBtn').addEventListener('click', function() {
+                const sidebar = document.getElementById('sidebar');
+                sidebar.classList.toggle('show-mobile');
+            });
+            
+            // Закрывать сайдбар при клике вне его на мобильных
+            document.addEventListener('click', function(event) {
+                const sidebar = document.getElementById('sidebar');
+                const toggleBtn = document.getElementById('mobileToggleBtn');
+                if (window.innerWidth <= 768) {
+                    if (!sidebar.contains(event.target) && !toggleBtn.contains(event.target)) {
+                        sidebar.classList.remove('show-mobile');
+                    }
+                }
+            });
+        });
+    </script>
+    
     {% block scripts %}{% endblock %}
 </body>
 </html>
