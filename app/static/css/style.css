@@ -287,3 +287,41 @@
         margin-left: 0 !important;
     }
 }
+
+/* Вложения */
+.attachment-item {
+    background-color: #f8f9fa;
+    transition: background-color 0.2s;
+}
+
+.attachment-item:hover {
+    background-color: #e9ecef;
+}
+
+.attachment-item a {
+    color: #0d6efd;
+    word-break: break-all;
+}
+
+.attachment-item a:hover {
+    text-decoration: underline !important;
+}
+
+#attachmentsList {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+#attachmentsList::-webkit-scrollbar {
+    width: 6px;
+}
+
+#attachmentsList::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+#attachmentsList::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}

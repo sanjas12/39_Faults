@@ -15,7 +15,7 @@ from app.core.security import verify_password, create_access_token
 from app.models.all_models import User
 
 from _version import __version__
-from app.api import auth, comments, faults, projects, history, knowledge_base, project_history, backup
+from app.api import auth, comments, faults, projects, history, knowledge_base, project_history, backup, attachments
 from app.services.scheduler import start_scheduler
 
 
@@ -48,6 +48,7 @@ app.include_router(history.router, prefix="/api")
 app.include_router(knowledge_base.router, prefix="/api")
 app.include_router(project_history.router, prefix="/api")
 app.include_router(backup.router, prefix="/api")
+app.include_router(attachments.router, prefix="/api")
 
 
 def _render_page(

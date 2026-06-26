@@ -94,6 +94,7 @@ class Fault(Base):
         "FaultComment", back_populates="fault", cascade="all, delete-orphan"
     )
     history = relationship("FaultHistory", back_populates="fault", cascade="all, delete-orphan")
+    attachments = relationship("FaultAttachment", back_populates="fault", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Fault(id={self.id}, title='{self.title[:30]}...')>"
@@ -131,6 +132,25 @@ class FaultHistory(Base):
 
     def __repr__(self):
         return f"<FaultHistory(id={self.id}, fault_id={self.fault_id}, type='{self.event_type}')>"
+
+
+class FaultAttachment(Base):
+    __tablename__ = "fault_attachments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    fault_id = Column(Integer, ForeignKey("faults.id", ondelete="CASCADE"), nullable=False)
+    filename = Column(String(255), nullable=False)
+    file_path = Column(String(500), nullable=False)
+    file_size = Column(Integer, nullable=False)  # размер в байтах
+    file_type = Column(String(100), nullable=True)  # mime type
+    description = Column(String(500), nullable=True)
+    uploaded_by = Column(String(100), nullable=False, default="system")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    fault = relationship("Fault", back_populates="attachments")
+
+    def __repr__(self):
+        return f"<FaultAttachment(id={self.id}, filename='{self.filename}')>"
 
 
 class KnowledgeBase(Base):

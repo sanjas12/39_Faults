@@ -18,6 +18,7 @@
     <div class="row">
         <!-- Основная информация -->
         <div class="col-md-8">
+            <!-- ===== КАРТОЧКА НЕИСПРАВНОСТИ ===== -->
             <div class="card mb-3">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-3">
@@ -61,7 +62,21 @@
                 </div>
             </div>
 
-            <!-- ===== СВЯЗАННЫЕ СТАТЬИ ИЗ БАЗЫ ЗНАНИЙ ===== -->
+            <!-- ===== 1. ВЛОЖЕНИЯ ===== -->
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-paperclip"></i> Вложения</h5>
+                    <button class="btn btn-sm btn-outline-primary" onclick="document.getElementById('fileInput').click()">
+                        <i class="bi bi-upload"></i> Загрузить
+                    </button>
+                    <input type="file" id="fileInput" style="display: none;" multiple>
+                </div>
+                <div class="card-body" id="attachmentsList">
+                    <p class="text-muted text-center">Нет вложений</p>
+                </div>
+            </div>
+
+            <!-- ===== 2. СВЯЗАННЫЕ СТАТЬИ ИЗ БАЗЫ ЗНАНИЙ ===== -->
             <div class="card mb-3">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="bi bi-book"></i> Связанные статьи</h5>
@@ -73,8 +88,8 @@
                     <p class="text-muted text-center">Нет связанных статей</p>
                 </div>
             </div>
-            
-            <!-- Редактирование (скрыто по умолчанию) -->
+
+            <!-- ===== 3. РЕДАКТИРОВАНИЕ (скрыто по умолчанию) ===== -->
             <div class="card mb-3 d-none" id="editForm">
                 <div class="card-body">
                     <h5>Редактирование</h5>
@@ -119,8 +134,8 @@
                     </form>
                 </div>
             </div>
-            
-            <!-- Комментарии -->
+
+            <!-- ===== 4. КОММЕНТАРИИ ===== -->
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="bi bi-chat-dots"></i> Комментарии</h5>
@@ -151,8 +166,9 @@
             </div>
         </div>
         
-        <!-- Боковая панель: быстрые действия -->
+        <!-- Боковая панель: быстрые действия и история -->
         <div class="col-md-4">
+            <!-- Быстрые действия -->
             <div class="card mb-3">
                 <div class="card-header">
                     <h6 class="mb-0">Быстрые действия</h6>
@@ -178,6 +194,7 @@
                 </div>
             </div>
             
+            <!-- История изменений -->
             <div class="card">
                 <div class="card-header">
                     <h6 class="mb-0"><i class="bi bi-clock-history"></i> История изменений</h6>
@@ -238,6 +255,7 @@ async function loadFaultDetail() {
         
         console.log('✅ Неисправность загружена:', currentFault);
         renderFault(currentFault);
+        await loadAttachments();
         renderLinkedKnowledge(currentFault.linked_knowledge || []);
         await loadComments();
         await loadHistory();
@@ -407,6 +425,116 @@ function renderFault(fault) {
     
     const editProjectEl = document.getElementById('editProject');
     if (editProjectEl) editProjectEl.value = fault.project_id || '';
+}
+
+// ======= ВЛОЖЕНИЯ =======
+async function loadAttachments() {
+    try {
+        const response = await axios.get(`/api/faults/${faultId}/attachments`);
+        const attachments = response.data || [];
+        
+        const container = document.getElementById('attachmentsList');
+        if (!container) return;
+        
+        if (attachments.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center">Нет вложений</p>';
+            return;
+        }
+        
+        container.innerHTML = attachments.map(a => {
+            let icon = '📎';
+            if (a.file_type) {
+                if (a.file_type.startsWith('image/')) icon = '🖼️';
+                else if (a.file_type === 'application/pdf') icon = '📄';
+                else if (a.file_type.startsWith('text/')) icon = '📝';
+                else if (a.file_type === 'application/zip') icon = '📦';
+                else if (a.file_type === 'application/json') icon = '📊';
+            }
+            
+            const sizeKB = (a.file_size / 1024).toFixed(1);
+            const sizeStr = a.file_size > 1024 * 1024 
+                ? (a.file_size / (1024 * 1024)).toFixed(1) + ' MB'
+                : sizeKB + ' KB';
+            
+            return `
+                <div class="attachment-item mb-2 p-2 border rounded d-flex justify-content-between align-items-center">
+                    <div>
+                        <span style="font-size: 24px;">${icon}</span>
+                        <a href="/api/faults/${faultId}/attachments/${a.id}/download" 
+                           class="text-decoration-none fw-bold ms-2" target="_blank">
+                            ${a.filename}
+                        </a>
+                        <span class="badge bg-secondary ms-2">${sizeStr}</span>
+                        ${a.description ? `<small class="text-muted ms-2">${a.description}</small>` : ''}
+                        <br>
+                        <small class="text-muted">
+                            <i class="bi bi-person"></i> ${a.uploaded_by} • 
+                            ${new Date(a.created_at).toLocaleString('ru-RU')}
+                        </small>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteAttachment(${a.id})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+    } catch (error) {
+        console.error('Ошибка загрузки вложений:', error);
+        const container = document.getElementById('attachmentsList');
+        if (container) {
+            container.innerHTML = '<p class="text-danger text-center">Ошибка загрузки вложений</p>';
+        }
+    }
+}
+
+// Загрузка файлов
+document.getElementById('fileInput').addEventListener('change', async function(event) {
+    const files = event.target.files;
+    if (files.length === 0) return;
+    
+    const formData = new FormData();
+    const description = prompt('Введите описание файла (необязательно):', '');
+    
+    for (const file of files) {
+        formData.append('file', file);
+    }
+    formData.append('description', description || '');
+    
+    try {
+        await axios.post(
+            `/api/faults/${faultId}/attachments`,
+            formData,
+            {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            }
+        );
+        
+        document.getElementById('fileInput').value = '';
+        await loadAttachments();
+        showNotification(`✅ Загружено ${files.length} файлов`);
+    } catch (error) {
+        console.error('Ошибка загрузки файлов:', error);
+        alert('Ошибка загрузки файлов: ' + (error.response?.data?.detail || error.message));
+    }
+});
+
+// Удаление вложения
+async function deleteAttachment(attachmentId) {
+    if (!confirm('Вы уверены, что хотите удалить это вложение?')) return;
+    
+    try {
+        await axios.delete(`/api/faults/${faultId}/attachments/${attachmentId}`);
+        await loadAttachments();
+        showNotification('✅ Вложение удалено');
+    } catch (error) {
+        console.error('Ошибка удаления вложения:', error);
+        alert('Ошибка при удалении вложения');
+    }
 }
 
 // ======= СВЯЗАННЫЕ СТАТЬИ =======
