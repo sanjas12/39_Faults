@@ -21,7 +21,8 @@ app = FastAPI(
     title="Faults", description="Отслеживание неисправностей", version=__version__
 )
 
-app.add_middleware(BaseHTTPMiddleware, dispatch=auth_middleware)
+# проблема с авторизаций, надо закоментировать
+# app.add_middleware(BaseHTTPMiddleware, dispatch=auth_middleware)
 
 # Подключаем статику и шаблоны
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
@@ -114,38 +115,6 @@ def login_page(request: Request) -> HTMLResponse:
     """Страница входа в систему."""
     return _render_page(request, "login.html")
 
-@app.post("/login")
-async def login_post(
-    request: Request,
-    username: str = Form(...),
-    password: str = Form(...)
-):
-    """Обработка POST-запроса для входа"""
-    from app.core.database import SessionLocal
-    db = SessionLocal()
-    try:
-        user = db.query(User).filter(User.username == username).first()
-        if not user or not verify_password(password, user.password_hash):
-            return templates.TemplateResponse("login.html", {
-                "request": request,
-                "error": "Неверное имя пользователя или пароль"
-            })
-        
-        if not user.is_active:
-            return templates.TemplateResponse("login.html", {
-                "request": request,
-                "error": "Пользователь заблокирован"
-            })
-        
-        # Создаём токен
-        token = create_access_token({"sub": user.username, "role": user.role})
-        
-        # Устанавливаем cookie и редиректим
-        response = RedirectResponse(url="/", status_code=302)
-        response.set_cookie(key="access_token", value=token, httponly=True)
-        return response
-    finally:
-        db.close()
 
 @app.get("/register")
 def register_page(request: Request) -> HTMLResponse:
