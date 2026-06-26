@@ -15,7 +15,9 @@ from app.core.security import verify_password, create_access_token
 from app.models.all_models import User
 
 from _version import __version__
-from app.api import auth, comments, faults, projects, history, knowledge_base, project_history
+from app.api import auth, comments, faults, projects, history, knowledge_base, project_history, backup
+from app.services.scheduler import start_scheduler
+
 
 app = FastAPI(
     title="Faults", description="Отслеживание неисправностей", version=__version__
@@ -45,6 +47,7 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(history.router, prefix="/api")
 app.include_router(knowledge_base.router, prefix="/api")
 app.include_router(project_history.router, prefix="/api")
+app.include_router(backup.router, prefix="/api")
 
 
 def _render_page(
@@ -137,3 +140,6 @@ def settings_page(request: Request):
 def project_detail(request: Request, project_id: int):
     """Детальная страница проекта"""
     return _render_page(request, "project_detail.html", active_page="projects", project_id=project_id)
+
+if not app.debug:
+    start_scheduler()
