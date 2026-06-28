@@ -72,6 +72,7 @@ dependencies = [
     "pydantic-settings>=2.8.1",
     "pygments==2.19.2 ; python_full_version < '3.9' and sys_platform == 'win32'",
     "pygments==2.20.0 ; python_full_version >= '3.9' and sys_platform == 'win32'",
+    "pytest>=8.3.5",
     "pytest==8.3.5 ; python_full_version < '3.9' and sys_platform == 'win32'",
     "pytest==8.4.2 ; python_full_version == '3.9.*' and sys_platform == 'win32'",
     "pytest==9.0.3 ; python_full_version >= '3.10' and sys_platform == 'win32'",
@@ -112,6 +113,12 @@ dependencies = [
     "wrapt==2.2.1 ; python_full_version >= '3.9' and sys_platform == 'win32'",
     "zipp==3.20.2 ; python_full_version < '3.9' and sys_platform == 'win32'",
     "zipp==3.23.1 ; python_full_version == '3.9.*' and sys_platform == 'win32'",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=5.0.0",
+    "httpx>=0.28.1",
+    "factory-boy>=3.3.3",
+    "apscheduler>=3.11.2",
+    "aiofiles>=24.1.0",
 ]
 
 [project.urls]
