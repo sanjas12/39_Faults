@@ -29,6 +29,9 @@
                         <p class="text-muted">Загрузка описания...</p>
                     </div>
                     
+                    <!-- Связь с родительской неисправностью и клонами -->
+                    <div id="faultRelations"></div>
+                    
                     <div class="row g-2 mb-3">
                         <div class="col-md-4">
                             <small class="text-muted">Проект:</small>
@@ -190,6 +193,9 @@
                         <a href="#" id="goToProjectBtn" class="btn btn-outline-info btn-sm" style="display: none;">
                             <i class="bi bi-box-arrow-up-right"></i> Перейти в проект
                         </a>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="showCloneModal()">
+                            <i class="bi bi-files"></i> Клонировать в проект
+                        </button>
                     </div>
                 </div>
             </div>
@@ -228,11 +234,47 @@
         </div>
     </div>
 </div>
+
+<!-- ===== МОДАЛЬНОЕ ОКНО ДЛЯ КЛОНИРОВАНИЯ ===== -->
+<div class="modal fade" id="cloneModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Клонировать неисправность</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">
+                    Будет создана копия неисправности в выбранном проекте.
+                    Будут скопированы: название, описание, важность, вложения и связанные статьи.
+                </p>
+                <div class="mb-3">
+                    <label class="form-label">Выберите целевой проект</label>
+                    <select class="form-select" id="cloneProjectSelect">
+                        <option value="">-- Выберите проект --</option>
+                    </select>
+                </div>
+                <div id="cloneInfo" class="alert alert-info">
+                    <small>
+                        <strong>Исходная неисправность:</strong> #<span id="cloneOriginalId"></span> 
+                        <span id="cloneOriginalTitle"></span>
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="confirmCloneBtn">
+                    <i class="bi bi-files"></i> Клонировать
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-// Глобальные переменные
+// ======= ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ =======
 const faultId = {{ fault_id }};
 let currentFault = null;
 let allProjects = [];
@@ -313,6 +355,9 @@ function renderFault(fault) {
     
     const descEl = document.getElementById('faultDescription');
     if (descEl) descEl.innerHTML = fault.description || '<span class="text-muted">Нет описания</span>';
+    
+    // ✅ Отображаем связи (родитель и клоны)
+    renderRelations(fault);
     
     // Проект со ссылкой
     const projectName = fault.project?.name || 'Без проекта';
@@ -428,6 +473,43 @@ function renderFault(fault) {
     if (editProjectEl) editProjectEl.value = fault.project_id || '';
 }
 
+// ======= ОТОБРАЖЕНИЕ СВЯЗЕЙ (РОДИТЕЛЬ И КЛОНЫ) =======
+function renderRelations(fault) {
+    const container = document.getElementById('faultRelations');
+    if (!container) return;
+    
+    let html = '';
+    
+    // Родительская неисправность
+    if (fault.parent_fault) {
+        html += `
+            <div class="alert alert-info mb-2">
+                <i class="bi bi-link"></i> 
+                <strong>Клон неисправности</strong>
+                <a href="/faults/${fault.parent_fault.id}" class="text-decoration-none fw-bold">
+                    #${fault.parent_fault.id} ${fault.parent_fault.title}
+                </a>
+            </div>
+        `;
+    }
+    
+    // Клоны
+    if (fault.clones && fault.clones.length > 0) {
+        const cloneLinks = fault.clones.map(c => 
+            `<a href="/faults/${c.id}" class="text-decoration-none">#${c.id}</a>`
+        ).join(', ');
+        
+        html += `
+            <div class="alert alert-secondary mb-2">
+                <i class="bi bi-files"></i> 
+                <strong>Клоны:</strong> ${cloneLinks}
+            </div>
+        `;
+    }
+    
+    container.innerHTML = html;
+}
+
 // ======= ВЛОЖЕНИЯ =======
 async function loadAttachments() {
     try {
@@ -491,7 +573,7 @@ async function loadAttachments() {
     }
 }
 
-// ======= СКАЧИВАНИЕ ФАЙЛА ЧЕРЕЗ AJAX =======
+// ======= СКАЧИВАНИЕ ФАЙЛА =======
 async function downloadFile(attachmentId, filename) {
     console.log(`📥 Скачивание файла: ${filename} (ID: ${attachmentId})`);
     
@@ -503,7 +585,6 @@ async function downloadFile(attachmentId, filename) {
             return;
         }
         
-        // ✅ Запрос с токеном в заголовке
         const response = await axios.get(
             `/api/faults/${faultId}/attachments/${attachmentId}/download`,
             {
@@ -543,7 +624,6 @@ async function downloadFile(attachmentId, filename) {
         
     } catch (error) {
         console.error('❌ Ошибка скачивания:', error);
-        
         if (error.response?.status === 401) {
             alert('Сессия истекла. Пожалуйста, войдите заново.');
             window.location.href = '/login';
@@ -624,86 +704,20 @@ document.getElementById('fileInput').addEventListener('change', async function(e
     }
 });
 
-// ======= ЗАГРУЗКА ФАЙЛОВ (с защитой от дублирования) =======
-document.getElementById('fileInput').addEventListener('change', async function(event) {
-    // ✅ Предотвращаем повторные вызовы
-    if (isUploading) {
-        console.log('⏳ Загрузка уже выполняется, пропускаем');
-        return;
-    }
-    
-    const files = event.target.files;
-    if (files.length === 0) return;
-    
-    // ✅ Блокируем повторные вызовы
-    isUploading = true;
-    
-    try {
-        // Спрашиваем описание
-        const description = prompt('Введите описание файла (необязательно):', '');
-        
-        // Если пользователь нажал "Отмена" — прерываем
-        if (description === null) {
-            console.log('❌ Загрузка отменена пользователем');
-            document.getElementById('fileInput').value = '';
-            return;
-        }
-        
-        const formData = new FormData();
-        for (const file of files) {
-            formData.append('file', file);
-        }
-        formData.append('description', description || '');
-        
-        // Показываем индикатор загрузки (находим кнопку загрузки)
-        const uploadBtn = document.querySelector('.card-header .btn-outline-primary');
-        if (uploadBtn) {
-            uploadBtn.disabled = true;
-            uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Загрузка...';
-        }
-        
-        await axios.post(
-            `/api/faults/${faultId}/attachments`,
-            formData,
-            {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
-            }
-        );
-        
-        // Очищаем input
-        document.getElementById('fileInput').value = '';
-        
-        // Перезагружаем списки
-        await loadAttachments();
-        await loadHistory();
-        
-        showNotification(`✅ Загружено ${files.length} файлов`);
-        
-    } catch (error) {
-        console.error('❌ Ошибка загрузки файлов:', error);
-        alert('Ошибка загрузки файлов: ' + (error.response?.data?.detail || error.message));
-        document.getElementById('fileInput').value = '';
-    } finally {
-        // ✅ Снимаем блокировку
-        isUploading = false;
-        
-        // Восстанавливаем кнопку
-        const uploadBtn = document.querySelector('.card-header .btn-outline-primary');
-        if (uploadBtn) {
-            uploadBtn.disabled = false;
-            uploadBtn.innerHTML = '<i class="bi bi-upload"></i> Загрузить';
-        }
-    }
-});
-
-// Удаление вложения
+// ======= УДАЛЕНИЕ ВЛОЖЕНИЯ =======
 async function deleteAttachment(attachmentId) {
     if (!confirm('Вы уверены, что хотите удалить это вложение?')) return;
     
     try {
-        await axios.delete(`/api/faults/${faultId}/attachments/${attachmentId}`);
+        const token = localStorage.getItem('auth_token');
+        await axios.delete(
+            `/api/faults/${faultId}/attachments/${attachmentId}`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            }
+        );
         await loadAttachments();
         await loadHistory();
         showNotification('✅ Вложение удалено');
@@ -1032,6 +1046,81 @@ function getSeverityLabel(severity) {
     };
     return labels[severity] || severity;
 }
+
+// ======= КЛОНИРОВАНИЕ =======
+async function showCloneModal() {
+    try {
+        const response = await axios.get('/api/projects');
+        const projects = response.data || [];
+        
+        const select = document.getElementById('cloneProjectSelect');
+        select.innerHTML = '<option value="">-- Выберите проект --</option>';
+        
+        const currentProjectId = currentFault?.project?.id;
+        projects.forEach(p => {
+            if (p.id !== currentProjectId) {
+                const option = document.createElement('option');
+                option.value = p.id;
+                option.textContent = `${p.name} (${p.client || 'Без клиента'})`;
+                select.appendChild(option);
+            }
+        });
+        
+        if (select.options.length === 1) {
+            select.innerHTML = '<option value="">Нет доступных проектов</option>';
+            document.getElementById('confirmCloneBtn').disabled = true;
+        } else {
+            document.getElementById('confirmCloneBtn').disabled = false;
+        }
+        
+        document.getElementById('cloneOriginalId').textContent = faultId;
+        document.getElementById('cloneOriginalTitle').textContent = currentFault?.title || '';
+        
+        const modal = new bootstrap.Modal(document.getElementById('cloneModal'));
+        modal.show();
+        
+    } catch (error) {
+        console.error('Ошибка загрузки проектов:', error);
+        alert('Ошибка при загрузке проектов');
+    }
+}
+
+document.getElementById('confirmCloneBtn').addEventListener('click', async function() {
+    const targetProjectId = document.getElementById('cloneProjectSelect').value;
+    if (!targetProjectId) {
+        alert('Выберите целевой проект');
+        return;
+    }
+    
+    if (!confirm(`Создать клон неисправности #${faultId} в выбранном проекте?`)) {
+        return;
+    }
+    
+    try {
+        this.disabled = true;
+        this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Клонирование...';
+        
+        const response = await axios.post(
+            `/api/faults/${faultId}/clone?target_project_id=${targetProjectId}`
+        );
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('cloneModal'));
+        modal.hide();
+        
+        showNotification(`✅ Клон создан! Новая неисправность #${response.data.id}`);
+        
+        setTimeout(() => {
+            window.location.href = `/faults/${response.data.id}`;
+        }, 1500);
+        
+    } catch (error) {
+        console.error('❌ Ошибка клонирования:', error);
+        alert('Ошибка при клонировании: ' + (error.response?.data?.detail || error.message));
+    } finally {
+        this.disabled = false;
+        this.innerHTML = '<i class="bi bi-files"></i> Клонировать';
+    }
+});
 
 // ======= РЕДАКТИРОВАНИЕ =======
 function toggleEdit() {

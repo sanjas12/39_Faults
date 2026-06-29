@@ -77,27 +77,28 @@ class Fault(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(500), nullable=False)
     description = Column(Text, nullable=True)
-    severity = Column(String(50), default="minor")  # critical, major, minor, trivial
-    status = Column(String(50), default="open")  # open, in_progress, review, closed
-    project_id = Column(
-        Integer, ForeignKey("projects.id"), nullable=True
-    )  # Связь с проектом
+    severity = Column(String(50), default="minor")
+    status = Column(String(50), default="open")
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=True)
+    parent_fault_id = Column(Integer, ForeignKey("faults.id"), nullable=True)
+    linked_knowledge_ids = Column(String(500), nullable=True, default="")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     resolved_at = Column(DateTime(timezone=True), nullable=True)
-
+    
     # Связанные статьи базы знаний (ID через запятую)
     linked_knowledge_ids = Column(String(500), nullable=True, default="")
 
     # Связь с проектом (много неисправностей → один проект)
     project = relationship("Project", back_populates="faults")
-    comments = relationship(
-        "FaultComment", back_populates="fault", cascade="all, delete-orphan"
-    )
+    comments = relationship("FaultComment", back_populates="fault", cascade="all, delete-orphan")
     history = relationship("FaultHistory", back_populates="fault", cascade="all, delete-orphan")
     attachments = relationship("FaultAttachment", back_populates="fault", cascade="all, delete-orphan")
+    
+    # ✅ Связь с родительской неисправностью
+    parent_fault = relationship("Fault", remote_side=[id], backref="clones")
 
     def __repr__(self):
-        return f"<Fault(id={self.id}, title='{self.title[:30]}...')>"
+            return f"<Fault(id={self.id}, title='{self.title[:30]}...')>"
 
 
 class FaultComment(Base):

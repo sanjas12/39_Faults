@@ -444,3 +444,121 @@ def log_history(
     except Exception as e:
         print(f"❌ Ошибка записи истории: {e}")
         db.rollback()
+
+@router.post("/{fault_id}/clone", response_model=FaultResponse, status_code=status.HTTP_201_CREATED)
+def clone_fault(
+    fault_id: int,
+    target_project_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """
+    Клонировать неисправность в другой проект
+    
+    - Сохраняется название, описание, важность
+    - Создаётся связь с родительской неисправностью
+    - Копируются вложения (файлы)
+    - Копируются связанные статьи
+    - В истории отмечается клонирование
+    """
+    # Находим исходную неисправность
+    original_fault = db.query(Fault).filter(Fault.id == fault_id).first()
+    if not original_fault:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Исходная неисправность не найдена"
+        )
+    
+    # Проверяем целевой проект
+    target_project = db.query(Project).filter(Project.id == target_project_id).first()
+    if not target_project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Целевой проект не найден"
+        )
+    
+    # Создаём клон
+    clone_fault = Fault(
+        title=f"[КЛОН] {original_fault.title}",
+        description=original_fault.description,
+        severity=original_fault.severity,
+        status="open",  # Всегда открыта
+        project_id=target_project_id,
+        parent_fault_id=original_fault.id,
+        linked_knowledge_ids=original_fault.linked_knowledge_ids
+    )
+    
+    db.add(clone_fault)
+    db.commit()
+    db.refresh(clone_fault)
+    
+    # ✅ Копируем вложения (файлы)
+    attachments = db.query(FaultAttachment).filter(
+        FaultAttachment.fault_id == original_fault.id
+    ).all()
+    
+    from pathlib import Path
+    import shutil
+    
+    BASE_DIR = Path(__file__).resolve().parent.parent.parent
+    UPLOAD_DIR = BASE_DIR / "uploads"
+    
+    for attachment in attachments:
+        old_path = Path(attachment.file_path)
+        if old_path.exists():
+            # Создаём папку для нового клона
+            clone_dir = UPLOAD_DIR / str(clone_fault.id)
+            clone_dir.mkdir(exist_ok=True)
+            
+            # Копируем файл
+            new_filename = f"{current_user.username}_{attachment.filename}"
+            new_path = clone_dir / new_filename
+            
+            # Если файл существует, добавляем суффикс
+            counter = 1
+            while new_path.exists():
+                name, ext = os.path.splitext(new_filename)
+                new_path = clone_dir / f"{name}_{counter}{ext}"
+                counter += 1
+            
+            shutil.copy2(old_path, new_path)
+            
+            # Создаём запись о вложении для клона
+            new_attachment = FaultAttachment(
+                fault_id=clone_fault.id,
+                filename=attachment.filename,
+                file_path=str(new_path),
+                file_size=attachment.file_size,
+                file_type=attachment.file_type,
+                description=attachment.description,
+                uploaded_by=current_user.username
+            )
+            db.add(new_attachment)
+    
+    # ✅ Записываем в историю
+    log_history(
+        db=db,
+        fault_id=clone_fault.id,
+        event_type="creation",
+        field="creation",
+        old_value=None,
+        new_value=f"Создан клон неисправности #{original_fault.id} из проекта {original_fault.project.name if original_fault.project else 'Без проекта'}",
+        author=current_user.username
+    )
+    
+    # Записываем в историю родительской неисправности
+    log_history(
+        db=db,
+        fault_id=original_fault.id,
+        event_type="field_change",
+        field="Клонирование",
+        old_value=None,
+        new_value=f"Создан клон в проекте {target_project.name} (#{clone_fault.id})",
+        author=current_user.username
+    )
+    
+    db.commit()
+    db.refresh(clone_fault)
+    
+    return clone_fault
+    

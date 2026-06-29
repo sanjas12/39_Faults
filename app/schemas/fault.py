@@ -74,6 +74,7 @@ class FaultUpdate(BaseModel):
     severity: Optional[SeverityEnum] = None
     status: Optional[StatusEnum] = None
     project_id: Optional[int] = None
+    parent_fault_id: Optional[int] = None
     linked_knowledge_ids: Optional[str] = Field(None, description="ID статей через запятую")
 
     @validator("title")
@@ -94,6 +95,8 @@ class FaultResponse(FaultBase):
     project: Optional[ProjectResponse] = None
     comments: List[CommentResponse] = []
     linked_knowledge: Optional[List[dict]] = None  # Связанные статьи
+    parent_fault: Optional[dict] = None
+    clones: Optional[List[dict]] = None
 
     class Config:
         """Конфигурация Pydantic-модели."""
