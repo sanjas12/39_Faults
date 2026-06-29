@@ -1,4 +1,3 @@
-import os
 import shutil
 from pathlib import Path
 from datetime import datetime
@@ -16,8 +15,11 @@ from app.schemas.user import UserResponse
 router = APIRouter(prefix="/faults/{fault_id}/attachments", tags=["attachments"])
 
 # Папка для хранения файлов
-UPLOAD_DIR = Path("uploads")
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+UPLOAD_DIR = BASE_DIR / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
+
+print(f"📁 Папка для загрузок: {UPLOAD_DIR}")
 
 
 def log_history(
@@ -30,16 +32,20 @@ def log_history(
     author: str = "system"
 ):
     """Запись события в историю"""
-    history = FaultHistory(
-        fault_id=fault_id,
-        event_type=event_type,
-        field=field,
-        old_value=old_value,
-        new_value=new_value,
-        author=author
-    )
-    db.add(history)
-    db.commit()
+    try:
+        history = FaultHistory(
+            fault_id=fault_id,
+            event_type=event_type,
+            field=field,
+            old_value=old_value,
+            new_value=new_value,
+            author=author
+        )
+        db.add(history)
+        db.commit()
+    except Exception as e:
+        print(f"❌ Ошибка записи истории: {e}")
+        db.rollback()
 
 
 @router.post("/", response_model=AttachmentResponse, status_code=status.HTTP_201_CREATED)
@@ -51,7 +57,8 @@ async def upload_attachment(
     current_user: UserResponse = Depends(get_current_user)
 ):
     """Загрузить файл к неисправности"""
-    # Проверяем существование неисправности
+    print(f"📤 Загрузка файла для неисправности #{fault_id}")
+    
     fault = db.query(Fault).filter(Fault.id == fault_id).first()
     if not fault:
         raise HTTPException(
@@ -74,20 +81,20 @@ async def upload_attachment(
     fault_dir = UPLOAD_DIR / str(fault_id)
     fault_dir.mkdir(exist_ok=True)
 
-    # Сохраняем файл
-    safe_filename = f"{current_user.username}_{file.filename}"
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    safe_filename = f"{timestamp}_{current_user.username}_{file.filename.replace(' ', '_')}"
     file_path = fault_dir / safe_filename
     
-    # Проверяем, не существует ли файл
-    counter = 1
-    while file_path.exists():
-        name, ext = os.path.splitext(safe_filename)
-        file_path = fault_dir / f"{name}_{counter}{ext}"
-        counter += 1
-
-    # Сохраняем файл
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    try:
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        print(f"✅ Файл сохранён: {file_path}")
+    except Exception as e:
+        print(f"❌ Ошибка сохранения файла: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Ошибка сохранения файла: {str(e)}"
+        )
 
     # Создаём запись в БД
     attachment = FaultAttachment(
@@ -95,14 +102,24 @@ async def upload_attachment(
         filename=file.filename,
         file_path=str(file_path),
         file_size=file_size,
-        file_type=file.content_type,
+        file_type=file.content_type or "application/octet-stream",
         description=description,
         uploaded_by=current_user.username
     )
     
-    db.add(attachment)
-    db.commit()
-    db.refresh(attachment)
+    try:
+        db.add(attachment)
+        db.commit()
+        db.refresh(attachment)
+        print(f"✅ Запись в БД создана: {attachment.id}")
+    except Exception as e:
+        print(f"❌ Ошибка записи в БД: {e}")
+        if file_path.exists():
+            file_path.unlink()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Ошибка записи в БД: {str(e)}"
+        )
 
     # ✅ Записываем в историю
     log_history(

@@ -461,8 +461,8 @@ async function loadAttachments() {
                 <div class="attachment-item mb-2 p-2 border rounded d-flex justify-content-between align-items-center">
                     <div>
                         <span style="font-size: 24px;">${icon}</span>
-                        <a href="/api/faults/${faultId}/attachments/${a.id}/download" 
-                           class="text-decoration-none fw-bold ms-2" target="_blank">
+                        <a href="#" onclick="downloadFile(${a.id}, '${a.filename}')" 
+                           class="text-decoration-none fw-bold ms-2">
                             ${a.filename}
                         </a>
                         <span class="badge bg-secondary ms-2">${sizeStr}</span>
@@ -490,6 +490,139 @@ async function loadAttachments() {
         }
     }
 }
+
+// ======= СКАЧИВАНИЕ ФАЙЛА ЧЕРЕЗ AJAX =======
+async function downloadFile(attachmentId, filename) {
+    console.log(`📥 Скачивание файла: ${filename} (ID: ${attachmentId})`);
+    
+    try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            alert('Вы не авторизованы!');
+            window.location.href = '/login';
+            return;
+        }
+        
+        // ✅ Запрос с токеном в заголовке
+        const response = await axios.get(
+            `/api/faults/${faultId}/attachments/${attachmentId}/download`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                responseType: 'blob'  // Важно для скачивания файла
+            }
+        );
+        
+        // Проверяем, что ответ содержит данные
+        if (!response.data || response.data.size === 0) {
+            throw new Error('Файл пустой или повреждён');
+        }
+        
+        // Определяем MIME-тип
+        const contentType = response.headers['content-type'] || 'application/octet-stream';
+        
+        // Создаём Blob и ссылку для скачивания
+        const blob = new Blob([response.data], { type: contentType });
+        const url = window.URL.createObjectURL(blob);
+        
+        // Создаём временную ссылку и кликаем
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;  // Устанавливаем имя файла
+        document.body.appendChild(link);
+        link.click();
+        
+        // Очищаем
+        setTimeout(() => {
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        }, 100);
+        
+        console.log(`✅ Файл "${filename}" скачан успешно`);
+        
+    } catch (error) {
+        console.error('❌ Ошибка скачивания:', error);
+        
+        if (error.response?.status === 401) {
+            alert('Сессия истекла. Пожалуйста, войдите заново.');
+            window.location.href = '/login';
+        } else if (error.response?.status === 404) {
+            alert('Файл не найден на сервере');
+        } else {
+            alert('Ошибка при скачивании файла: ' + (error.response?.data?.detail || error.message));
+        }
+    }
+}
+
+// ======= ЗАГРУЗКА ФАЙЛОВ =======
+document.getElementById('fileInput').addEventListener('change', async function(event) {
+    if (isUploading) {
+        console.log('⏳ Загрузка уже выполняется, пропускаем');
+        return;
+    }
+    
+    const files = event.target.files;
+    if (files.length === 0) return;
+    
+    isUploading = true;
+    
+    try {
+        const description = prompt('Введите описание файла (необязательно):', '');
+        if (description === null) {
+            document.getElementById('fileInput').value = '';
+            return;
+        }
+        
+        const formData = new FormData();
+        for (const file of files) {
+            formData.append('file', file);
+        }
+        formData.append('description', description || '');
+        
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            alert('Вы не авторизованы!');
+            window.location.href = '/login';
+            return;
+        }
+        
+        const uploadBtn = document.querySelector('.card-header .btn-outline-primary');
+        if (uploadBtn) {
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Загрузка...';
+        }
+        
+        await axios.post(
+            `/api/faults/${faultId}/attachments`,
+            formData,
+            {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    'Authorization': `Bearer ${token}`
+                }
+            }
+        );
+        
+        document.getElementById('fileInput').value = '';
+        await loadAttachments();
+        await loadHistory();
+        
+        showNotification(`✅ Загружено ${files.length} файлов`);
+        
+    } catch (error) {
+        console.error('❌ Ошибка загрузки файлов:', error);
+        alert('Ошибка загрузки файлов: ' + (error.response?.data?.detail || error.message));
+        document.getElementById('fileInput').value = '';
+    } finally {
+        isUploading = false;
+        const uploadBtn = document.querySelector('.card-header .btn-outline-primary');
+        if (uploadBtn) {
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = '<i class="bi bi-upload"></i> Загрузить';
+        }
+    }
+});
 
 // ======= ЗАГРУЗКА ФАЙЛОВ (с защитой от дублирования) =======
 document.getElementById('fileInput').addEventListener('change', async function(event) {
