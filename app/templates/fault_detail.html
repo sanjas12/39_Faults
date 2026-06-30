@@ -923,7 +923,8 @@ async function loadHistory() {
         const eventLabels = {
             'creation': 'создал(а) неисправность',
             'field_change': 'изменил(а)',
-            'comment': 'добавил(а) комментарий'
+            'comment': 'добавил(а) комментарий',
+            'cloning': 'клонировал(а) неисправность'
         };
         
         historyList.innerHTML = history.map(h => {

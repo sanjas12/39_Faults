@@ -556,99 +556,234 @@ def clone_fault(
 ):
     """
     Клонировать неисправность в другой проект
+    
+    - Сохраняется название, описание, важность
+    - Создаётся связь с родительской неисправностью
+    - Копируются вложения (файлы)
+    - Копируются связанные статьи
+    - В истории отмечается клонирование
     """
-    # Находим исходную неисправность с загрузкой проекта
-    original_fault = db.query(Fault).options(
-        joinedload(Fault.project)
-    ).filter(Fault.id == fault_id).first()
+    print(f"🔄 Клонирование неисправности #{fault_id} в проект #{target_project_id}")
     
-    if not original_fault:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Исходная неисправность не найдена"
+    try:
+        # 1. Находим исходную неисправность
+        original_fault = db.query(Fault).options(
+            joinedload(Fault.project)
+        ).filter(Fault.id == fault_id).first()
+        
+        if not original_fault:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Исходная неисправность не найдена"
+            )
+        
+        print(f"   📋 Исходная неисправность: #{original_fault.id} - {original_fault.title}")
+        
+        # 2. Проверяем целевой проект
+        target_project = db.query(Project).filter(Project.id == target_project_id).first()
+        if not target_project:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Целевой проект не найден"
+            )
+        
+        print(f"   📁 Целевой проект: #{target_project.id} - {target_project.name}")
+        
+        # 3. Проверяем, что не клонируем в тот же проект
+        if original_fault.project_id == target_project_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Нельзя клонировать неисправность в тот же проект"
+            )
+        
+        # 4. Создаём клон
+        clone_fault_obj = Fault(
+            title=f"[КЛОН] {original_fault.title}",
+            description=original_fault.description,
+            severity=original_fault.severity,
+            status="open",
+            project_id=target_project_id,
+            parent_fault_id=original_fault.id,
+            linked_knowledge_ids=original_fault.linked_knowledge_ids
         )
-    
-    # Проверяем целевой проект
-    target_project = db.query(Project).filter(Project.id == target_project_id).first()
-    if not target_project:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Целевой проект не найден"
+        
+        db.add(clone_fault_obj)
+        db.flush()
+        print(f"   ✅ Клон создан: #{clone_fault_obj.id}")
+        
+        # 5. Копируем вложения
+        attachments = db.query(FaultAttachment).filter(
+            FaultAttachment.fault_id == original_fault.id
+        ).all()
+        
+        BASE_DIR = Path(__file__).resolve().parent.parent.parent
+        UPLOAD_DIR = BASE_DIR / "uploads"
+        
+        for attachment in attachments:
+            try:
+                old_path = Path(attachment.file_path)
+                if old_path.exists():
+                    clone_dir = UPLOAD_DIR / str(clone_fault_obj.id)
+                    clone_dir.mkdir(exist_ok=True)
+                    
+                    new_filename = f"{current_user.username}_{attachment.filename}"
+                    new_path = clone_dir / new_filename
+                    
+                    counter = 1
+                    name, ext = os.path.splitext(new_filename)
+                    while new_path.exists():
+                        new_path = clone_dir / f"{name}_{counter}{ext}"
+                        counter += 1
+                    
+                    shutil.copy2(old_path, new_path)
+                    
+                    new_attachment = FaultAttachment(
+                        fault_id=clone_fault_obj.id,
+                        filename=attachment.filename,
+                        file_path=str(new_path),
+                        file_size=attachment.file_size,
+                        file_type=attachment.file_type,
+                        description=attachment.description,
+                        uploaded_by=current_user.username
+                    )
+                    db.add(new_attachment)
+                    print(f"   📎 Скопировано вложение: {attachment.filename}")
+            except Exception as e:
+                print(f"   ⚠️ Ошибка копирования вложения {attachment.filename}: {e}")
+        
+        # 6. ✅ Записываем историю для клона
+        log_history(
+            db=db,
+            fault_id=clone_fault_obj.id,
+            event_type="creation",
+            field="creation",
+            old_value=None,
+            new_value=f"Создан клон неисправности #{original_fault.id} из проекта '{original_fault.project.name if original_fault.project else 'Без проекта'}'",
+            author=current_user.username
         )
-    
-    # Проверяем, что не клонируем в тот же проект
-    if original_fault.project_id == target_project_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Нельзя клонировать неисправность в тот же проект"
+        print(f"   📝 История для клона записана")
+        
+        # 7. ✅ Записываем историю для родительской неисправности
+        log_history(
+            db=db,
+            fault_id=original_fault.id,
+            event_type="field_change",
+            field="Клонирование",
+            old_value=None,
+            new_value=f"Создан клон в проекте '{target_project.name}' (#{clone_fault_obj.id})",
+            author=current_user.username
         )
-    
-    # Создаём клон
-    clone_fault_obj = Fault(
-        title=f"[КЛОН] {original_fault.title}",
-        description=original_fault.description,
-        severity=original_fault.severity,
-        status="open",
-        project_id=target_project_id,
-        parent_fault_id=original_fault.id,
-        linked_knowledge_ids=original_fault.linked_knowledge_ids
-    )
-    
-    db.add(clone_fault_obj)
-    db.commit()
-    db.refresh(clone_fault_obj)
-    
-    # ... остальной код копирования вложений ...
-    
-    # ✅ Возвращаем клон с загруженными связями
-    db.refresh(clone_fault_obj)
-    
-    # Загружаем связи для ответа
-    clone_with_relations = db.query(Fault).options(
-        joinedload(Fault.project),
-        joinedload(Fault.parent_fault),
-        joinedload(Fault.clones)
-    ).filter(Fault.id == clone_fault_obj.id).first()
-    
-    # Формируем ответ
-    response_data = {
-        "id": clone_with_relations.id,
-        "title": clone_with_relations.title,
-        "description": clone_with_relations.description,
-        "severity": clone_with_relations.severity,
-        "status": clone_with_relations.status,
-        "project_id": clone_with_relations.project_id,
-        "linked_knowledge_ids": clone_with_relations.linked_knowledge_ids,
-        "created_at": clone_with_relations.created_at,
-        "resolved_at": clone_with_relations.resolved_at,
-        "project": {
-            "id": clone_with_relations.project.id,
-            "name": clone_with_relations.project.name,
-            "description": clone_with_relations.project.description,
-            "client": clone_with_relations.project.client,
-            "station": clone_with_relations.project.station,
-            "unit": clone_with_relations.project.unit,
-            "type": clone_with_relations.project.type,
-            "created_at": clone_with_relations.project.created_at,
-            "updated_at": clone_with_relations.project.updated_at
-        } if clone_with_relations.project else None,
-        "comments": [],
-        "linked_knowledge": [],
-        "parent_fault": {
-            "id": clone_with_relations.parent_fault.id,
-            "title": clone_with_relations.parent_fault.title,
-            "severity": clone_with_relations.parent_fault.severity,
-            "status": clone_with_relations.parent_fault.status
-        } if clone_with_relations.parent_fault else None,
-        "clones": [
-            {
-                "id": clone.id,
-                "title": clone.title,
-                "severity": clone.severity,
-                "status": clone.status
-            }
-            for clone in clone_with_relations.clones
-        ] if clone_with_relations.clones else []
-    }
-    
-    return response_data
+        print(f"   📝 История для родителя записана")
+        
+        # 8. ✅ Записываем дополнительную информацию в историю клона
+        # Информация о родителе
+        log_history(
+            db=db,
+            fault_id=clone_fault_obj.id,
+            event_type="field_change",
+            field="Родительская неисправность",
+            old_value=None,
+            new_value=f"#{original_fault.id} {original_fault.title}",
+            author=current_user.username
+        )
+        
+        # Информация о целевом проекте
+        log_history(
+            db=db,
+            fault_id=clone_fault_obj.id,
+            event_type="field_change",
+            field="Целевой проект",
+            old_value=None,
+            new_value=f"{target_project.name}",
+            author=current_user.username
+        )
+        
+        # 9. ✅ Если были скопированы вложения, записываем это в историю
+        if attachments:
+            log_history(
+                db=db,
+                fault_id=clone_fault_obj.id,
+                event_type="field_change",
+                field="Вложения",
+                old_value=None,
+                new_value=f"Скопировано {len(attachments)} файлов",
+                author=current_user.username
+            )
+        
+        # 10. ✅ Если были скопированы связанные статьи
+        if original_fault.linked_knowledge_ids:
+            log_history(
+                db=db,
+                fault_id=clone_fault_obj.id,
+                event_type="field_change",
+                field="Связанные статьи",
+                old_value=None,
+                new_value=f"Скопированы связанные статьи",
+                author=current_user.username
+            )
+        
+        db.commit()
+        db.refresh(clone_fault_obj)
+        
+        # Загружаем связи для ответа
+        clone_with_relations = db.query(Fault).options(
+            joinedload(Fault.project),
+            joinedload(Fault.parent_fault),
+            joinedload(Fault.clones)
+        ).filter(Fault.id == clone_fault_obj.id).first()
+        
+        # Формируем ответ
+        response_data = {
+            "id": clone_with_relations.id,
+            "title": clone_with_relations.title,
+            "description": clone_with_relations.description,
+            "severity": clone_with_relations.severity,
+            "status": clone_with_relations.status,
+            "project_id": clone_with_relations.project_id,
+            "linked_knowledge_ids": clone_with_relations.linked_knowledge_ids,
+            "created_at": clone_with_relations.created_at,
+            "resolved_at": clone_with_relations.resolved_at,
+            "project": {
+                "id": clone_with_relations.project.id,
+                "name": clone_with_relations.project.name,
+                "description": clone_with_relations.project.description,
+                "client": clone_with_relations.project.client,
+                "station": clone_with_relations.project.station,
+                "unit": clone_with_relations.project.unit,
+                "type": clone_with_relations.project.type,
+                "created_at": clone_with_relations.project.created_at,
+                "updated_at": clone_with_relations.project.updated_at
+            } if clone_with_relations.project else None,
+            "comments": [],
+            "linked_knowledge": [],
+            "parent_fault": {
+                "id": clone_with_relations.parent_fault.id,
+                "title": clone_with_relations.parent_fault.title,
+                "severity": clone_with_relations.parent_fault.severity,
+                "status": clone_with_relations.parent_fault.status
+            } if clone_with_relations.parent_fault else None,
+            "clones": [
+                {
+                    "id": clone.id,
+                    "title": clone.title,
+                    "severity": clone.severity,
+                    "status": clone.status
+                }
+                for clone in clone_with_relations.clones
+            ] if clone_with_relations.clones else []
+        }
+        
+        print(f"✅ Клонирование завершено успешно! Новый ID: #{clone_fault_obj.id}")
+        return response_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Ошибка при клонировании: {e}")
+        import traceback
+        traceback.print_exc()
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Ошибка при клонировании: {str(e)}"
+        )
