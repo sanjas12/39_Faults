@@ -52,9 +52,17 @@ app.include_router(attachments.router, prefix="/api")
 
 
 def is_authenticated(request: Request) -> bool:
-    """Проверка авторизации пользователя"""
-    # Проверяем токен в cookies
+    """Проверка авторизации пользователя (cookies + localStorage)"""
+    
+    # 1. Проверяем токен в cookies
     token = request.cookies.get('access_token')
+    
+    # 2. Проверяем токен в заголовке Authorization (из localStorage)
+    if not token:
+        auth_header = request.headers.get('Authorization')
+        if auth_header and auth_header.startswith('Bearer '):
+            token = auth_header[7:]
+    
     if token:
         payload = decode_token(token)
         if payload:
@@ -65,7 +73,7 @@ def is_authenticated(request: Request) -> bool:
                     request.state.user = user
                     return True
             except Exception as e:
-                print(f"Ошибка проверки авторизации: {e}")
+                print(f"❌ Ошибка проверки авторизации: {e}")
             finally:
                 db.close()
     return False

@@ -61,7 +61,9 @@ function logout() {
     // Удаляем токен из заголовков axios
     delete axios.defaults.headers.common['Authorization'];
     
-    // Сбрасываем пользователя
+    // ✅ Удаляем cookie
+    document.cookie = 'access_token=; path=/; max-age=0';
+    
     currentUser = null;
     
     // Обновляем UI
@@ -93,11 +95,11 @@ async function login(username, password) {
         localStorage.setItem('current_user', JSON.stringify(data.user));
         currentUser = data.user;
 
-        // ✅ Устанавливаем cookie для middleware
-        document.cookie = `access_token=${data.access_token}; path=/; max-age=86400`;
-        
-        // Устанавливаем токен в заголовки axios
+        // ✅ Устанавливаем токен в заголовки axios
         axios.defaults.headers.common['Authorization'] = `Bearer ${data.access_token}`;
+        
+        // ✅ Устанавливаем cookie для middleware
+        document.cookie = `access_token=${data.access_token}; path=/; max-age=86400; samesite=lax`;
 
         updateUserUI();
         return { success: true, user: currentUser };
@@ -142,6 +144,8 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             currentUser = JSON.parse(userData);
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            // ✅ Восстанавливаем cookie
+            document.cookie = `access_token=${token}; path=/; max-age=86400; samesite=lax`;
             console.log('✅ Пользователь восстановлен:', currentUser.username);
         } catch (e) {
             console.error('❌ Ошибка восстановления:', e);
