@@ -257,10 +257,18 @@ async function loadDashboard() {
         // document.getElementById('total-clones').textContent = clones;
         document.getElementById('total-knowledge').textContent = knowledge.length;
 
-        // === ПОСЛЕДНИЕ НЕИСПРАВНОСТИ ===
+        // === ПОСЛЕДНИЕ НЕИСПРАВНОСТИ (по дате изменения) ===
         const tbody = document.getElementById('faults-list');
-        const recentFaults = faults.slice(-5).reverse();
-        
+
+        // ✅ Сортируем по дате изменения (если есть) или по дате создания
+        const sortedFaults = [...faults].sort((a, b) => {
+            const dateA = a.updated_at ? new Date(a.updated_at) : new Date(a.created_at);
+            const dateB = b.updated_at ? new Date(b.updated_at) : new Date(b.created_at);
+            return dateB - dateA;  // Сначала новые
+        });
+
+        const recentFaults = sortedFaults.slice(0, 5);
+
         if (recentFaults.length === 0) {
             tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Нет неисправностей</td></tr>';
         } else {
@@ -286,6 +294,8 @@ async function loadDashboard() {
             tbody.innerHTML = recentFaults.map(f => {
                 const projectName = f.project?.name || 'Без проекта';
                 const hasActions = f.planned_actions && f.planned_actions.trim().length > 0;
+                const changeDate = f.updated_at ? new Date(f.updated_at) : new Date(f.created_at);
+                const dateStr = changeDate.toLocaleDateString('ru-RU') + ' ' + changeDate.toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'});
                 
                 return `
                     <tr>
@@ -293,6 +303,7 @@ async function loadDashboard() {
                             <a href="/faults/${f.id}" class="text-decoration-none">
                                 ${f.title.length > 40 ? f.title.slice(0, 40) + '...' : f.title}
                             </a>
+                            <br><small class="text-muted">${dateStr}</small>
                         </td>
                         <td>${projectName}</td>
                         <td><span class="badge bg-${severityColors[f.severity] || 'secondary'}">${f.severity}</span></td>
