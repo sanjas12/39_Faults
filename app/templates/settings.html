@@ -1,39 +1,257 @@
 {% extends "base.html" %}
 
-{% block title %}Настройки уведомлений{% endblock %}
-{% block page_title %}Настройки{% endblock %}
+{% block title %}Настройки{% endblock %}
+{% block page_title %}
+    <div class="d-flex justify-content-between align-items-center">
+        <span>Личный кабинет</span>
+        <div>
+            <button class="btn btn-outline-secondary btn-sm" onclick="history.back()">
+                <i class="bi bi-arrow-left"></i> Назад
+            </button>
+        </div>
+    </div>
+{% endblock %}
+{% set active_page = 'settings' %}
 
 {% block content %}
 <div class="row">
-    <div class="col-md-6">
-        <div class="card">
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-body text-center">
+                <i class="bi bi-person-circle" style="font-size: 80px;"></i>
+                <h4 id="profileName" class="mt-2">Загрузка...</h4>
+                <p class="text-muted" id="profileUsername">@загрузка</p>
+                <p class="text-muted" id="profileRole">Роль: загрузка</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <!-- Основные настройки -->
+        <div class="card mb-3">
             <div class="card-header">
-                <h5>Настройки уведомлений</h5>
+                <h5 class="mb-0"><i class="bi bi-person"></i> Основные данные</h5>
             </div>
             <div class="card-body">
-                <form id="notificationSettingsForm">
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="notifyCreation" checked>
-                        <label class="form-check-label" for="notifyCreation">
-                            Уведомлять о создании неисправностей
-                        </label>
+                <form id="profileForm">
+                    <div class="mb-3">
+                        <label class="form-label">Полное имя</label>
+                        <input type="text" class="form-control" id="fullName" placeholder="Иванов Иван Иванович">
                     </div>
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="notifyStatus" checked>
-                        <label class="form-check-label" for="notifyStatus">
-                            Уведомлять об изменении статуса
-                        </label>
+                    <div class="mb-3">
+                        <label class="form-label">Имя пользователя</label>
+                        <input type="text" class="form-control" id="username" placeholder="username">
                     </div>
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="notifyComments" checked>
-                        <label class="form-check-label" for="notifyComments">
-                            Уведомлять о новых комментариях
-                        </label>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" placeholder="email@example.com">
                     </div>
-                    <button type="submit" class="btn btn-primary">Сохранить настройки</button>
+                    <div class="mb-3">
+                        <label class="form-label">Новый пароль (оставьте пустым, если не хотите менять)</label>
+                        <input type="password" class="form-control" id="password" placeholder="******" minlength="6">
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Сохранить изменения
+                    </button>
                 </form>
+                <div id="profileMessage" class="mt-3 d-none"></div>
+            </div>
+        </div>
+        
+        <!-- Настройки уведомлений -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-bell"></i> Настройки уведомлений</h5>
+            </div>
+            <div class="card-body">
+                <form id="notificationsForm">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="notifyCreation">
+                        <label class="form-check-label" for="notifyCreation">
+                            <strong>Новые неисправности</strong>
+                            <br><small class="text-muted">Уведомлять о создании новых неисправностей</small>
+                        </label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="notifyStatusChange">
+                        <label class="form-check-label" for="notifyStatusChange">
+                            <strong>Изменение статуса</strong>
+                            <br><small class="text-muted">Уведомлять об изменении статуса неисправностей</small>
+                        </label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="notifyComments">
+                        <label class="form-check-label" for="notifyComments">
+                            <strong>Новые комментарии</strong>
+                            <br><small class="text-muted">Уведомлять о новых комментариях в неисправностях</small>
+                        </label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="notifyAssigned">
+                        <label class="form-check-label" for="notifyAssigned">
+                            <strong>Назначение на меня</strong>
+                            <br><small class="text-muted">Уведомлять, когда меня назначают ответственным</small>
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Сохранить настройки
+                    </button>
+                </form>
+                <div id="notifyMessage" class="mt-3 d-none"></div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ======= ЗАГРУЗКА ПРОФИЛЯ =======
+async function loadProfile() {
+    try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        const response = await axios.get('/api/auth/me');
+        const user = response.data;
+        
+        document.getElementById('profileName').textContent = user.full_name || user.username;
+        document.getElementById('profileUsername').textContent = `@${user.username}`;
+        document.getElementById('profileRole').textContent = `Роль: ${user.role}`;
+        
+        document.getElementById('fullName').value = user.full_name || '';
+        document.getElementById('username').value = user.username;
+        document.getElementById('email').value = user.email;
+        
+        document.getElementById('notifyCreation').checked = user.notify_creation !== false;
+        document.getElementById('notifyStatusChange').checked = user.notify_status_change !== false;
+        document.getElementById('notifyComments').checked = user.notify_comments !== false;
+        document.getElementById('notifyAssigned').checked = user.notify_assigned !== false;
+        
+    } catch (error) {
+        console.error('Ошибка загрузки профиля:', error);
+        if (error.response?.status === 401) {
+            window.location.href = '/login';
+        }
+    }
+}
+
+// ======= ОБНОВЛЕНИЕ ПРОФИЛЯ =======
+document.getElementById('profileForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const messageDiv = document.getElementById('profileMessage');
+    const submitBtn = this.querySelector('button[type="submit"]');
+    
+    const data = {
+        full_name: document.getElementById('fullName').value.trim() || null,
+        username: document.getElementById('username').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        password: document.getElementById('password').value || null
+    };
+    
+    // Валидация
+    if (!data.username || data.username.length < 3) {
+        showMessage(messageDiv, 'Имя пользователя должно содержать минимум 3 символа', 'danger');
+        return;
+    }
+    
+    if (!data.email || !data.email.includes('@')) {
+        showMessage(messageDiv, 'Введите корректный email', 'danger');
+        return;
+    }
+    
+    if (data.password && data.password.length < 6) {
+        showMessage(messageDiv, 'Пароль должен содержать минимум 6 символов', 'danger');
+        return;
+    }
+    
+    try {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
+        
+        const token = localStorage.getItem('auth_token');
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        const response = await axios.put('/api/auth/me', data);
+        
+        showMessage(messageDiv, '✅ Профиль успешно обновлён!', 'success');
+        
+        // Обновляем данные в localStorage
+        const userData = JSON.parse(localStorage.getItem('current_user') || '{}');
+        const updatedUser = { ...userData, ...response.data };
+        localStorage.setItem('current_user', JSON.stringify(updatedUser));
+        
+        // Обновляем UI
+        document.getElementById('profileName').textContent = updatedUser.full_name || updatedUser.username;
+        document.getElementById('profileUsername').textContent = `@${updatedUser.username}`;
+        document.getElementById('profileRole').textContent = `Роль: ${updatedUser.role}`;
+        
+        // Очищаем поле пароля
+        document.getElementById('password').value = '';
+        
+    } catch (error) {
+        console.error('Ошибка обновления профиля:', error);
+        showMessage(messageDiv, '❌ ' + (error.response?.data?.detail || 'Ошибка при обновлении профиля'), 'danger');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="bi bi-save"></i> Сохранить изменения';
+    }
+});
+
+// ======= НАСТРОЙКИ УВЕДОМЛЕНИЙ =======
+document.getElementById('notificationsForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const messageDiv = document.getElementById('notifyMessage');
+    const submitBtn = this.querySelector('button[type="submit"]');
+    
+    const data = {
+        notify_creation: document.getElementById('notifyCreation').checked,
+        notify_status_change: document.getElementById('notifyStatusChange').checked,
+        notify_comments: document.getElementById('notifyComments').checked,
+        notify_assigned: document.getElementById('notifyAssigned').checked
+    };
+    
+    try {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
+        
+        const token = localStorage.getItem('auth_token');
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        const response = await axios.put('/api/auth/me', data);
+        
+        showMessage(messageDiv, '✅ Настройки уведомлений сохранены!', 'success');
+        
+        // Обновляем данные в localStorage
+        const userData = JSON.parse(localStorage.getItem('current_user') || '{}');
+        const updatedUser = { ...userData, ...response.data };
+        localStorage.setItem('current_user', JSON.stringify(updatedUser));
+        
+    } catch (error) {
+        console.error('Ошибка сохранения настроек:', error);
+        showMessage(messageDiv, '❌ ' + (error.response?.data?.detail || 'Ошибка при сохранении настроек'), 'danger');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="bi bi-save"></i> Сохранить настройки';
+    }
+});
+
+// ======= ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =======
+function showMessage(container, text, type = 'info') {
+    container.textContent = text;
+    container.className = `alert alert-${type} mt-3`;
+    container.classList.remove('d-none');
+}
+
+// ======= ИНИЦИАЛИЗАЦИЯ =======
+document.addEventListener('DOMContentLoaded', function() {
+    loadProfile();
+});
+</script>
 {% endblock %}

@@ -21,7 +21,11 @@ class UserBase(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     email: EmailStr
     full_name: Optional[str] = Field(None, max_length=100)
-    role: UserRole = UserRole.MANAGER
+    role: UserRole = UserRole.ENGINEER
+    notify_creation: bool = True  
+    notify_status_change: bool = True
+    notify_comments: bool = True  
+    notify_assigned: bool = True  
 
 
 class UserCreate(UserBase):
@@ -58,6 +62,10 @@ class UserUpdate(BaseModel):
     role: Optional[UserRole] = None
     is_active: Optional[bool] = None
     password: Optional[str] = Field(None, min_length=6, max_length=100)
+    notify_creation: Optional[bool] = None
+    notify_status_change: Optional[bool] = None
+    notify_comments: Optional[bool] = None
+    notify_assigned: Optional[bool] = None
 
 
 class UserResponse(UserBase):
