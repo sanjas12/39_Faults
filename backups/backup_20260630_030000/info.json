@@ -1,0 +1,13 @@
+{
+  "timestamp": "20260630_030000",
+  "size": 177026,
+  "tables": {
+    "users": 5,
+    "projects": 8,
+    "faults": 34,
+    "comments": 46,
+    "history": 65,
+    "knowledge": 3
+  },
+  "total_records": 161
+}

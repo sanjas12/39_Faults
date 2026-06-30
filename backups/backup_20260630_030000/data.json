@@ -1,0 +1,1583 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "username": "admin",
+      "email": "admin@diakont.com",
+      "full_name": "Администратор Системы",
+      "role": "admin",
+      "is_active": true,
+      "created_at": "2026-06-29T14:08:05",
+      "updated_at": null
+    },
+    {
+      "id": 2,
+      "username": "engineer",
+      "email": "engineer@diakont.com",
+      "full_name": "Иванов Иван Петрович",
+      "role": "engineer",
+      "is_active": true,
+      "created_at": "2026-06-29T14:08:05",
+      "updated_at": null
+    },
+    {
+      "id": 3,
+      "username": "engineer2",
+      "email": "engineer2@diakont.com",
+      "full_name": "Петров Пётр Сергеевич",
+      "role": "engineer",
+      "is_active": true,
+      "created_at": "2026-06-29T14:08:05",
+      "updated_at": null
+    },
+    {
+      "id": 4,
+      "username": "manager",
+      "email": "manager@diakont.com",
+      "full_name": "Сидорова Мария Ивановна",
+      "role": "manager",
+      "is_active": true,
+      "created_at": "2026-06-29T14:08:05",
+      "updated_at": null
+    },
+    {
+      "id": 5,
+      "username": "operator",
+      "email": "operator@diakont.com",
+      "full_name": "Козлов Дмитрий Алексеевич",
+      "role": "manager",
+      "is_active": true,
+      "created_at": "2026-06-29T14:08:05",
+      "updated_at": null
+    }
+  ],
+  "projects": [
+    {
+      "id": 1,
+      "name": "Кольская САРЗ-1",
+      "description": "Модернизация системы управления котлами ТЭЦ-5",
+      "client": "Кольская АЭС",
+      "station": "Кольская",
+      "unit": 1,
+      "type": "САРЗ",
+      "created_at": "2026-06-29T14:08:05",
+      "updated_at": null
+    },
+    {
+      "id": 2,
+      "name": "Кольская САРЗ-2",
+      "description": "Внедрение системы диспетчерского контроля нефтепровода",
+      "client": "Кольская АЭС",
+      "station": "Кольская",
+      "unit": 2,
+      "type": "САРЗ",
+      "created_at": "2026-06-29T14:08:05",
+      "updated_at": null
+    },
+    {
+      "id": 3,
+      "name": "Смоленская САРЗ-2",
+      "description": "Система автоматического управления дизель-генератора",
+      "client": "Смоленская АЭС",
+      "station": "Смоленская",
+      "unit": 2,
+      "type": "САРЗ",
+      "created_at": "2026-06-29T14:08:05",
+      "updated_at": null
+    },
+    {
+      "id": 4,
+      "name": "Курская САУ-1",
+      "description": "Система автоматического управления турбиной К-500",
+      "client": "Курская АЭС",
+      "station": "Курская",
+      "unit": 1,
+      "type": "САУ",
+      "created_at": "2026-06-29T14:08:05",
+      "updated_at": null
+    },
+    {
+      "id": 5,
+      "name": "Ленинградская САУ-3",
+      "description": "Автоматизация системы охлаждения реактора",
+      "client": "Ленинградская АЭС",
+      "station": "Ленинградская",
+      "unit": 3,
+      "type": "САУ",
+      "created_at": "2026-06-29T14:08:05",
+      "updated_at": null
+    },
+    {
+      "id": 6,
+      "name": "Нововоронежская САРЗ-1",
+      "description": "Резервирование системы управления парогенераторами",
+      "client": "Нововоронежская АЭС",
+      "station": "Нововоронежская",
+      "unit": 1,
+      "type": "САРЗ",
+      "created_at": "2026-06-29T14:08:05",
+      "updated_at": null
+    },
+    {
+      "id": 7,
+      "name": "Балаковская САУ-2",
+      "description": "Модернизация системы управления турбиной",
+      "client": "Балаковская АЭС",
+      "station": "Балаковская",
+      "unit": 2,
+      "type": "САУ",
+      "created_at": "2026-06-29T14:08:05",
+      "updated_at": null
+    },
+    {
+      "id": 8,
+      "name": "Ростовская САРЗ-1",
+      "description": "Автоматизация системы управления парогенераторами",
+      "client": "Ростовская АЭС",
+      "station": "Ростовская",
+      "unit": 1,
+      "type": "САРЗ",
+      "created_at": "2026-06-29T14:08:05",
+      "updated_at": null
+    }
+  ],
+  "faults": [
+    {
+      "id": 1,
+      "title": "Некорректные показания датчика вибрации",
+      "description": "Показания датчика вибрации отличаются от эталонных на 9%",
+      "severity": "major",
+      "status": "in_progress",
+      "project_id": 1,
+      "linked_knowledge_ids": "2",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 2,
+      "title": "Ошибка контроллера Кольская САРЗ-1",
+      "description": "PLC выдаёт ошибку 0xE6 при запуске температуры",
+      "severity": "critical",
+      "status": "open",
+      "project_id": 1,
+      "linked_knowledge_ids": "1,2",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 3,
+      "title": "Сбой связи с датчиком вибрации",
+      "description": "Потеря данных с датчика вибрации на на трубопроводе",
+      "severity": "major",
+      "status": "review",
+      "project_id": 1,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 4,
+      "title": "Зависание SCADA интерфейса",
+      "description": "Система мониторинга перестаёт обновлять данные каждые 9 минут",
+      "severity": "major",
+      "status": "open",
+      "project_id": 2,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 5,
+      "title": "Ошибка контроллера Кольская САРЗ-2",
+      "description": "PLC выдаёт ошибку 0xE8 при запуске уровня",
+      "severity": "critical",
+      "status": "open",
+      "project_id": 2,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 6,
+      "title": "Ошибка контроллера Кольская САРЗ-2",
+      "description": "PLC выдаёт ошибку 0xE6 при запуске уровня",
+      "severity": "minor",
+      "status": "in_progress",
+      "project_id": 2,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 7,
+      "title": "Аварийное отключение температуры",
+      "description": "Произошло автоматическое отключение температуры по причине обрыв цепи",
+      "severity": "critical",
+      "status": "open",
+      "project_id": 3,
+      "linked_knowledge_ids": "2",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 8,
+      "title": "Сбой в системе резервирования",
+      "description": "При переключении на резервный канал произошла ошибка 390",
+      "severity": "major",
+      "status": "open",
+      "project_id": 3,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 9,
+      "title": "Сбой связи с датчиком температуры",
+      "description": "Потеря данных с датчика температуры на в турбинном цехе",
+      "severity": "major",
+      "status": "in_progress",
+      "project_id": 3,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 10,
+      "title": "Некорректная калибровка тока",
+      "description": "тока на линии 4 отклоняется от нормы на 11%",
+      "severity": "major",
+      "status": "open",
+      "project_id": 4,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 11,
+      "title": "Зависание SCADA интерфейса",
+      "description": "Система мониторинга перестаёт обновлять данные каждые 13 минут",
+      "severity": "critical",
+      "status": "open",
+      "project_id": 4,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 12,
+      "title": "Сбой связи с датчиком напряжения",
+      "description": "Потеря данных с датчика напряжения на на трубопроводе",
+      "severity": "major",
+      "status": "in_progress",
+      "project_id": 4,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 13,
+      "title": "Сбой связи с датчиком давления",
+      "description": "Потеря данных с датчика давления на на трубопроводе",
+      "severity": "minor",
+      "status": "in_progress",
+      "project_id": 4,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 14,
+      "title": "Зависание SCADA интерфейса",
+      "description": "Система мониторинга перестаёт обновлять данные каждые 5 минут",
+      "severity": "trivial",
+      "status": "review",
+      "project_id": 4,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 15,
+      "title": "Аварийное отключение тока",
+      "description": "Произошло автоматическое отключение тока по причине короткое замыкание",
+      "severity": "major",
+      "status": "open",
+      "project_id": 5,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 16,
+      "title": "Перегрев блока питания контроллера",
+      "description": "Температура блока питания достигает 81°C",
+      "severity": "major",
+      "status": "open",
+      "project_id": 5,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 17,
+      "title": "Сбой связи с датчиком тока",
+      "description": "Потеря данных с датчика тока на в распределительном щите",
+      "severity": "minor",
+      "status": "in_progress",
+      "project_id": 5,
+      "linked_knowledge_ids": "3",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 18,
+      "title": "Зависание SCADA интерфейса",
+      "description": "Система мониторинга перестаёт обновлять данные каждые 10 минут",
+      "severity": "critical",
+      "status": "open",
+      "project_id": 6,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 19,
+      "title": "Аварийное отключение уровня",
+      "description": "Произошло автоматическое отключение уровня по причине перегрузка",
+      "severity": "major",
+      "status": "open",
+      "project_id": 6,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 20,
+      "title": "Перегрев блока питания контроллера",
+      "description": "Температура блока питания достигает 79°C",
+      "severity": "minor",
+      "status": "in_progress",
+      "project_id": 6,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 21,
+      "title": "Некорректные показания датчика тока",
+      "description": "Показания датчика тока отличаются от эталонных на 26%",
+      "severity": "minor",
+      "status": "in_progress",
+      "project_id": 6,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 22,
+      "title": "Перегрев блока питания контроллера",
+      "description": "Температура блока питания достигает 85°C",
+      "severity": "critical",
+      "status": "open",
+      "project_id": 7,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 23,
+      "title": "Перегрев блока питания контроллера",
+      "description": "Температура блока питания достигает 82°C",
+      "severity": "major",
+      "status": "open",
+      "project_id": 7,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 24,
+      "title": "Перегрев блока питания контроллера",
+      "description": "Температура блока питания достигает 84°C",
+      "severity": "major",
+      "status": "in_progress",
+      "project_id": 7,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 25,
+      "title": "Зависание SCADA интерфейса",
+      "description": "Система мониторинга перестаёт обновлять данные каждые 8 минут",
+      "severity": "trivial",
+      "status": "in_progress",
+      "project_id": 7,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 26,
+      "title": "Сбой связи с датчиком давления",
+      "description": "Потеря данных с датчика давления на на магистрали",
+      "severity": "critical",
+      "status": "in_progress",
+      "project_id": 7,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 27,
+      "title": "Сбой в системе резервирования",
+      "description": "При переключении на резервный канал произошла ошибка 151",
+      "severity": "major",
+      "status": "in_progress",
+      "project_id": 7,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 28,
+      "title": "Зависание SCADA интерфейса",
+      "description": "Система мониторинга перестаёт обновлять данные каждые 13 минут",
+      "severity": "trivial",
+      "status": "open",
+      "project_id": 8,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 29,
+      "title": "Сбой в системе резервирования",
+      "description": "При переключении на резервный канал произошла ошибка 898",
+      "severity": "critical",
+      "status": "open",
+      "project_id": 8,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 30,
+      "title": "Некорректные показания датчика давления",
+      "description": "Показания датчика давления отличаются от эталонных на 27%",
+      "severity": "critical",
+      "status": "open",
+      "project_id": 8,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 31,
+      "title": "Зависание SCADA интерфейса",
+      "description": "Система мониторинга перестаёт обновлять данные каждые 9 минут",
+      "severity": "major",
+      "status": "in_progress",
+      "project_id": 8,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 32,
+      "title": "Перегрев блока питания контроллера",
+      "description": "Температура блока питания достигает 82°C",
+      "severity": "trivial",
+      "status": "review",
+      "project_id": 8,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 33,
+      "title": "Сбой связи с датчиком тока",
+      "description": "Потеря данных с датчика тока на на магистрали",
+      "severity": "minor",
+      "status": "closed",
+      "project_id": 8,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:05",
+      "resolved_at": null
+    },
+    {
+      "id": 34,
+      "title": "[КЛОН] Сбой связи с датчиком вибрации",
+      "description": "Потеря данных с датчика вибрации на на трубопроводе",
+      "severity": "major",
+      "status": "open",
+      "project_id": 2,
+      "linked_knowledge_ids": "",
+      "created_at": "2026-06-29T14:08:29",
+      "resolved_at": null
+    }
+  ],
+  "comments": [
+    {
+      "id": 1,
+      "fault_id": 1,
+      "author": "manager",
+      "content": "Связался с поставщиком, жду ответа.",
+      "is_internal": false,
+      "created_at": "2026-06-29T17:08:05.480488"
+    },
+    {
+      "id": 2,
+      "fault_id": 2,
+      "author": "engineer",
+      "content": "Проверил, подтверждаю проблему.",
+      "is_internal": false,
+      "created_at": "2026-06-27T17:08:05.480488"
+    },
+    {
+      "id": 3,
+      "fault_id": 2,
+      "author": "engineer2",
+      "content": "Связался с поставщиком, жду ответа.",
+      "is_internal": true,
+      "created_at": "2026-06-24T17:08:05.480488"
+    },
+    {
+      "id": 4,
+      "fault_id": 2,
+      "author": "engineer2",
+      "content": "Провел дополнительное тестирование, всё работает штатно.",
+      "is_internal": false,
+      "created_at": "2026-06-26T17:08:05.480488"
+    },
+    {
+      "id": 5,
+      "fault_id": 6,
+      "author": "manager",
+      "content": "Не удается воспроизвести ошибку, нужны дополнительные логи.",
+      "is_internal": false,
+      "created_at": "2026-06-19T17:08:05.480488"
+    },
+    {
+      "id": 6,
+      "fault_id": 6,
+      "author": "operator",
+      "content": "Начал диагностику, предварительно проблема в блоке питания.",
+      "is_internal": false,
+      "created_at": "2026-06-23T17:08:05.480488"
+    },
+    {
+      "id": 7,
+      "fault_id": 6,
+      "author": "operator",
+      "content": "Проблема устранена, провел тестирование.",
+      "is_internal": false,
+      "created_at": "2026-06-23T17:08:05.480488"
+    },
+    {
+      "id": 8,
+      "fault_id": 7,
+      "author": "operator",
+      "content": "Проблема устранена, провел тестирование.",
+      "is_internal": false,
+      "created_at": "2026-06-22T17:08:05.480488"
+    },
+    {
+      "id": 9,
+      "fault_id": 7,
+      "author": "operator",
+      "content": "Не удается воспроизвести ошибку, нужны дополнительные логи.",
+      "is_internal": false,
+      "created_at": "2026-06-23T17:08:05.480488"
+    },
+    {
+      "id": 10,
+      "fault_id": 7,
+      "author": "engineer",
+      "content": "Заменил датчик, наблюдаю за показаниями.",
+      "is_internal": false,
+      "created_at": "2026-06-24T17:08:05.480488"
+    },
+    {
+      "id": 11,
+      "fault_id": 9,
+      "author": "operator",
+      "content": "Требуется замена модуля, заказал запчасти.",
+      "is_internal": false,
+      "created_at": "2026-06-29T17:08:05.480488"
+    },
+    {
+      "id": 12,
+      "fault_id": 9,
+      "author": "engineer2",
+      "content": "Временное решение внедрено, ждем замену.",
+      "is_internal": true,
+      "created_at": "2026-06-22T17:08:05.480488"
+    },
+    {
+      "id": 13,
+      "fault_id": 10,
+      "author": "engineer2",
+      "content": "Связался с поставщиком, жду ответа.",
+      "is_internal": false,
+      "created_at": "2026-06-29T17:08:05.480488"
+    },
+    {
+      "id": 14,
+      "fault_id": 10,
+      "author": "operator",
+      "content": "Проблема устранена, провел тестирование.",
+      "is_internal": true,
+      "created_at": "2026-06-21T17:08:05.480488"
+    },
+    {
+      "id": 15,
+      "fault_id": 10,
+      "author": "operator",
+      "content": "Проблема устранена, провел тестирование.",
+      "is_internal": false,
+      "created_at": "2026-06-24T17:08:05.480488"
+    },
+    {
+      "id": 16,
+      "fault_id": 11,
+      "author": "operator",
+      "content": "Провел дополнительное тестирование, всё работает штатно.",
+      "is_internal": true,
+      "created_at": "2026-06-20T17:08:05.480488"
+    },
+    {
+      "id": 17,
+      "fault_id": 11,
+      "author": "operator",
+      "content": "Не удается воспроизвести ошибку, нужны дополнительные логи.",
+      "is_internal": false,
+      "created_at": "2026-06-21T17:08:05.480488"
+    },
+    {
+      "id": 18,
+      "fault_id": 12,
+      "author": "engineer2",
+      "content": "Заменил датчик, наблюдаю за показаниями.",
+      "is_internal": false,
+      "created_at": "2026-06-19T17:08:05.480488"
+    },
+    {
+      "id": 19,
+      "fault_id": 13,
+      "author": "engineer2",
+      "content": "Связался с поставщиком, жду ответа.",
+      "is_internal": false,
+      "created_at": "2026-06-19T17:08:05.480488"
+    },
+    {
+      "id": 20,
+      "fault_id": 13,
+      "author": "operator",
+      "content": "Заменил датчик, наблюдаю за показаниями.",
+      "is_internal": false,
+      "created_at": "2026-06-23T17:08:05.480488"
+    },
+    {
+      "id": 21,
+      "fault_id": 14,
+      "author": "engineer",
+      "content": "Проблема устранена, провел тестирование.",
+      "is_internal": false,
+      "created_at": "2026-06-27T17:08:05.480488"
+    },
+    {
+      "id": 22,
+      "fault_id": 18,
+      "author": "manager",
+      "content": "Начал диагностику, предварительно проблема в блоке питания.",
+      "is_internal": false,
+      "created_at": "2026-06-27T17:08:05.481488"
+    },
+    {
+      "id": 23,
+      "fault_id": 18,
+      "author": "engineer",
+      "content": "Проблема устранена, провел тестирование.",
+      "is_internal": true,
+      "created_at": "2026-06-24T17:08:05.481488"
+    },
+    {
+      "id": 24,
+      "fault_id": 18,
+      "author": "engineer2",
+      "content": "Требуется замена модуля, заказал запчасти.",
+      "is_internal": true,
+      "created_at": "2026-06-19T17:08:05.481488"
+    },
+    {
+      "id": 25,
+      "fault_id": 19,
+      "author": "manager",
+      "content": "Временное решение внедрено, ждем замену.",
+      "is_internal": false,
+      "created_at": "2026-06-28T17:08:05.481488"
+    },
+    {
+      "id": 26,
+      "fault_id": 20,
+      "author": "manager",
+      "content": "Связался с поставщиком, жду ответа.",
+      "is_internal": false,
+      "created_at": "2026-06-22T17:08:05.481488"
+    },
+    {
+      "id": 27,
+      "fault_id": 20,
+      "author": "engineer2",
+      "content": "Не удается воспроизвести ошибку, нужны дополнительные логи.",
+      "is_internal": false,
+      "created_at": "2026-06-26T17:08:05.481488"
+    },
+    {
+      "id": 28,
+      "fault_id": 21,
+      "author": "manager",
+      "content": "Заменил датчик, наблюдаю за показаниями.",
+      "is_internal": true,
+      "created_at": "2026-06-21T17:08:05.481488"
+    },
+    {
+      "id": 29,
+      "fault_id": 21,
+      "author": "operator",
+      "content": "Требуется замена модуля, заказал запчасти.",
+      "is_internal": false,
+      "created_at": "2026-06-20T17:08:05.481488"
+    },
+    {
+      "id": 30,
+      "fault_id": 21,
+      "author": "engineer",
+      "content": "Связался с поставщиком, жду ответа.",
+      "is_internal": false,
+      "created_at": "2026-06-20T17:08:05.481488"
+    },
+    {
+      "id": 31,
+      "fault_id": 22,
+      "author": "operator",
+      "content": "Временное решение внедрено, ждем замену.",
+      "is_internal": false,
+      "created_at": "2026-06-24T17:08:05.481488"
+    },
+    {
+      "id": 32,
+      "fault_id": 22,
+      "author": "operator",
+      "content": "Заменил датчик, наблюдаю за показаниями.",
+      "is_internal": false,
+      "created_at": "2026-06-22T17:08:05.481488"
+    },
+    {
+      "id": 33,
+      "fault_id": 22,
+      "author": "engineer2",
+      "content": "Провел дополнительное тестирование, всё работает штатно.",
+      "is_internal": true,
+      "created_at": "2026-06-23T17:08:05.481488"
+    },
+    {
+      "id": 34,
+      "fault_id": 23,
+      "author": "engineer",
+      "content": "Не удается воспроизвести ошибку, нужны дополнительные логи.",
+      "is_internal": false,
+      "created_at": "2026-06-29T17:08:05.481488"
+    },
+    {
+      "id": 35,
+      "fault_id": 24,
+      "author": "engineer2",
+      "content": "Обновил ПО, ошибка исчезла.",
+      "is_internal": false,
+      "created_at": "2026-06-28T17:08:05.481488"
+    },
+    {
+      "id": 36,
+      "fault_id": 24,
+      "author": "operator",
+      "content": "Обновил ПО, ошибка исчезла.",
+      "is_internal": false,
+      "created_at": "2026-06-25T17:08:05.481488"
+    },
+    {
+      "id": 37,
+      "fault_id": 26,
+      "author": "operator",
+      "content": "Проверил, подтверждаю проблему.",
+      "is_internal": false,
+      "created_at": "2026-06-20T17:08:05.481488"
+    },
+    {
+      "id": 38,
+      "fault_id": 26,
+      "author": "engineer2",
+      "content": "Начал диагностику, предварительно проблема в блоке питания.",
+      "is_internal": false,
+      "created_at": "2026-06-25T17:08:05.481488"
+    },
+    {
+      "id": 39,
+      "fault_id": 27,
+      "author": "engineer2",
+      "content": "Проблема устранена, провел тестирование.",
+      "is_internal": false,
+      "created_at": "2026-06-29T17:08:05.481488"
+    },
+    {
+      "id": 40,
+      "fault_id": 27,
+      "author": "engineer2",
+      "content": "Проблема устранена, провел тестирование.",
+      "is_internal": false,
+      "created_at": "2026-06-29T17:08:05.481488"
+    },
+    {
+      "id": 41,
+      "fault_id": 28,
+      "author": "manager",
+      "content": "Провел дополнительное тестирование, всё работает штатно.",
+      "is_internal": false,
+      "created_at": "2026-06-29T17:08:05.481488"
+    },
+    {
+      "id": 42,
+      "fault_id": 28,
+      "author": "manager",
+      "content": "Заменил датчик, наблюдаю за показаниями.",
+      "is_internal": false,
+      "created_at": "2026-06-22T17:08:05.481488"
+    },
+    {
+      "id": 43,
+      "fault_id": 29,
+      "author": "engineer",
+      "content": "Проблема устранена, провел тестирование.",
+      "is_internal": false,
+      "created_at": "2026-06-29T17:08:05.481488"
+    },
+    {
+      "id": 44,
+      "fault_id": 31,
+      "author": "operator",
+      "content": "Обновил ПО, ошибка исчезла.",
+      "is_internal": false,
+      "created_at": "2026-06-27T17:08:05.481488"
+    },
+    {
+      "id": 45,
+      "fault_id": 31,
+      "author": "engineer2",
+      "content": "Связался с поставщиком, жду ответа.",
+      "is_internal": false,
+      "created_at": "2026-06-19T17:08:05.481488"
+    },
+    {
+      "id": 46,
+      "fault_id": 32,
+      "author": "engineer2",
+      "content": "Начал диагностику, предварительно проблема в блоке питания.",
+      "is_internal": false,
+      "created_at": "2026-06-19T17:08:05.481488"
+    }
+  ],
+  "history": [
+    {
+      "id": 1,
+      "fault_id": 1,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Некорректные показания датчика вибрации",
+      "author": "manager",
+      "created_at": "2026-06-26T14:08:05"
+    },
+    {
+      "id": 2,
+      "fault_id": 1,
+      "event_type": "field_change",
+      "field": "Статус",
+      "old_value": "Открыта",
+      "new_value": "В работе",
+      "author": "admin",
+      "created_at": "2026-06-27T03:08:05"
+    },
+    {
+      "id": 3,
+      "fault_id": 2,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Ошибка контроллера Кольская САРЗ-1",
+      "author": "engineer2",
+      "created_at": "2026-06-26T14:08:05"
+    },
+    {
+      "id": 4,
+      "fault_id": 2,
+      "event_type": "field_change",
+      "field": "Важность",
+      "old_value": "Незначительная",
+      "new_value": "Критическая",
+      "author": "manager",
+      "created_at": "2026-06-27T13:08:05"
+    },
+    {
+      "id": 5,
+      "fault_id": 3,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Сбой связи с датчиком вибрации",
+      "author": "admin",
+      "created_at": "2026-06-26T14:08:05"
+    },
+    {
+      "id": 6,
+      "fault_id": 3,
+      "event_type": "field_change",
+      "field": "Статус",
+      "old_value": "В работе",
+      "new_value": "На проверке",
+      "author": "engineer",
+      "created_at": "2026-06-26T18:08:05"
+    },
+    {
+      "id": 7,
+      "fault_id": 3,
+      "event_type": "field_change",
+      "field": "Важность",
+      "old_value": "Незначительная",
+      "new_value": "Серьёзная",
+      "author": "operator",
+      "created_at": "2026-06-27T01:08:05"
+    },
+    {
+      "id": 8,
+      "fault_id": 4,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Зависание SCADA интерфейса",
+      "author": "engineer2",
+      "created_at": "2026-06-26T14:08:05"
+    },
+    {
+      "id": 9,
+      "fault_id": 5,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Ошибка контроллера Кольская САРЗ-2",
+      "author": "engineer2",
+      "created_at": "2026-06-27T14:08:05"
+    },
+    {
+      "id": 10,
+      "fault_id": 5,
+      "event_type": "field_change",
+      "field": "Важность",
+      "old_value": "Незначительная",
+      "new_value": "Критическая",
+      "author": "manager",
+      "created_at": "2026-06-28T18:08:05"
+    },
+    {
+      "id": 11,
+      "fault_id": 6,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Ошибка контроллера Кольская САРЗ-2",
+      "author": "engineer",
+      "created_at": "2026-06-27T14:08:05"
+    },
+    {
+      "id": 12,
+      "fault_id": 6,
+      "event_type": "field_change",
+      "field": "Статус",
+      "old_value": "Открыта",
+      "new_value": "В работе",
+      "author": "operator",
+      "created_at": "2026-06-27T18:08:05"
+    },
+    {
+      "id": 13,
+      "fault_id": 7,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Аварийное отключение температуры",
+      "author": "engineer",
+      "created_at": "2026-06-28T14:08:05"
+    },
+    {
+      "id": 14,
+      "fault_id": 7,
+      "event_type": "field_change",
+      "field": "Важность",
+      "old_value": "Незначительная",
+      "new_value": "Критическая",
+      "author": "admin",
+      "created_at": "2026-06-29T11:08:05"
+    },
+    {
+      "id": 15,
+      "fault_id": 8,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Сбой в системе резервирования",
+      "author": "engineer2",
+      "created_at": "2026-06-27T14:08:05"
+    },
+    {
+      "id": 16,
+      "fault_id": 8,
+      "event_type": "field_change",
+      "field": "Важность",
+      "old_value": "Тривиальная",
+      "new_value": "Серьёзная",
+      "author": "admin",
+      "created_at": "2026-06-28T14:08:05"
+    },
+    {
+      "id": 17,
+      "fault_id": 9,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Сбой связи с датчиком температуры",
+      "author": "engineer2",
+      "created_at": "2026-06-26T14:08:05"
+    },
+    {
+      "id": 18,
+      "fault_id": 9,
+      "event_type": "field_change",
+      "field": "Статус",
+      "old_value": "Открыта",
+      "new_value": "В работе",
+      "author": "manager",
+      "created_at": "2026-06-26T17:08:05"
+    },
+    {
+      "id": 19,
+      "fault_id": 9,
+      "event_type": "field_change",
+      "field": "Важность",
+      "old_value": "Тривиальная",
+      "new_value": "Серьёзная",
+      "author": "operator",
+      "created_at": "2026-06-27T05:08:05"
+    },
+    {
+      "id": 20,
+      "fault_id": 10,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Некорректная калибровка тока",
+      "author": "admin",
+      "created_at": "2026-06-26T14:08:05"
+    },
+    {
+      "id": 21,
+      "fault_id": 10,
+      "event_type": "field_change",
+      "field": "Важность",
+      "old_value": "Тривиальная",
+      "new_value": "Серьёзная",
+      "author": "operator",
+      "created_at": "2026-06-26T16:08:05"
+    },
+    {
+      "id": 22,
+      "fault_id": 11,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Зависание SCADA интерфейса",
+      "author": "engineer2",
+      "created_at": "2026-06-27T14:08:05"
+    },
+    {
+      "id": 23,
+      "fault_id": 11,
+      "event_type": "field_change",
+      "field": "Важность",
+      "old_value": "Серьёзная",
+      "new_value": "Критическая",
+      "author": "engineer2",
+      "created_at": "2026-06-28T04:08:05"
+    },
+    {
+      "id": 24,
+      "fault_id": 12,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Сбой связи с датчиком напряжения",
+      "author": "engineer2",
+      "created_at": "2026-06-26T14:08:05"
+    },
+    {
+      "id": 25,
+      "fault_id": 12,
+      "event_type": "field_change",
+      "field": "Статус",
+      "old_value": "Открыта",
+      "new_value": "В работе",
+      "author": "manager",
+      "created_at": "2026-06-27T10:08:05"
+    },
+    {
+      "id": 26,
+      "fault_id": 13,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Сбой связи с датчиком давления",
+      "author": "operator",
+      "created_at": "2026-06-29T14:08:05"
+    },
+    {
+      "id": 27,
+      "fault_id": 13,
+      "event_type": "field_change",
+      "field": "Статус",
+      "old_value": "Открыта",
+      "new_value": "В работе",
+      "author": "engineer2",
+      "created_at": "2026-06-30T13:08:05"
+    },
+    {
+      "id": 28,
+      "fault_id": 14,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Зависание SCADA интерфейса",
+      "author": "manager",
+      "created_at": "2026-06-29T14:08:05"
+    },
+    {
+      "id": 29,
+      "fault_id": 15,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Аварийное отключение тока",
+      "author": "engineer",
+      "created_at": "2026-06-29T14:08:05"
+    },
+    {
+      "id": 30,
+      "fault_id": 15,
+      "event_type": "field_change",
+      "field": "Важность",
+      "old_value": "Тривиальная",
+      "new_value": "Серьёзная",
+      "author": "engineer",
+      "created_at": "2026-07-01T04:08:05"
+    },
+    {
+      "id": 31,
+      "fault_id": 16,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Перегрев блока питания контроллера",
+      "author": "engineer2",
+      "created_at": "2026-06-29T14:08:05"
+    },
+    {
+      "id": 32,
+      "fault_id": 16,
+      "event_type": "field_change",
+      "field": "Важность",
+      "old_value": "Незначительная",
+      "new_value": "Серьёзная",
+      "author": "engineer",
+      "created_at": "2026-06-29T21:08:05"
+    },
+    {
+      "id": 33,
+      "fault_id": 17,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Сбой связи с датчиком тока",
+      "author": "operator",
+      "created_at": "2026-06-27T14:08:05"
+    },
+    {
+      "id": 34,
+      "fault_id": 17,
+      "event_type": "field_change",
+      "field": "Статус",
+      "old_value": "Открыта",
+      "new_value": "В работе",
+      "author": "operator",
+      "created_at": "2026-06-27T17:08:05"
+    },
+    {
+      "id": 35,
+      "fault_id": 18,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Зависание SCADA интерфейса",
+      "author": "admin",
+      "created_at": "2026-06-26T14:08:05"
+    },
+    {
+      "id": 36,
+      "fault_id": 18,
+      "event_type": "field_change",
+      "field": "Важность",
+      "old_value": "Серьёзная",
+      "new_value": "Критическая",
+      "author": "admin",
+      "created_at": "2026-06-28T14:08:05"
+    },
+    {
+      "id": 37,
+      "fault_id": 19,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Аварийное отключение уровня",
+      "author": "engineer",
+      "created_at": "2026-06-26T14:08:05"
+    },
+    {
+      "id": 38,
+      "fault_id": 20,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Перегрев блока питания контроллера",
+      "author": "engineer",
+      "created_at": "2026-06-28T14:08:05"
+    },
+    {
+      "id": 39,
+      "fault_id": 21,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Некорректные показания датчика тока",
+      "author": "admin",
+      "created_at": "2026-06-27T14:08:05"
+    },
+    {
+      "id": 40,
+      "fault_id": 21,
+      "event_type": "field_change",
+      "field": "Статус",
+      "old_value": "Открыта",
+      "new_value": "В работе",
+      "author": "engineer",
+      "created_at": "2026-06-28T13:08:05"
+    },
+    {
+      "id": 41,
+      "fault_id": 22,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Перегрев блока питания контроллера",
+      "author": "engineer2",
+      "created_at": "2026-06-28T14:08:05"
+    },
+    {
+      "id": 42,
+      "fault_id": 22,
+      "event_type": "field_change",
+      "field": "Важность",
+      "old_value": "Незначительная",
+      "new_value": "Критическая",
+      "author": "engineer",
+      "created_at": "2026-06-29T17:08:05"
+    },
+    {
+      "id": 43,
+      "fault_id": 23,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Перегрев блока питания контроллера",
+      "author": "engineer2",
+      "created_at": "2026-06-27T14:08:05"
+    },
+    {
+      "id": 44,
+      "fault_id": 24,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Перегрев блока питания контроллера",
+      "author": "admin",
+      "created_at": "2026-06-26T14:08:05"
+    },
+    {
+      "id": 45,
+      "fault_id": 24,
+      "event_type": "field_change",
+      "field": "Статус",
+      "old_value": "Открыта",
+      "new_value": "В работе",
+      "author": "engineer",
+      "created_at": "2026-06-27T14:08:05"
+    },
+    {
+      "id": 46,
+      "fault_id": 24,
+      "event_type": "field_change",
+      "field": "Важность",
+      "old_value": "Незначительная",
+      "new_value": "Серьёзная",
+      "author": "engineer",
+      "created_at": "2026-06-27T02:08:05"
+    },
+    {
+      "id": 47,
+      "fault_id": 25,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Зависание SCADA интерфейса",
+      "author": "operator",
+      "created_at": "2026-06-28T14:08:05"
+    },
+    {
+      "id": 48,
+      "fault_id": 25,
+      "event_type": "field_change",
+      "field": "Статус",
+      "old_value": "Открыта",
+      "new_value": "В работе",
+      "author": "admin",
+      "created_at": "2026-06-28T23:08:05"
+    },
+    {
+      "id": 49,
+      "fault_id": 26,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Сбой связи с датчиком давления",
+      "author": "engineer2",
+      "created_at": "2026-06-27T14:08:05"
+    },
+    {
+      "id": 50,
+      "fault_id": 26,
+      "event_type": "field_change",
+      "field": "Статус",
+      "old_value": "Открыта",
+      "new_value": "В работе",
+      "author": "manager",
+      "created_at": "2026-06-27T18:08:05"
+    },
+    {
+      "id": 51,
+      "fault_id": 27,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Сбой в системе резервирования",
+      "author": "engineer",
+      "created_at": "2026-06-26T14:08:05"
+    },
+    {
+      "id": 52,
+      "fault_id": 28,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Зависание SCADA интерфейса",
+      "author": "admin",
+      "created_at": "2026-06-28T14:08:05"
+    },
+    {
+      "id": 53,
+      "fault_id": 28,
+      "event_type": "field_change",
+      "field": "Важность",
+      "old_value": "Незначительная",
+      "new_value": "Тривиальная",
+      "author": "manager",
+      "created_at": "2026-06-29T09:08:05"
+    },
+    {
+      "id": 54,
+      "fault_id": 29,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Сбой в системе резервирования",
+      "author": "manager",
+      "created_at": "2026-06-29T14:08:05"
+    },
+    {
+      "id": 55,
+      "fault_id": 29,
+      "event_type": "field_change",
+      "field": "Важность",
+      "old_value": "Серьёзная",
+      "new_value": "Критическая",
+      "author": "engineer",
+      "created_at": "2026-06-30T08:08:05"
+    },
+    {
+      "id": 56,
+      "fault_id": 30,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Некорректные показания датчика давления",
+      "author": "engineer2",
+      "created_at": "2026-06-28T14:08:05"
+    },
+    {
+      "id": 57,
+      "fault_id": 31,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Зависание SCADA интерфейса",
+      "author": "engineer",
+      "created_at": "2026-06-26T14:08:05"
+    },
+    {
+      "id": 58,
+      "fault_id": 31,
+      "event_type": "field_change",
+      "field": "Статус",
+      "old_value": "Открыта",
+      "new_value": "В работе",
+      "author": "admin",
+      "created_at": "2026-06-26T16:08:05"
+    },
+    {
+      "id": 59,
+      "fault_id": 31,
+      "event_type": "field_change",
+      "field": "Важность",
+      "old_value": "Тривиальная",
+      "new_value": "Серьёзная",
+      "author": "admin",
+      "created_at": "2026-06-26T18:08:05"
+    },
+    {
+      "id": 60,
+      "fault_id": 32,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Перегрев блока питания контроллера",
+      "author": "manager",
+      "created_at": "2026-06-27T14:08:05"
+    },
+    {
+      "id": 61,
+      "fault_id": 32,
+      "event_type": "field_change",
+      "field": "Статус",
+      "old_value": "В работе",
+      "new_value": "На проверке",
+      "author": "engineer2",
+      "created_at": "2026-06-27T21:08:05"
+    },
+    {
+      "id": 62,
+      "fault_id": 33,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создана неисправность: Сбой связи с датчиком тока",
+      "author": "engineer2",
+      "created_at": "2026-06-29T14:08:05"
+    },
+    {
+      "id": 63,
+      "fault_id": 33,
+      "event_type": "field_change",
+      "field": "Статус",
+      "old_value": "В работе",
+      "new_value": "Закрыта",
+      "author": "operator",
+      "created_at": "2026-06-30T13:08:05"
+    },
+    {
+      "id": 64,
+      "fault_id": 34,
+      "event_type": "creation",
+      "field": "creation",
+      "old_value": null,
+      "new_value": "Создан клон неисправности #3 из проекта Кольская САРЗ-1",
+      "author": "admin",
+      "created_at": "2026-06-29T14:08:29"
+    },
+    {
+      "id": 65,
+      "fault_id": 3,
+      "event_type": "field_change",
+      "field": "Клонирование",
+      "old_value": null,
+      "new_value": "Создан клон в проекте Кольская САРЗ-2 (#34)",
+      "author": "admin",
+      "created_at": "2026-06-29T14:08:29"
+    }
+  ],
+  "knowledge": [
+    {
+      "id": 1,
+      "title": "Как устранить ошибку PLC 0xE4",
+      "content": "# Ошибка PLC 0xE4\n\n        ## Причина\n        Ошибка возникает при перегреве блока питания контроллера.\n\n        ## Решение\n        1. Отключите питание\n        2. Проверьте вентиляцию\n        3. Замените термопасту\n        4. Включите питание\n\n        ## Профилактика\n        Проводите чистку каждые 3 месяца.",
+      "category": "Решение",
+      "tags": "plc, ошибка, контроллер",
+      "related_faults": "2",
+      "author": "admin",
+      "is_published": true,
+      "views": 0,
+      "created_at": "2026-06-29T14:08:05",
+      "updated_at": "2026-06-29T14:08:05"
+    },
+    {
+      "id": 2,
+      "title": "Настройка SCADA для нефтепровода",
+      "content": "# Настройка SCADA\n\n        ## Шаг 1: Установка\n        Скачайте дистрибутив с сайта производителя.\n\n        ## Шаг 2: Конфигурация\n        Откройте файл `config.ini` и настройте параметры.\n\n        ## Шаг 3: Подключение\n        Настройте подключение к контроллерам.",
+      "category": "Инструкция",
+      "tags": "scada, настройка, нефтепровод",
+      "related_faults": "7,2,1",
+      "author": "engineer",
+      "is_published": true,
+      "views": 0,
+      "created_at": "2026-06-29T14:08:05",
+      "updated_at": "2026-06-29T14:08:05"
+    },
+    {
+      "id": 3,
+      "title": "Диагностика датчика давления",
+      "content": "# Диагностика датчика давления\n\n        ## Симптомы\n        - Нестабильные показания\n        - Потеря связи\n\n        ## Проверка\n        1. Проверьте питание\n        2. Проверьте кабель\n        3. Проверьте калибровку\n\n        ## Замена\n        При неисправности замените датчик.",
+      "category": "Документация",
+      "tags": "датчик, давление, диагностика",
+      "related_faults": "17",
+      "author": "engineer2",
+      "is_published": true,
+      "views": 0,
+      "created_at": "2026-06-29T14:08:05",
+      "updated_at": "2026-06-29T14:08:05"
+    }
+  ]
+}
