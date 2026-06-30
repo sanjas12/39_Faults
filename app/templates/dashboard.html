@@ -59,14 +59,14 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3 mb-3">
+    <!-- <div class="col-md-3 mb-3">
         <div class="card bg-dark text-white">
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-files"></i> Клонов</h5>
                 <h2 class="card-text" id="total-clones">0</h2>
             </div>
         </div>
-    </div>
+    </div> -->
     <div class="col-md-3 mb-3">
         <div class="card bg-purple text-white" style="background: #6f42c1;">
             <div class="card-body">
@@ -102,6 +102,30 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Быстрые действия -->
+                <div class="mt-3 pt-3 border-top">
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="/faults" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-bug"></i> Все неисправности
+                        </a>
+                        <a href="/projects" class="btn btn-outline-success btn-sm">
+                            <i class="bi bi-folder"></i> Проекты
+                        </a>
+                        <a href="/knowledge" class="btn btn-outline-info btn-sm">
+                            <i class="bi bi-book"></i> База знаний
+                        </a>
+                        <button class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#createFaultModal">
+                            <i class="bi bi-plus-circle"></i> Создать неисправность
+                        </button>
+                        <a href="/kanban" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-grid-3x3-gap-fill"></i> Kanban
+                        </a>
+                        <a href="/projects" class="btn btn-outline-dark btn-sm">
+                            <i class="bi bi-arrow-repeat"></i> Клонировать
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -127,36 +151,6 @@
             </div>
             <div class="card-body" id="knowledge-list">
                 <div class="text-center text-muted">Загрузка...</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Быстрые действия -->
-<div class="row mt-3">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-lightning"></i> Быстрые действия</h5>
-            </div>
-            <div class="card-body">
-                <div class="d-flex flex-wrap gap-2">
-                    <a href="/faults" class="btn btn-outline-primary">
-                        <i class="bi bi-bug"></i> Все неисправности
-                    </a>
-                    <a href="/projects" class="btn btn-outline-success">
-                        <i class="bi bi-folder"></i> Проекты
-                    </a>
-                    <a href="/knowledge" class="btn btn-outline-info">
-                        <i class="bi bi-book"></i> База знаний
-                    </a>
-                    <button class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#createFaultModal">
-                        <i class="bi bi-plus-circle"></i> Создать неисправность
-                    </button>
-                    <a href="/kanban" class="btn btn-outline-secondary">
-                        <i class="bi bi-grid-3x3-gap-fill"></i> Kanban
-                    </a>
-                </div>
             </div>
         </div>
     </div>
@@ -220,30 +214,26 @@ async function loadDashboard() {
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         // Загружаем все данные параллельно
-        const [faultsRes, projectsRes, knowledgeRes, attachmentsRes] = await Promise.all([
+        const [faultsRes, projectsRes, knowledgeRes] = await Promise.all([
             axios.get('/api/faults?limit=1000'),
             axios.get('/api/projects'),
-            axios.get('/api/knowledge?limit=10'),
-            axios.get('/api/faults?limit=1000')  // Для подсчёта вложений
+            axios.get('/api/knowledge?limit=10')
         ]);
 
         const faults = faultsRes.data || [];
         const projects = projectsRes.data || [];
         const knowledge = knowledgeRes.data || [];
-        const allFaults = attachmentsRes.data || [];
 
-        console.log(`📊 Загружено: ${faults.length} неисправностей, ${projects.length} проектов`);
+        console.log(`📊 Загружено: ${faults.length} неисправностей, ${projects.length} проектов, ${knowledge.length} статей`);
 
         // === СТАТИСТИКА ===
         const total = faults.length;
         const critical = faults.filter(f => f.severity === 'critical').length;
         const inProgress = faults.filter(f => f.status === 'in_progress').length;
         const closed = faults.filter(f => f.status === 'closed').length;
-        
-        // ✅ Дополнительная статистика
         const withActions = faults.filter(f => f.planned_actions && f.planned_actions.trim().length > 0).length;
         
-        // Подсчёт вложений (нужно загрузить отдельно для каждой неисправности)
+        // Подсчёт вложений
         let withAttachments = 0;
         for (const fault of faults) {
             try {
@@ -256,7 +246,6 @@ async function loadDashboard() {
             }
         }
         
-        // Подсчёт клонов (неисправности с parent_fault_id)
         const clones = faults.filter(f => f.parent_fault_id !== null && f.parent_fault_id !== undefined).length;
 
         document.getElementById('total-faults').textContent = total;
@@ -265,7 +254,7 @@ async function loadDashboard() {
         document.getElementById('closed-faults').textContent = closed;
         document.getElementById('faults-with-actions').textContent = withActions;
         document.getElementById('faults-with-attachments').textContent = withAttachments;
-        document.getElementById('total-clones').textContent = clones;
+        // document.getElementById('total-clones').textContent = clones;
         document.getElementById('total-knowledge').textContent = knowledge.length;
 
         // === ПОСЛЕДНИЕ НЕИСПРАВНОСТИ ===
@@ -323,7 +312,6 @@ async function loadDashboard() {
         if (projects.length === 0) {
             projectsContainer.innerHTML = '<div class="text-center text-muted">Нет проектов</div>';
         } else {
-            // Считаем неисправности по проектам
             const faultsByProject = {};
             faults.forEach(f => {
                 if (f.project_id) {
