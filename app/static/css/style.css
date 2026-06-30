@@ -325,3 +325,75 @@
     background: #888;
     border-radius: 10px;
 }
+
+/* Планируемые мероприятия */
+.planned-actions-content {
+    min-height: 50px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.planned-actions-content h2 {
+    font-size: 1.2rem;
+    margin-top: 10px;
+    margin-bottom: 5px;
+}
+
+.planned-actions-content h3 {
+    font-size: 1.1rem;
+    margin-top: 8px;
+    margin-bottom: 4px;
+}
+
+.planned-actions-content h4 {
+    font-size: 1rem;
+    margin-top: 6px;
+    margin-bottom: 3px;
+}
+
+.planned-actions-content ul {
+    padding-left: 20px;
+    margin-bottom: 5px;
+}
+
+.planned-actions-content li {
+    margin-bottom: 2px;
+}
+
+.planned-actions-content strong {
+    color: #0d6efd;
+}
+
+#plannedActionsPreview {
+    min-height: 150px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+#plannedActionsPreview h2 {
+    font-size: 1.2rem;
+    margin-top: 10px;
+    margin-bottom: 5px;
+}
+
+#plannedActionsPreview h3 {
+    font-size: 1.1rem;
+    margin-top: 8px;
+    margin-bottom: 4px;
+}
+
+#plannedActionsPreview h4 {
+    font-size: 1rem;
+    margin-top: 6px;
+    margin-bottom: 3px;
+}
+
+#plannedActionsPreview ul {
+    padding-left: 20px;
+    margin-bottom: 5px;
+}
+
+#plannedActionsPreview li {
+    margin-bottom: 2px;
+}

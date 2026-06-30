@@ -54,6 +54,7 @@ class FaultBase(BaseModel):
     severity: SeverityEnum = SeverityEnum.MINOR
     project_id: Optional[int] = Field(None, description="ID проекта (может быть null)")
     linked_knowledge_ids: Optional[str] = Field(None, description="ID статей через запятую")
+    planned_actions: Optional[str] = Field(None, description="Планируемые мероприятия (Markdown)")
 
     @validator("title")
     def title_not_empty(cls, v: str) -> str:  # noqa: N805
@@ -76,6 +77,7 @@ class FaultUpdate(BaseModel):
     project_id: Optional[int] = None
     parent_fault_id: Optional[int] = None
     linked_knowledge_ids: Optional[str] = Field(None, description="ID статей через запятую")
+    planned_actions: Optional[str] = Field(None, description="Планируемые мероприятия (Markdown)")
 
     @validator("title")
     def title_not_empty(cls, v: Optional[str]) -> Optional[str]:  # noqa: N805

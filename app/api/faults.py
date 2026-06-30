@@ -312,7 +312,8 @@ def update_fault(
         "severity": fault.severity,
         "status": fault.status,
         "project_id": fault.project_id,
-        "linked_knowledge_ids": fault.linked_knowledge_ids or ""
+        "linked_knowledge_ids": fault.linked_knowledge_ids or "",
+        "planned_actions": fault.planned_actions or "" 
     }
     
     # Проверяем project_id
@@ -344,7 +345,8 @@ def update_fault(
         "severity": "Важность",
         "status": "Статус",
         "project_id": "Проект",
-        "linked_knowledge_ids": "Связанные статьи"
+        "linked_knowledge_ids": "Связанные статьи",
+        "planned_actions": "Планируемые мероприятия"
     }
 
     # После обновления, если изменился статус — отправляем уведомление

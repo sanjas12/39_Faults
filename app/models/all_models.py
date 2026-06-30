@@ -82,6 +82,7 @@ class Fault(Base):
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=True)
     parent_fault_id = Column(Integer, ForeignKey("faults.id"), nullable=True)
     linked_knowledge_ids = Column(String(500), nullable=True, default="")
+    planned_actions = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     resolved_at = Column(DateTime(timezone=True), nullable=True)
     

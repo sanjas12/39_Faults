@@ -79,6 +79,48 @@
                 </div>
             </div>
 
+            <!-- ===== ПЛАНИРУЕМЫЕ МЕРОПРИЯТИЯ ===== -->
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-list-check"></i> Планируемые мероприятия</h5>
+                    <div>
+                        <button class="btn btn-sm btn-outline-primary" id="togglePlannedActionsEdit">
+                            <i class="bi bi-pencil"></i> Редактировать
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Режим просмотра -->
+                    <div id="plannedActionsView">
+                        <div id="plannedActionsContent" class="planned-actions-content">
+                            <p class="text-muted">Нет запланированных мероприятий</p>
+                        </div>
+                    </div>
+                    <!-- Режим редактирования (скрыт по умолчанию) -->
+                    <div id="plannedActionsEdit" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <textarea class="form-control" id="plannedActionsTextarea" rows="6" placeholder="Введите планируемые мероприятия в формате Markdown..."></textarea>
+                                <small class="text-muted">Поддерживается Markdown: # Заголовок, **жирный**, *курсив*, - список</small>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="border p-2" id="plannedActionsPreview" style="min-height: 150px; background: #f8f9fa; border-radius: 4px;">
+                                    <em class="text-muted">Предпросмотр...</em>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <button class="btn btn-primary btn-sm" id="savePlannedActionsBtn">
+                                <i class="bi bi-check"></i> Сохранить
+                            </button>
+                            <button class="btn btn-secondary btn-sm" id="cancelPlannedActionsBtn">
+                                <i class="bi bi-x"></i> Отмена
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- ===== СВЯЗАННЫЕ СТАТЬИ ИЗ БАЗЫ ЗНАНИЙ ===== -->
             <div class="card mb-3">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -279,7 +321,30 @@ const faultId = {{ fault_id }};
 let currentFault = null;
 let allProjects = [];
 let isEditing = false;
-let isUploading = false;  // ✅ Флаг для предотвращения дублирования загрузки
+let isUploading = false;
+let isPlannedActionsEditing = false;
+let originalPlannedActions = '';
+
+// ======= ФУНКЦИЯ ПАРСИНГА MARKDOWN =======
+function parseMarkdown(text) {
+    if (!text) return '';
+    
+    let html = text;
+    // Заголовки
+    html = html.replace(/^### (.*$)/gim, '<h4>$1</h4>');
+    html = html.replace(/^## (.*$)/gim, '<h3>$1</h3>');
+    html = html.replace(/^# (.*$)/gim, '<h2>$1</h2>');
+    // Жирный
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    // Курсив
+    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    // Списки
+    html = html.replace(/^\s*-\s(.*$)/gim, '<li>$1</li>');
+    html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+    // Переносы строк
+    html = html.replace(/\n/g, '<br>');
+    return html;
+}
 
 // ======= ЗАГРУЗКА ДАННЫХ =======
 async function loadFaultDetail() {
@@ -356,7 +421,7 @@ function renderFault(fault) {
     const descEl = document.getElementById('faultDescription');
     if (descEl) descEl.innerHTML = fault.description || '<span class="text-muted">Нет описания</span>';
     
-    // ✅ Отображаем связи (родитель и клоны)
+    // Отображаем связи (родитель и клоны)
     renderRelations(fault);
     
     // Проект со ссылкой
@@ -471,6 +536,9 @@ function renderFault(fault) {
     
     const editProjectEl = document.getElementById('editProject');
     if (editProjectEl) editProjectEl.value = fault.project_id || '';
+    
+    // ✅ Загружаем планируемые мероприятия
+    loadPlannedActions(fault);
 }
 
 // ======= ОТОБРАЖЕНИЕ СВЯЗЕЙ (РОДИТЕЛЬ И КЛОНЫ) =======
@@ -508,6 +576,147 @@ function renderRelations(fault) {
     }
     
     container.innerHTML = html;
+}
+
+// ======= ПЛАНИРУЕМЫЕ МЕРОПРИЯТИЯ =======
+function loadPlannedActions(fault) {
+    const content = fault.planned_actions || '';
+    originalPlannedActions = content;
+    
+    // Отображаем в режиме просмотра
+    const viewContainer = document.getElementById('plannedActionsContent');
+    if (viewContainer) {
+        if (content) {
+            viewContainer.innerHTML = parseMarkdown(content);
+        } else {
+            viewContainer.innerHTML = '<p class="text-muted">Нет запланированных мероприятий</p>';
+        }
+    }
+    
+    // Заполняем текстовое поле для редактирования
+    const textarea = document.getElementById('plannedActionsTextarea');
+    if (textarea) {
+        textarea.value = content;
+    }
+    updatePlannedActionsPreview(content);
+}
+
+function updatePlannedActionsPreview(text) {
+    const preview = document.getElementById('plannedActionsPreview');
+    if (!preview) return;
+    
+    if (text && text.trim()) {
+        preview.innerHTML = parseMarkdown(text);
+    } else {
+        preview.innerHTML = '<em class="text-muted">Предпросмотр...</em>';
+    }
+}
+
+// Переключение режима редактирования
+const toggleBtn = document.getElementById('togglePlannedActionsEdit');
+if (toggleBtn) {
+    toggleBtn.addEventListener('click', function() {
+        const editMode = document.getElementById('plannedActionsEdit');
+        const viewMode = document.getElementById('plannedActionsView');
+        const isEditing = editMode.style.display !== 'none';
+        
+        if (isEditing) {
+            // Выход из режима редактирования без сохранения
+            editMode.style.display = 'none';
+            viewMode.style.display = 'block';
+            this.innerHTML = '<i class="bi bi-pencil"></i> Редактировать';
+            isPlannedActionsEditing = false;
+            // Восстанавливаем исходное значение
+            const textarea = document.getElementById('plannedActionsTextarea');
+            if (textarea) {
+                textarea.value = originalPlannedActions;
+                updatePlannedActionsPreview(originalPlannedActions);
+            }
+        } else {
+            // Вход в режим редактирования
+            editMode.style.display = 'block';
+            viewMode.style.display = 'none';
+            this.innerHTML = '<i class="bi bi-x"></i> Отменить';
+            isPlannedActionsEditing = true;
+            // Сохраняем текущее значение как оригинал
+            const textarea = document.getElementById('plannedActionsTextarea');
+            if (textarea) {
+                originalPlannedActions = textarea.value;
+            }
+        }
+    });
+}
+
+// Предпросмотр при вводе
+const plannedTextarea = document.getElementById('plannedActionsTextarea');
+if (plannedTextarea) {
+    plannedTextarea.addEventListener('input', function() {
+        updatePlannedActionsPreview(this.value);
+    });
+}
+
+// Отмена редактирования
+const cancelBtn = document.getElementById('cancelPlannedActionsBtn');
+if (cancelBtn) {
+    cancelBtn.addEventListener('click', function() {
+        document.getElementById('plannedActionsEdit').style.display = 'none';
+        document.getElementById('plannedActionsView').style.display = 'block';
+        const toggleBtn = document.getElementById('togglePlannedActionsEdit');
+        if (toggleBtn) {
+            toggleBtn.innerHTML = '<i class="bi bi-pencil"></i> Редактировать';
+        }
+        isPlannedActionsEditing = false;
+        // Восстанавливаем исходное значение
+        const textarea = document.getElementById('plannedActionsTextarea');
+        if (textarea) {
+            textarea.value = originalPlannedActions;
+            updatePlannedActionsPreview(originalPlannedActions);
+        }
+    });
+}
+
+// Сохранение планируемых мероприятий
+const saveBtn = document.getElementById('savePlannedActionsBtn');
+if (saveBtn) {
+    saveBtn.addEventListener('click', async function() {
+        const content = document.getElementById('plannedActionsTextarea').value.trim();
+        
+        try {
+            const token = localStorage.getItem('auth_token');
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            
+            const response = await axios.patch(`/api/faults/${faultId}`, {
+                planned_actions: content || null
+            });
+            
+            // Обновляем currentFault
+            currentFault = response.data;
+            
+            // Обновляем отображение
+            loadPlannedActions(currentFault);
+            
+            // Закрываем режим редактирования
+            document.getElementById('plannedActionsEdit').style.display = 'none';
+            document.getElementById('plannedActionsView').style.display = 'block';
+            const toggleBtn = document.getElementById('togglePlannedActionsEdit');
+            if (toggleBtn) {
+                toggleBtn.innerHTML = '<i class="bi bi-pencil"></i> Редактировать';
+            }
+            isPlannedActionsEditing = false;
+            
+            // Обновляем оригинальное значение
+            originalPlannedActions = content;
+            
+            showNotification('✅ Планируемые мероприятия сохранены!');
+        } catch (error) {
+            console.error('❌ Ошибка сохранения:', error);
+            alert('Ошибка при сохранении: ' + (error.response?.data?.detail || error.message));
+        }
+    });
 }
 
 // ======= ВЛОЖЕНИЯ =======
@@ -923,8 +1132,7 @@ async function loadHistory() {
         const eventLabels = {
             'creation': 'создал(а) неисправность',
             'field_change': 'изменил(а)',
-            'comment': 'добавил(а) комментарий',
-            'cloning': 'клонировал(а) неисправность'
+            'comment': 'добавил(а) комментарий'
         };
         
         historyList.innerHTML = history.map(h => {
