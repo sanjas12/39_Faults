@@ -9,6 +9,7 @@ function updateUserUI() {
     const userInfo = document.getElementById('userInfo');
     const logoutBtn = document.getElementById('logoutBtn');
     const loginLink = document.getElementById('loginLink');
+    const settingsNav = document.getElementById('settingsNavItem');
     
     console.log('🔄 updateUserUI вызван');
     console.log('🔍 currentUser:', currentUser);
@@ -29,6 +30,10 @@ function updateUserUI() {
         if (loginLink) {
             loginLink.style.display = 'none';
         }
+        // ✅ Показываем пункт "Настройки"
+        if (settingsNav) {
+            settingsNav.style.display = 'block';
+        }
     } else {
         // Гость
         userInfo.innerHTML = `<small>Гость</small>`;
@@ -37,6 +42,10 @@ function updateUserUI() {
         }
         if (loginLink) {
             loginLink.style.display = 'block';
+        }
+        // ✅ Скрываем пункт "Настройки"
+        if (settingsNav) {
+            settingsNav.style.display = 'none';
         }
     }
 }
