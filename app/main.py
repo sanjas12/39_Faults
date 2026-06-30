@@ -64,6 +64,8 @@ def is_authenticated(request: Request) -> bool:
                 if user and user.is_active:
                     request.state.user = user
                     return True
+            except Exception as e:
+                print(f"Ошибка проверки авторизации: {e}")
             finally:
                 db.close()
     return False
@@ -75,18 +77,26 @@ def _render_page(
     active_page: Optional[str] = None,
     **extra_context: object,
 ) -> HTMLResponse:
-    """Отрендерить HTML-страницу через Jinja2Templates с проверкой авторизации
-    Собирает базовый контекст (request, active_page) и добавляет
-    дополнительные значения, специфичные для конкретной страницы.
-    """
+    """Отрендерить HTML-страницу через Jinja2Templates"""
     
-    # ✅ Проверяем авторизацию для всех страниц, кроме публичных
-    public_pages = ['/login', '/register']
+    context: Dict[str, object] = {"request": request}
+    if active_page is not None:
+        context["active_page"] = active_page
+    context.update(extra_context)
+    return templates.TemplateResponse(template_name, context)
+
+
+def _render_protected_page(
+    request: Request,
+    template_name: str,
+    active_page: Optional[str] = None,
+    **extra_context: object,
+) -> HTMLResponse:
+    """Отрендерить HTML-страницу с проверкой авторизации"""
     
-    # Проверяем, что запрос не на публичную страницу
-    if request.url.path not in public_pages:
-        if not is_authenticated(request):
-            return RedirectResponse(url='/login', status_code=302)
+    # Проверяем авторизацию
+    if not is_authenticated(request):
+        return RedirectResponse(url='/login', status_code=302)
     
     context: Dict[str, object] = {"request": request}
     if active_page is not None:
@@ -99,31 +109,31 @@ def _render_page(
 @app.get("/")
 def dashboard(request: Request) -> HTMLResponse:
     """Главная панель (дашборд)."""
-    return _render_page(request, "dashboard.html", active_page="dashboard")
+    return _render_protected_page(request, "dashboard.html", active_page="dashboard")
 
 
 @app.get("/projects")
 def projects_page(request: Request) -> HTMLResponse:
     """Страница со списком проектов."""
-    return _render_page(request, "projects.html", active_page="projects")
+    return _render_protected_page(request, "projects.html", active_page="projects")
 
 
 @app.get("/faults")
 def faults_page(request: Request) -> HTMLResponse:
     """Страница со списком неисправностей."""
-    return _render_page(request, "faults.html", active_page="faults")
+    return _render_protected_page(request, "faults.html", active_page="faults")
 
 
 @app.get("/knowledge")
 def knowledge_page(request: Request) -> HTMLResponse:
     """Страница базы знаний."""
-    return _render_page(request, "knowledge_base.html", active_page="knowledge")
+    return _render_protected_page(request, "knowledge_base.html", active_page="knowledge")
 
 
 @app.get("/faults/{fault_id}")
 def fault_detail(request: Request, fault_id: int) -> HTMLResponse:
     """Детальная карточка конкретной неисправности."""
-    return _render_page(
+    return _render_protected_page(
         request, "fault_detail.html", active_page="faults", fault_id=fault_id
     )
 
@@ -137,24 +147,24 @@ def health() -> Dict[str, str]:
 @app.get("/kanban")
 def kanban_page(request: Request) -> HTMLResponse:
     """Канбан-доска."""
-    return _render_page(request, "kanban.html", active_page="kanban")
+    return _render_protected_page(request, "kanban.html", active_page="kanban")
 
 
 @app.get("/knowledge/{article_id}")
 def knowledge_article_detail(request: Request, article_id: int):
     """Страница просмотра статьи"""
-    return _render_page(request, "knowledge_article.html", active_page="knowledge", article_id=article_id)
+    return _render_protected_page(request, "knowledge_article.html", active_page="knowledge", article_id=article_id)
 
 
 @app.get("/settings")
 def settings_page(request: Request):
-    return _render_page(request, "settings.html", active_page="settings")
+    return _render_protected_page(request, "settings.html", active_page="settings")
 
 
 @app.get("/projects/{project_id}")
 def project_detail(request: Request, project_id: int):
     """Детальная страница проекта"""
-    return _render_page(request, "project_detail.html", active_page="projects", project_id=project_id)
+    return _render_protected_page(request, "project_detail.html", active_page="projects", project_id=project_id)
 
 if not app.debug:
     start_scheduler()
@@ -164,15 +174,18 @@ if not app.debug:
 @app.get("/login")
 def login_page(request: Request) -> HTMLResponse:
     """Страница входа в систему."""
-    # Если пользователь уже авторизован, редиректим на дашборд
+    # Если уже авторизован — редирект на дашборд
     if is_authenticated(request):
         return RedirectResponse(url='/', status_code=302)
-    return _render_page(request, "login.html")
+    # Используем _render_page без проверки
+    context = {"request": request}
+    return templates.TemplateResponse("login.html", context)
+
 
 @app.get("/register")
 def register_page(request: Request) -> HTMLResponse:
     """Страница регистрации."""
-    # Если пользователь уже авторизован, редиректим на дашборд
     if is_authenticated(request):
         return RedirectResponse(url='/', status_code=302)
-    return _render_page(request, "register.html")
+    context = {"request": request}
+    return templates.TemplateResponse("register.html", context)
