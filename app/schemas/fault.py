@@ -93,6 +93,7 @@ class FaultResponse(FaultBase):
     id: int
     status: StatusEnum
     created_at: datetime
+    updated_at: Optional[datetime] = None
     resolved_at: Optional[datetime] = None
     project: Optional[ProjectResponse] = None
     comments: List[CommentResponse] = []

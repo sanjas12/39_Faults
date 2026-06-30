@@ -171,6 +171,7 @@ def list_faults(
             "linked_knowledge_ids": fault.linked_knowledge_ids,
             "planned_actions": fault.planned_actions,
             "created_at": fault.created_at,
+            "updated_at": fault.updated_at,
             "resolved_at": fault.resolved_at,
             "project": {
                 "id": fault.project.id,
@@ -258,6 +259,7 @@ def get_fault(
         "linked_knowledge_ids": fault.linked_knowledge_ids,
         "planned_actions": fault.planned_actions,
         "created_at": fault.created_at,
+        "updated_at": fault.updated_at,
         "resolved_at": fault.resolved_at,
         "project": {
             "id": fault.project.id,

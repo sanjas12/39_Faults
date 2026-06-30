@@ -84,6 +84,7 @@ class Fault(Base):
     linked_knowledge_ids = Column(String(500), nullable=True, default="")
     planned_actions = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     resolved_at = Column(DateTime(timezone=True), nullable=True)
     
     # Связь с проектом (много неисправностей → один проект)

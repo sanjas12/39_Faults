@@ -73,6 +73,7 @@
                         <th style="width: 120px;">Важность</th>
                         <th style="width: 130px;">Статус</th>
                         <th style="width: 140px;">Создана</th>
+                        <th style="width: 140px;">Изменена</th>
                         <th style="width: 100px;">Мероприятия</th>
                         <th style="width: 120px;">Планируемые мероприятия</th> 
                     </tr>
@@ -325,7 +326,7 @@ async function loadFaults(searchTerm = '') {
             return;
         }
         document.getElementById('faultsList').innerHTML = `
-            <tr><td colspan="8" class="text-center text-danger">Ошибка загрузки данных</td></tr>
+            <tr><td colspan="9" class="text-center text-danger">Ошибка загрузки данных</td></tr>
         `;
     }
 }
@@ -384,46 +385,40 @@ function renderTable() {
             ? '<span class="badge bg-success"><i class="bi bi-check-circle"></i> Есть</span>'
             : '<span class="badge bg-secondary"><i class="bi bi-x-circle"></i> Нет</span>';
         
-        return `
-            <tr class="fault-row" data-id="${fault.id}">
-                <td>${start + index + 1}</td>
-                <td>
-                    <a href="/faults/${fault.id}" class="text-decoration-none fw-bold">
-                        ${fault.title.length > 50 ? fault.title.slice(0, 50) + '...' : fault.title}
-                    </a>
-                </td>
-                <td>
-                    <span class="badge bg-secondary">${projectName}</span>
-                </td>
-                <td>
-                    <span class="badge bg-${severityColors[fault.severity] || 'secondary'}">
-                        ${severityLabels[fault.severity] || fault.severity}
-                    </span>
-                </td>
-                <td>
-                    <span class="badge bg-${statusColors[fault.status] || 'secondary'}">
-                        ${statusLabels[fault.status] || fault.status}
-                    </span>
-                </td>
-                <td>
-                    <small class="text-muted">${new Date(fault.created_at).toLocaleDateString('ru-RU')}</small>
-                </td>
-                <td>
-                    ${plannedActionsStatus}
-                </td>
-                <td>
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-primary" onclick="editFault(${fault.id})" title="Редактировать">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <button class="btn btn-outline-danger" onclick="deleteFault(${fault.id})" title="Удалить">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `;
-    }).join('');
+        const createdDate = fault.created_at 
+            ? new Date(fault.created_at).toLocaleDateString('ru-RU') 
+            : '—';
+        const updatedDate = fault.updated_at 
+            ? new Date(fault.updated_at).toLocaleDateString('ru-RU') 
+            : '—';
+
+            return `
+        <tr class="fault-row" data-id="${fault.id}">
+            <td>${start + index + 1}</td>
+            <td>
+                <a href="/faults/${fault.id}" class="text-decoration-none fw-bold">
+                    ${fault.title.length > 50 ? fault.title.slice(0, 50) + '...' : fault.title}
+                </a>
+            </td>
+            <td><span class="badge bg-secondary">${projectName}</span></td>
+            <td><span class="badge bg-${severityColors[fault.severity] || 'secondary'}">${severityLabels[fault.severity] || fault.severity}</span></td>
+            <td><span class="badge bg-${statusColors[fault.status] || 'secondary'}">${statusLabels[fault.status] || fault.status}</span></td>
+            <td><small class="text-muted">${createdDate}</small></td>
+            <td><small class="text-muted">${updatedDate}</small></td>  <!-- ✅ Добавляем -->
+            <td>${plannedActionsStatus}</td>
+            <td>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary" onclick="editFault(${fault.id})" title="Редактировать">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-outline-danger" onclick="deleteFault(${fault.id})" title="Удалить">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `;
+}).join('');
     
     updatePagination();
 }

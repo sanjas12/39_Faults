@@ -57,6 +57,10 @@
                             <small class="text-muted">Создана:</small>
                             <div id="faultCreated">Загрузка...</div>
                         </div>
+                        <div class="col-md-4">
+                            <small class="text-muted">Изменена:</small>
+                            <div id="faultUpdated">Загрузка...</div>
+                        </div>
                         <div class="col-md-6">
                             <small class="text-muted">Закрыта:</small>
                             <div id="faultResolved">Не закрыта</div>
@@ -509,6 +513,13 @@ function renderFault(fault) {
         createdEl.textContent = fault.created_at 
             ? new Date(fault.created_at).toLocaleString('ru-RU') 
             : 'Неизвестно';
+    }
+    
+    const updatedEl = document.getElementById('faultUpdated');
+    if (updatedEl) {
+        updatedEl.textContent = fault.updated_at 
+            ? new Date(fault.updated_at).toLocaleString('ru-RU') 
+            : 'Не обновлялась';
     }
     
     const resolvedEl = document.getElementById('faultResolved');
