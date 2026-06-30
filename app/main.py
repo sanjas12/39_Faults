@@ -2,21 +2,21 @@
 
 from typing import Dict, Optional
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Form, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.responses import RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from app.middleware.auth import auth_middleware
-from fastapi import Request, Form, HTTPException
-from fastapi.responses import RedirectResponse
-from app.core.security import verify_password, create_access_token
+from app.core.security import verify_password, create_access_token, decode_token
+from app.core.database import SessionLocal
 from app.models.all_models import User
-
-from _version import __version__
 from app.api import auth, comments, faults, projects, history, knowledge_base, project_history, backup, attachments
 from app.services.scheduler import start_scheduler
+
+from _version import __version__
 
 
 app = FastAPI(
@@ -51,17 +51,43 @@ app.include_router(backup.router, prefix="/api")
 app.include_router(attachments.router, prefix="/api")
 
 
+def is_authenticated(request: Request) -> bool:
+    """Проверка авторизации пользователя"""
+    # Проверяем токен в cookies
+    token = request.cookies.get('access_token')
+    if token:
+        payload = decode_token(token)
+        if payload:
+            db = SessionLocal()
+            try:
+                user = db.query(User).filter(User.username == payload.get('sub')).first()
+                if user and user.is_active:
+                    request.state.user = user
+                    return True
+            finally:
+                db.close()
+    return False
+
+
 def _render_page(
     request: Request,
     template_name: str,
     active_page: Optional[str] = None,
     **extra_context: object,
 ) -> HTMLResponse:
-    """Отрендерить HTML-страницу через Jinja2Templates.
-
+    """Отрендерить HTML-страницу через Jinja2Templates с проверкой авторизации
     Собирает базовый контекст (request, active_page) и добавляет
     дополнительные значения, специфичные для конкретной страницы.
     """
+    
+    # ✅ Проверяем авторизацию для всех страниц, кроме публичных
+    public_pages = ['/login', '/register']
+    
+    # Проверяем, что запрос не на публичную страницу
+    if request.url.path not in public_pages:
+        if not is_authenticated(request):
+            return RedirectResponse(url='/login', status_code=302)
+    
     context: Dict[str, object] = {"request": request}
     if active_page is not None:
         context["active_page"] = active_page
@@ -114,18 +140,6 @@ def kanban_page(request: Request) -> HTMLResponse:
     return _render_page(request, "kanban.html", active_page="kanban")
 
 
-@app.get("/login")
-def login_page(request: Request) -> HTMLResponse:
-    """Страница входа в систему."""
-    return _render_page(request, "login.html")
-
-
-@app.get("/register")
-def register_page(request: Request) -> HTMLResponse:
-    """Страница регистрации."""
-    return _render_page(request, "register.html")
-
-
 @app.get("/knowledge/{article_id}")
 def knowledge_article_detail(request: Request, article_id: int):
     """Страница просмотра статьи"""
@@ -144,3 +158,21 @@ def project_detail(request: Request, project_id: int):
 
 if not app.debug:
     start_scheduler()
+
+
+# ===== ПУБЛИЧНЫЕ СТРАНИЦЫ (без авторизации) =====
+@app.get("/login")
+def login_page(request: Request) -> HTMLResponse:
+    """Страница входа в систему."""
+    # Если пользователь уже авторизован, редиректим на дашборд
+    if is_authenticated(request):
+        return RedirectResponse(url='/', status_code=302)
+    return _render_page(request, "login.html")
+
+@app.get("/register")
+def register_page(request: Request) -> HTMLResponse:
+    """Страница регистрации."""
+    # Если пользователь уже авторизован, редиректим на дашборд
+    if is_authenticated(request):
+        return RedirectResponse(url='/', status_code=302)
+    return _render_page(request, "register.html")

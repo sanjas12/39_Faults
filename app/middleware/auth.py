@@ -1,5 +1,5 @@
 from fastapi import Request
-from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi.responses import RedirectResponse
 from app.core.security import decode_token
 from app.core.database import SessionLocal
 from app.models.all_models import User
@@ -14,7 +14,7 @@ async def auth_middleware(request: Request, call_next):
     if request.url.path in public_paths or request.url.path.startswith('/static'):
         return await call_next(request)
     
-    # ✅ Если это API-запрос — пропускаем (авторизация через JWT в headers)
+    # API-запросы пропускаем (авторизация через JWT в headers)
     if request.url.path.startswith('/api/'):
         return await call_next(request)
     
