@@ -397,3 +397,47 @@
 #plannedActionsPreview li {
     margin-bottom: 2px;
 }
+
+
+/* Дашборд - новые стили */
+.bg-purple {
+    background-color: #6f42c1 !important;
+}
+
+.card .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.project-item:hover,
+.knowledge-item:hover {
+    background-color: #e9ecef;
+    cursor: pointer;
+}
+
+.knowledge-item {
+    transition: background-color 0.2s;
+}
+
+#knowledge-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+#knowledge-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+#knowledge-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+#knowledge-list::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+#knowledge-list::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}

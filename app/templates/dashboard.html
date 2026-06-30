@@ -5,6 +5,7 @@
 {% set active_page = 'dashboard' %}
 
 {% block content %}
+<!-- Статистика -->
 <div class="row">
     <div class="col-md-3 mb-3">
         <div class="card bg-primary text-white">
@@ -40,37 +41,165 @@
     </div>
 </div>
 
+<!-- Дополнительная статистика -->
 <div class="row">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h5>Последние неисправности</h5>
-            </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-info text-white">
             <div class="card-body">
-                <table class="table table-striped" id="faults-table">
-                    <thead>
-                        <tr>
-                            <th>Название</th>
-                            <th>Проект</th>
-                            <th>Важность</th>
-                            <th>Статус</th>
-                        </tr>
-                    </thead>
-                    <tbody id="faults-list">
-                        <tr><td colspan="4" class="text-center">Загрузка...</td></tr>
-                    </tbody>
-                </table>
+                <h5 class="card-title"><i class="bi bi-list-check"></i> С мероприятиями</h5>
+                <h2 class="card-text" id="faults-with-actions">0</h2>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3 mb-3">
+        <div class="card bg-secondary text-white">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-paperclip"></i> С вложениями</h5>
+                <h2 class="card-text" id="faults-with-attachments">0</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-dark text-white">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-files"></i> Клонов</h5>
+                <h2 class="card-text" id="total-clones">0</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-purple text-white" style="background: #6f42c1;">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-book"></i> Статей в БЗ</h5>
+                <h2 class="card-text" id="total-knowledge">0</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Последние неисправности -->
+    <div class="col-md-8">
         <div class="card">
-            <div class="card-header">
-                <h5>Проекты</h5>
-                <small class="text-muted" id="projects-count">Загрузка...</small>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Последние неисправности</h5>
+                <a href="/faults" class="btn btn-sm btn-outline-primary">Все неисправности</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="faults-table">
+                        <thead>
+                            <tr>
+                                <th>Название</th>
+                                <th>Проект</th>
+                                <th>Важность</th>
+                                <th>Статус</th>
+                                <th>Мероприятия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="faults-list">
+                            <tr><td colspan="5" class="text-center">Загрузка...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Боковая панель -->
+    <div class="col-md-4">
+        <!-- Проекты -->
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-folder"></i> Проекты</h5>
+                <a href="/projects" class="btn btn-sm btn-outline-primary">Все</a>
             </div>
             <div class="card-body" id="projects-list">
-                <div class="text-center text-muted">Загрузка проектов...</div>
+                <div class="text-center text-muted">Загрузка...</div>
+            </div>
+        </div>
+
+        <!-- База знаний -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-book"></i> База знаний</h5>
+                <a href="/knowledge" class="btn btn-sm btn-outline-primary">Все</a>
+            </div>
+            <div class="card-body" id="knowledge-list">
+                <div class="text-center text-muted">Загрузка...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Быстрые действия -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-lightning"></i> Быстрые действия</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="/faults" class="btn btn-outline-primary">
+                        <i class="bi bi-bug"></i> Все неисправности
+                    </a>
+                    <a href="/projects" class="btn btn-outline-success">
+                        <i class="bi bi-folder"></i> Проекты
+                    </a>
+                    <a href="/knowledge" class="btn btn-outline-info">
+                        <i class="bi bi-book"></i> База знаний
+                    </a>
+                    <button class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#createFaultModal">
+                        <i class="bi bi-plus-circle"></i> Создать неисправность
+                    </button>
+                    <a href="/kanban" class="btn btn-outline-secondary">
+                        <i class="bi bi-grid-3x3-gap-fill"></i> Kanban
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно создания неисправности -->
+<div class="modal fade" id="createFaultModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Создать неисправность</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createFaultForm">
+                    <div class="mb-3">
+                        <label for="faultTitle" class="form-label">Название *</label>
+                        <input type="text" class="form-control" id="faultTitle" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="faultDescription" class="form-label">Описание</label>
+                        <textarea class="form-control" id="faultDescription" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="faultProject" class="form-label">Проект</label>
+                        <select class="form-select" id="faultProject">
+                            <option value="">Без проекта</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="faultSeverity" class="form-label">Важность</label>
+                        <select class="form-select" id="faultSeverity">
+                            <option value="critical">Критическая</option>
+                            <option value="major">Серьёзная</option>
+                            <option value="minor" selected>Незначительная</option>
+                            <option value="trivial">Тривиальная</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="saveFaultBtn">Сохранить</button>
             </div>
         </div>
     </div>
@@ -83,25 +212,25 @@ async function loadDashboard() {
     console.log('🔄 Загрузка дашборда...');
     
     try {
-        // Проверяем авторизацию
         const token = localStorage.getItem('auth_token');
         if (!token) {
-            console.warn('🔒 Нет токена, редирект на логин');
             window.location.href = '/login';
             return;
         }
-
-        // Устанавливаем токен в заголовки
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-        // Загружаем данные
-        const [faultsRes, projectsRes] = await Promise.all([
-            axios.get('/api/faults'),
-            axios.get('/api/projects')
+        // Загружаем все данные параллельно
+        const [faultsRes, projectsRes, knowledgeRes, attachmentsRes] = await Promise.all([
+            axios.get('/api/faults?limit=1000'),
+            axios.get('/api/projects'),
+            axios.get('/api/knowledge?limit=10'),
+            axios.get('/api/faults?limit=1000')  // Для подсчёта вложений
         ]);
 
         const faults = faultsRes.data || [];
         const projects = projectsRes.data || [];
+        const knowledge = knowledgeRes.data || [];
+        const allFaults = attachmentsRes.data || [];
 
         console.log(`📊 Загружено: ${faults.length} неисправностей, ${projects.length} проектов`);
 
@@ -111,32 +240,63 @@ async function loadDashboard() {
         const inProgress = faults.filter(f => f.status === 'in_progress').length;
         const closed = faults.filter(f => f.status === 'closed').length;
         
+        // ✅ Дополнительная статистика
+        const withActions = faults.filter(f => f.planned_actions && f.planned_actions.trim().length > 0).length;
+        
+        // Подсчёт вложений (нужно загрузить отдельно для каждой неисправности)
+        let withAttachments = 0;
+        for (const fault of faults) {
+            try {
+                const attRes = await axios.get(`/api/faults/${fault.id}/attachments`);
+                if (attRes.data && attRes.data.length > 0) {
+                    withAttachments++;
+                }
+            } catch (e) {
+                // Игнорируем ошибки
+            }
+        }
+        
+        // Подсчёт клонов (неисправности с parent_fault_id)
+        const clones = faults.filter(f => f.parent_fault_id !== null && f.parent_fault_id !== undefined).length;
+
         document.getElementById('total-faults').textContent = total;
         document.getElementById('critical-faults').textContent = critical;
         document.getElementById('inprogress-faults').textContent = inProgress;
         document.getElementById('closed-faults').textContent = closed;
+        document.getElementById('faults-with-actions').textContent = withActions;
+        document.getElementById('faults-with-attachments').textContent = withAttachments;
+        document.getElementById('total-clones').textContent = clones;
+        document.getElementById('total-knowledge').textContent = knowledge.length;
 
         // === ПОСЛЕДНИЕ НЕИСПРАВНОСТИ ===
         const tbody = document.getElementById('faults-list');
         const recentFaults = faults.slice(-5).reverse();
         
         if (recentFaults.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Нет неисправностей</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Нет неисправностей</td></tr>';
         } else {
+            const severityColors = {
+                critical: 'danger',
+                major: 'warning',
+                minor: 'info',
+                trivial: 'secondary'
+            };
+            const statusColors = {
+                open: 'danger',
+                in_progress: 'warning',
+                review: 'primary',
+                closed: 'success'
+            };
+            const statusLabels = {
+                open: 'Открыта',
+                in_progress: 'В работе',
+                review: 'На проверке',
+                closed: 'Закрыта'
+            };
+            
             tbody.innerHTML = recentFaults.map(f => {
                 const projectName = f.project?.name || 'Без проекта';
-                const severityColors = {
-                    critical: 'danger',
-                    major: 'warning',
-                    minor: 'info',
-                    trivial: 'secondary'
-                };
-                const statusColors = {
-                    open: 'danger',
-                    in_progress: 'warning',
-                    review: 'primary',
-                    closed: 'success'
-                };
+                const hasActions = f.planned_actions && f.planned_actions.trim().length > 0;
                 
                 return `
                     <tr>
@@ -147,7 +307,12 @@ async function loadDashboard() {
                         </td>
                         <td>${projectName}</td>
                         <td><span class="badge bg-${severityColors[f.severity] || 'secondary'}">${f.severity}</span></td>
-                        <td><span class="badge bg-${statusColors[f.status] || 'secondary'}">${f.status}</span></td>
+                        <td><span class="badge bg-${statusColors[f.status] || 'secondary'}">${statusLabels[f.status] || f.status}</span></td>
+                        <td>
+                            ${hasActions 
+                                ? '<span class="badge bg-success"><i class="bi bi-check-circle"></i> Есть</span>'
+                                : '<span class="badge bg-secondary"><i class="bi bi-x-circle"></i> Нет</span>'}
+                        </td>
                     </tr>
                 `;
             }).join('');
@@ -155,11 +320,8 @@ async function loadDashboard() {
 
         // === ПРОЕКТЫ ===
         const projectsContainer = document.getElementById('projects-list');
-        const projectsCount = document.getElementById('projects-count');
-        
         if (projects.length === 0) {
             projectsContainer.innerHTML = '<div class="text-center text-muted">Нет проектов</div>';
-            projectsCount.textContent = '(0)';
         } else {
             // Считаем неисправности по проектам
             const faultsByProject = {};
@@ -169,13 +331,13 @@ async function loadDashboard() {
                 }
             });
             
-            projectsContainer.innerHTML = projects.map(p => {
+            projectsContainer.innerHTML = projects.slice(0, 5).map(p => {
                 const count = faultsByProject[p.id] || 0;
                 return `
                     <div class="project-item mb-2 p-2 border rounded">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <a href="/projects" class="text-decoration-none fw-bold">
+                                <a href="/projects/${p.id}" class="text-decoration-none fw-bold">
                                     ${p.name.length > 20 ? p.name.slice(0, 20) + '...' : p.name}
                                 </a>
                                 ${p.client ? `<br><small class="text-muted">${p.client}</small>` : ''}
@@ -185,30 +347,45 @@ async function loadDashboard() {
                     </div>
                 `;
             }).join('');
-            
-            projectsCount.textContent = `(${projects.length})`;
+        }
+
+        // === БАЗА ЗНАНИЙ ===
+        const knowledgeContainer = document.getElementById('knowledge-list');
+        if (knowledge.length === 0) {
+            knowledgeContainer.innerHTML = '<div class="text-center text-muted">Нет статей</div>';
+        } else {
+            knowledgeContainer.innerHTML = knowledge.slice(0, 5).map(a => `
+                <div class="knowledge-item mb-2 p-2 border rounded">
+                    <a href="/knowledge/${a.id}" class="text-decoration-none fw-bold">
+                        ${a.title.length > 30 ? a.title.slice(0, 30) + '...' : a.title}
+                    </a>
+                    <div class="mt-1">
+                        ${a.category ? `<span class="badge bg-primary">${a.category}</span>` : ''}
+                        <span class="badge bg-secondary"><i class="bi bi-eye"></i> ${a.views || 0}</span>
+                    </div>
+                </div>
+            `).join('');
         }
 
     } catch (error) {
         console.error('❌ Ошибка загрузки дашборда:', error);
         
         if (error.response?.status === 401) {
-            console.warn('🔒 Неавторизован, редирект на логин');
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('current_user');
             window.location.href = '/login';
             return;
         }
         
         document.getElementById('faults-list').innerHTML = `
-            <tr><td colspan="4" class="text-center text-danger">
+            <tr><td colspan="5" class="text-center text-danger">
                 Ошибка загрузки данных: ${error.message}
             </td></tr>
         `;
         document.getElementById('projects-list').innerHTML = `
             <div class="text-center text-danger">Ошибка загрузки проектов</div>
         `;
-        document.getElementById('projects-count').textContent = '(ошибка)';
+        document.getElementById('knowledge-list').innerHTML = `
+            <div class="text-center text-danger">Ошибка загрузки статей</div>
+        `;
     }
 }
 
@@ -216,7 +393,6 @@ async function loadDashboard() {
 document.addEventListener('DOMContentLoaded', function() {
     const token = localStorage.getItem('auth_token');
     if (!token) {
-        console.warn('🔒 Нет токена, редирект на логин');
         window.location.href = '/login';
         return;
     }
@@ -229,5 +405,42 @@ setInterval(() => {
         loadDashboard();
     }
 }, 30000);
+
+// ======= СОЗДАНИЕ НЕИСПРАВНОСТИ =======
+document.getElementById('saveFaultBtn').addEventListener('click', async function() {
+    const title = document.getElementById('faultTitle').value.trim();
+    if (!title) {
+        alert('Название неисправности обязательно!');
+        return;
+    }
+    
+    const data = {
+        title: title,
+        description: document.getElementById('faultDescription').value.trim() || null,
+        severity: document.getElementById('faultSeverity').value,
+        project_id: parseInt(document.getElementById('faultProject').value) || null
+    };
+    
+    try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        await axios.post('/api/faults', data);
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('createFaultModal'));
+        modal.hide();
+        document.getElementById('createFaultForm').reset();
+        
+        await loadDashboard();
+        alert('✅ Неисправность создана!');
+    } catch (error) {
+        console.error('Ошибка создания:', error);
+        alert('Ошибка: ' + (error.response?.data?.detail || error.message));
+    }
+});
 </script>
 {% endblock %}
