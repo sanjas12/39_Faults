@@ -39,6 +39,13 @@
                 </select>
             </div>
             <div class="col-md-2">
+                <select class="form-select" id="plannedActionsFilter">
+                    <option value="">Все мероприятия</option>
+                    <option value="yes">Есть</option>
+                    <option value="no">Нет</option>
+                </select>
+            </div>
+            <div class="col-md-2">
                 <select class="form-select" id="projectFilter">
                     <option value="">Все проекты</option>
                     <!-- Проекты загружаются через JavaScript -->
@@ -67,6 +74,7 @@
                         <th style="width: 130px;">Статус</th>
                         <th style="width: 140px;">Создана</th>
                         <th style="width: 100px;">Действия</th>
+                        <th style="width: 120px;">Планируемые мероприятия</th> 
                     </tr>
                 </thead>
                 <tbody id="faultsList">
@@ -275,10 +283,8 @@ async function loadFaults(searchTerm = '') {
             window.location.href = '/login';
             return;
         }
-        
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         
-        // Собираем параметры фильтров
         const params = new URLSearchParams();
         
         const status = document.getElementById('statusFilter').value;
@@ -290,7 +296,6 @@ async function loadFaults(searchTerm = '') {
         const project = document.getElementById('projectFilter').value;
         if (project) params.append('project_id', project);
         
-        // ✅ Добавляем поиск
         if (searchTerm) {
             params.append('search', searchTerm);
         }
@@ -298,11 +303,19 @@ async function loadFaults(searchTerm = '') {
         params.append('limit', '1000');
         
         const response = await axios.get(`/api/faults?${params.toString()}`);
-        allFaultsData = response.data;
+        let data = response.data;
+        
+        // ✅ Фильтр по планируемым мероприятиям (клиентская фильтрация)
+        const plannedFilter = document.getElementById('plannedActionsFilter')?.value;
+        if (plannedFilter === 'yes') {
+            data = data.filter(f => f.planned_actions && f.planned_actions.trim().length > 0);
+        } else if (plannedFilter === 'no') {
+            data = data.filter(f => !f.planned_actions || f.planned_actions.trim().length === 0);
+        }
+        
+        allFaultsData = data;
         
         document.getElementById('faultsCount').textContent = `Всего: ${allFaultsData.length}`;
-        
-        // Сбрасываем пагинацию
         currentPage = 1;
         renderTable();
     } catch (error) {
@@ -312,7 +325,7 @@ async function loadFaults(searchTerm = '') {
             return;
         }
         document.getElementById('faultsList').innerHTML = `
-            <tr><td colspan="7" class="text-center text-danger">Ошибка загрузки данных</td></tr>
+            <tr><td colspan="8" class="text-center text-danger">Ошибка загрузки данных</td></tr>
         `;
     }
 }
@@ -328,7 +341,7 @@ function renderTable() {
     if (pageItems.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="7" class="text-center text-muted py-4">
+                <td colspan="8" class="text-center text-muted py-4">  <!-- ✅ Изменяем colspan на 8 -->
                     <i class="bi bi-inbox" style="font-size: 32px;"></i>
                     <p class="mt-2">Неисправности не найдены</p>
                 </td>
@@ -365,6 +378,12 @@ function renderTable() {
             trivial: 'Тривиальная'
         };
         
+        // ✅ Определяем наличие планируемых мероприятий
+        const hasPlannedActions = fault.planned_actions && fault.planned_actions.trim().length > 0;
+        const plannedActionsStatus = hasPlannedActions 
+            ? '<span class="badge bg-success"><i class="bi bi-check-circle"></i> Есть</span>'
+            : '<span class="badge bg-secondary"><i class="bi bi-x-circle"></i> Нет</span>';
+        
         return `
             <tr class="fault-row" data-id="${fault.id}">
                 <td>${start + index + 1}</td>
@@ -388,6 +407,9 @@ function renderTable() {
                 </td>
                 <td>
                     <small class="text-muted">${new Date(fault.created_at).toLocaleDateString('ru-RU')}</small>
+                </td>
+                <td>
+                    ${plannedActionsStatus}
                 </td>
                 <td>
                     <div class="btn-group btn-group-sm">
