@@ -6,10 +6,11 @@
 
 {% block content %}
 <!-- Панель фильтров -->
+<!-- Панель фильтров -->
 <div class="card mb-3">
     <div class="card-body">
         <div class="row g-3">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="input-group">
                     <input type="text" class="form-control" id="searchInput" placeholder="Поиск по названию или описанию...">
                     <button class="btn btn-outline-secondary" type="button" id="searchBtn">
@@ -39,21 +40,20 @@
                 </select>
             </div>
             <div class="col-md-2">
+                <select class="form-select" id="projectFilter">
+                    <option value="">Все проекты</option>
+                </select>
+            </div>
+            <div class="col-md-2">
                 <select class="form-select" id="plannedActionsFilter">
                     <option value="">Все мероприятия</option>
                     <option value="yes">Есть</option>
                     <option value="no">Нет</option>
                 </select>
             </div>
-            <div class="col-md-2">
-                <select class="form-select" id="projectFilter">
-                    <option value="">Все проекты</option>
-                    <!-- Проекты загружаются через JavaScript -->
-                </select>
-            </div>
-            <div class="col-md-2">
+            <div class="col-md-1">
                 <button class="btn btn-primary w-100" id="createFaultBtn" data-bs-toggle="modal" data-bs-target="#createFaultModal">
-                    <i class="bi bi-plus-circle"></i> Создать
+                    <i class="bi bi-plus-circle"></i>
                 </button>
             </div>
         </div>
@@ -648,16 +648,53 @@ document.getElementById('confirmDeleteFaultBtn').addEventListener('click', async
 });
 
 // ======= ФИЛЬТРЫ =======
-
 function applyFilters() {
     const search = document.getElementById('searchInput').value.trim();
     currentPage = 1;
     loadFaults(search);
 }
 
+// Обработчики для всех фильтров
 document.getElementById('statusFilter').addEventListener('change', applyFilters);
 document.getElementById('severityFilter').addEventListener('change', applyFilters);
 document.getElementById('projectFilter').addEventListener('change', applyFilters);
+document.getElementById('plannedActionsFilter').addEventListener('change', applyFilters);
+
+// Поиск
+document.getElementById('searchBtn').addEventListener('click', function() {
+    const search = document.getElementById('searchInput').value.trim();
+    loadFaults(search);
+});
+
+document.getElementById('searchInput').addEventListener('keyup', function(e) {
+    if (e.key === 'Enter') {
+        const search = document.getElementById('searchInput').value.trim();
+        loadFaults(search);
+    }
+});
+
+document.getElementById('clearSearchBtn').addEventListener('click', function() {
+    document.getElementById('searchInput').value = '';
+    loadFaults('');
+});
+
+// Сброс фильтров (двойной клик для сброса)
+document.getElementById('statusFilter').addEventListener('dblclick', function() {
+    this.value = '';
+    applyFilters();
+});
+document.getElementById('severityFilter').addEventListener('dblclick', function() {
+    this.value = '';
+    applyFilters();
+});
+document.getElementById('projectFilter').addEventListener('dblclick', function() {
+    this.value = '';
+    applyFilters();
+});
+document.getElementById('plannedActionsFilter').addEventListener('dblclick', function() {
+    this.value = '';
+    applyFilters();
+});
 
 // ======= ИНИЦИАЛИЗАЦИЯ =======
 
