@@ -85,6 +85,7 @@ class Fault(Base):
     description = Column(Text, nullable=True)
     severity = Column(String(50), default="minor")
     status = Column(String(50), default="open")
+    category = Column(String(100), nullable=True)
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=True)
     parent_fault_id = Column(Integer, ForeignKey("faults.id"), nullable=True)
     linked_knowledge_ids = Column(String(500), nullable=True, default="")

@@ -50,6 +50,10 @@
                             <small class="text-muted">Статус:</small>
                             <div id="faultStatus">Загрузка...</div>
                         </div>
+                        <div class="col-md-4">
+                            <small class="text-muted">Категория:</small>
+                            <div id="faultCategory">Загрузка...</div>
+                        </div>
                     </div>
                     
                     <div class="row g-2">
@@ -483,6 +487,14 @@ function renderFault(fault) {
                 ${severityLabels[fault.severity] || fault.severity}
             </span>
         `;
+    }
+
+    // Категория
+    const categoryEl = document.getElementById('faultCategory');
+    if (categoryEl) {
+        categoryEl.innerHTML = fault.category 
+            ? `<span class="badge bg-info">${fault.category}</span>`
+            : '<span class="text-muted">Не указана</span>';
     }
     
     // Статус

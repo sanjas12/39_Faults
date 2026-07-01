@@ -52,6 +52,7 @@ class FaultBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=500)
     description: Optional[str] = Field(None, max_length=2000)
     severity: SeverityEnum = SeverityEnum.MINOR
+    category: Optional[str] = Field(None, max_length=100, description="Категория неисправности")
     project_id: Optional[int] = Field(None, description="ID проекта (может быть null)")
     linked_knowledge_ids: Optional[str] = Field(None, description="ID статей через запятую")
     planned_actions: Optional[str] = Field(None, description="Планируемые мероприятия (Markdown)")
@@ -74,6 +75,7 @@ class FaultUpdate(BaseModel):
     description: Optional[str] = Field(None, max_length=2000)
     severity: Optional[SeverityEnum] = None
     status: Optional[StatusEnum] = None
+    category: Optional[str] = Field(None, max_length=100)
     project_id: Optional[int] = None
     parent_fault_id: Optional[int] = None
     linked_knowledge_ids: Optional[str] = Field(None, description="ID статей через запятую")

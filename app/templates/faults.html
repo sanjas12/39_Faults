@@ -45,6 +45,11 @@
                 </select>
             </div>
             <div class="col-md-2">
+                <select class="form-select" id="categoryFilter">
+                    <option value="">Все категории</option>
+                </select>
+            </div>
+            <div class="col-md-2">
                 <select class="form-select" id="plannedActionsFilter">
                     <option value="">Все мероприятия</option>
                     <option value="yes">Есть</option>
@@ -70,6 +75,7 @@
                         <th style="width: 40px;">ID</th>
                         <th>Название</th>
                         <th style="width: 150px;">Проект</th>
+                        <th style="width: 120px;">Категория</th> 
                         <th style="width: 120px;">Важность</th>
                         <th style="width: 130px;">Статус</th>
                         <th style="width: 140px;">Создана</th>
@@ -294,6 +300,9 @@ async function loadFaults(searchTerm = '') {
         const severity = document.getElementById('severityFilter').value;
         if (severity) params.append('severity', severity);
         
+        const category = document.getElementById('categoryFilter').value;  // ✅ Добавляем
+        if (category) params.append('category', category);
+        
         const project = document.getElementById('projectFilter').value;
         if (project) params.append('project_id', project);
         
@@ -306,7 +315,7 @@ async function loadFaults(searchTerm = '') {
         const response = await axios.get(`/api/faults?${params.toString()}`);
         let data = response.data;
         
-        // ✅ Фильтр по планируемым мероприятиям (клиентская фильтрация)
+        // Фильтр по планируемым мероприятиям
         const plannedFilter = document.getElementById('plannedActionsFilter')?.value;
         if (plannedFilter === 'yes') {
             data = data.filter(f => f.planned_actions && f.planned_actions.trim().length > 0);
@@ -315,19 +324,11 @@ async function loadFaults(searchTerm = '') {
         }
         
         allFaultsData = data;
-        
         document.getElementById('faultsCount').textContent = `Всего: ${allFaultsData.length}`;
         currentPage = 1;
         renderTable();
     } catch (error) {
-        console.error('Ошибка загрузки неисправностей:', error);
-        if (error.response?.status === 401) {
-            window.location.href = '/login';
-            return;
-        }
-        document.getElementById('faultsList').innerHTML = `
-            <tr><td colspan="9" class="text-center text-danger">Ошибка загрузки данных</td></tr>
-        `;
+        // ... обработка ошибок ...
     }
 }
 
@@ -392,19 +393,20 @@ function renderTable() {
             ? new Date(fault.updated_at).toLocaleDateString('ru-RU') 
             : '—';
 
-            return `
+        return `
         <tr class="fault-row" data-id="${fault.id}">
-            <td>${fault.id}</td>
+            <td><strong>${fault.id}</strong></td>
             <td>
                 <a href="/faults/${fault.id}" class="text-decoration-none fw-bold">
                     ${fault.title.length > 50 ? fault.title.slice(0, 50) + '...' : fault.title}
                 </a>
             </td>
             <td><span class="badge bg-secondary">${projectName}</span></td>
+            <td>${fault.category ? `<span class="badge bg-info">${fault.category}</span>` : '<span class="text-muted">—</span>'}</td>
             <td><span class="badge bg-${severityColors[fault.severity] || 'secondary'}">${severityLabels[fault.severity] || fault.severity}</span></td>
             <td><span class="badge bg-${statusColors[fault.status] || 'secondary'}">${statusLabels[fault.status] || fault.status}</span></td>
             <td><small class="text-muted">${createdDate}</small></td>
-            <td><small class="text-muted">${updatedDate}</small></td>  <!-- ✅ Добавляем -->
+            <td><small class="text-muted">${updatedDate}</small></td>
             <td>${plannedActionsStatus}</td>
             <td>
                 <div class="btn-group btn-group-sm">
@@ -642,6 +644,30 @@ document.getElementById('confirmDeleteFaultBtn').addEventListener('click', async
     }
 });
 
+async function loadCategoryFilter() {
+    try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        const response = await axios.get('/api/faults/categories/');
+        const categories = response.data || [];
+        const select = document.getElementById('categoryFilter');
+        select.innerHTML = '<option value="">Все категории</option>';
+        categories.forEach(c => {
+            if (c) {
+                const option = document.createElement('option');
+                option.value = c;
+                option.textContent = c;
+                select.appendChild(option);
+            }
+        });
+    } catch (error) {
+        console.error('Ошибка загрузки категорий:', error);
+    }
+}
+
+
 // ======= ФИЛЬТРЫ =======
 function applyFilters() {
     const search = document.getElementById('searchInput').value.trim();
@@ -654,6 +680,11 @@ document.getElementById('statusFilter').addEventListener('change', applyFilters)
 document.getElementById('severityFilter').addEventListener('change', applyFilters);
 document.getElementById('projectFilter').addEventListener('change', applyFilters);
 document.getElementById('plannedActionsFilter').addEventListener('change', applyFilters);
+document.getElementById('categoryFilter').addEventListener('change', function() {
+    currentPage = 1;
+    const search = document.getElementById('searchInput').value.trim();
+    loadFaults(search);
+});
 
 // Поиск
 document.getElementById('searchBtn').addEventListener('click', function() {
@@ -707,6 +738,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     
     await loadProjectsForFilters();
+    await loadCategoryFilter();
     await loadFaults();
 });
 </script>

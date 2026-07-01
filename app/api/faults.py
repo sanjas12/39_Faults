@@ -102,6 +102,7 @@ def list_faults(
     limit: int = Query(100, ge=1, le=1000, description="Сколько вернуть"),
     status: Optional[StatusEnum] = Query(None, description="Фильтр по статусу"),
     severity: Optional[SeverityEnum] = Query(None, description="Фильтр по важности"),
+    category: Optional[str] = Query(None, description="Фильтр по категории"),
     project_id: Optional[int] = Query(None, description="Фильтр по проекту"),
     search: Optional[str] = Query(None, description="Поиск по названию"),
     db: Session = Depends(get_db),
@@ -121,6 +122,8 @@ def list_faults(
         query = query.filter(Fault.status == status)
     if severity:
         query = query.filter(Fault.severity == severity)
+    if category:
+        query = query.filter(Fault.category == category)
     if project_id:
         query = query.filter(Fault.project_id == project_id)
     
@@ -167,6 +170,7 @@ def list_faults(
             "description": fault.description,
             "severity": fault.severity,
             "status": fault.status,
+            "category": fault.category,
             "project_id": fault.project_id,
             "linked_knowledge_ids": fault.linked_knowledge_ids,
             "planned_actions": fault.planned_actions,
@@ -255,6 +259,7 @@ def get_fault(
         "description": fault.description,
         "severity": fault.severity,
         "status": fault.status,
+        "category": fault.category,
         "project_id": fault.project_id,
         "linked_knowledge_ids": fault.linked_knowledge_ids,
         "planned_actions": fault.planned_actions,
@@ -315,6 +320,7 @@ def update_fault(
         "description": fault.description or "",
         "severity": fault.severity,
         "status": fault.status,
+        "category": fault.category or "",
         "project_id": fault.project_id,
         "linked_knowledge_ids": fault.linked_knowledge_ids or "",
         "planned_actions": fault.planned_actions or "" 
@@ -348,6 +354,7 @@ def update_fault(
         "description": "Описание",
         "severity": "Важность",
         "status": "Статус",
+        "category": "Категория",
         "project_id": "Проект",
         "linked_knowledge_ids": "Связанные статьи",
         "planned_actions": "Планируемые мероприятия"
@@ -793,3 +800,13 @@ def clone_fault(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Ошибка при клонировании: {str(e)}"
         )
+
+
+@router.get("/categories/", response_model=List[str])
+def get_categories(
+    db: Session = Depends(get_db),
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Получить список всех категорий неисправностей"""
+    categories = db.query(Fault.category).distinct().all()
+    return [c[0] for c in categories if c[0]]
