@@ -67,7 +67,7 @@
             <table class="table table-hover table-striped mb-0" id="faultsTable">
                 <thead class="table-light">
                     <tr>
-                        <th style="width: 40px;">#</th>
+                        <th style="width: 40px;">ID</th>
                         <th>Название</th>
                         <th style="width: 150px;">Проект</th>
                         <th style="width: 120px;">Важность</th>
@@ -394,7 +394,7 @@ function renderTable() {
 
             return `
         <tr class="fault-row" data-id="${fault.id}">
-            <td>${start + index + 1}</td>
+            <td>${fault.id}</td>
             <td>
                 <a href="/faults/${fault.id}" class="text-decoration-none fw-bold">
                     ${fault.title.length > 50 ? fault.title.slice(0, 50) + '...' : fault.title}
