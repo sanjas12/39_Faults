@@ -297,6 +297,16 @@ def seed_data():
         components = ["температуры", "давления", "уровня", "положения", "вибрации", "тока", "напряжения"]
         locations = ["на магистрали", "в турбинном цехе", "на трубопроводе", "в распределительном щите"]
         
+        CATEGORIES = [
+            "Аппаратная неисправность",
+            "Программная ошибка",
+            "Сбой связи",
+            "Ошибка пользователя",
+            "Профилактика",
+            "Модернизация",
+            "Другое"
+        ]
+
         faults = []
         
         # Генерируем неисправности для каждого проекта
@@ -348,13 +358,17 @@ def seed_data():
                     else:
                         planned_actions = action_template
                 
+                # Выбираем категорию    
+                category = random.choice(CATEGORIES) if random.random() > 0.2 else None  # 80% с категорией
+
                 fault = Fault(
                     title=title[:200],
                     description=description[:500],
                     severity=severity,
                     status=status,
+                    category=category,
                     project_id=project.id,
-                    planned_actions=planned_actions,  # ✅ Добавляем
+                    planned_actions=planned_actions,
                 )
                 db.add(fault)
                 faults.append(fault)

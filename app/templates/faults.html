@@ -139,6 +139,19 @@
                         </select>
                     </div>
                     <div class="mb-3">
+                        <label for="faultCategory" class="form-label">Категория</label>
+                        <select class="form-select" id="faultCategory">
+                            <option value="">Без категории</option>
+                            <option value="Аппаратная неисправность">Аппаратная неисправность</option>
+                            <option value="Программная ошибка">Программная ошибка</option>
+                            <option value="Сбой связи">Сбой связи</option>
+                            <option value="Ошибка пользователя">Ошибка пользователя</option>
+                            <option value="Профилактика">Профилактика</option>
+                            <option value="Модернизация">Модернизация</option>
+                            <option value="Другое">Другое</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
                         <label for="faultSeverity" class="form-label">Важность</label>
                         <select class="form-select" id="faultSeverity">
                             <option value="critical">Критическая</option>
@@ -501,6 +514,7 @@ document.getElementById('saveFaultBtn').addEventListener('click', async function
         title: title,
         description: document.getElementById('faultDescription').value.trim() || null,
         severity: document.getElementById('faultSeverity').value,
+        category: document.getElementById('faultCategory').value || null,
         project_id: parseInt(document.getElementById('faultProject').value) || null
     };
     
@@ -548,6 +562,7 @@ async function editFault(id) {
         document.getElementById('editFaultDescription').value = fault.description || '';
         document.getElementById('editFaultSeverity').value = fault.severity;
         document.getElementById('editFaultStatus').value = fault.status;
+        document.getElementById('editFaultCategory').value = fault.category || '';  // ✅ Добавляем
         document.getElementById('editFaultProject').value = fault.project_id || '';
         
         const modal = new bootstrap.Modal(document.getElementById('editFaultModal'));
@@ -576,6 +591,7 @@ document.getElementById('updateFaultBtn').addEventListener('click', async functi
         description: document.getElementById('editFaultDescription').value.trim() || null,
         severity: document.getElementById('editFaultSeverity').value,
         status: document.getElementById('editFaultStatus').value,
+        category: document.getElementById('editFaultCategory').value || null,
         project_id: parseInt(document.getElementById('editFaultProject').value) || null
     };
     
