@@ -100,30 +100,67 @@
 
             <!-- Контактная информация -->
             <div class="card mb-3">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="bi bi-person"></i> Контактная информация</h5>
+                    <button class="btn btn-sm btn-outline-primary" id="editContactsBtn">
+                        <i class="bi bi-pencil"></i> Редактировать
+                    </button>
                 </div>
                 <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <small class="text-muted">Контактное лицо:</small>
-                            <p id="projectContactName" class="fw-bold">Не указано</p>
-                        </div>
-                        <div class="col-md-6">
-                            <small class="text-muted">Должность:</small>
-                            <p id="projectContactPosition">Не указана</p>
-                        </div>
-                        <div class="col-md-6">
-                            <small class="text-muted">Телефон:</small>
-                            <p id="projectContactPhone">Не указан</p>
-                        </div>
-                        <div class="col-md-6">
-                            <small class="text-muted">Email:</small>
-                            <p id="projectContactEmail">Не указан</p>
+                    <!-- Режим просмотра -->
+                    <div id="contactsView">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <small class="text-muted">Контактное лицо:</small>
+                                <p id="projectContactName" class="fw-bold">Не указано</p>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted">Должность:</small>
+                                <p id="projectContactPosition">Не указана</p>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted">Телефон:</small>
+                                <p id="projectContactPhone">Не указан</p>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted">Email:</small>
+                                <p id="projectContactEmail">Не указан</p>
+                            </div>
                         </div>
                     </div>
+                    <!-- Режим редактирования -->
+                    <div id="contactsEdit" style="display: none;">
+                        <form id="editContactsForm">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Контактное лицо (ФИО) *</label>
+                                    <input type="text" class="form-control" id="editContactName" placeholder="Иванов Иван Иванович">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Должность</label>
+                                    <input type="text" class="form-control" id="editContactPosition" placeholder="Главный инженер">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Телефон</label>
+                                    <input type="text" class="form-control" id="editContactPhone" placeholder="+7 (999) 123-45-67">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="editContactEmail" placeholder="ivanov@example.com">
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <button type="button" class="btn btn-primary" id="saveContactsBtn">
+                                    <i class="bi bi-check"></i> Сохранить
+                                </button>
+                                <button type="button" class="btn btn-secondary" id="cancelContactsBtn">
+                                    <i class="bi bi-x"></i> Отмена
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-            </div>    
+            </div>
 
             <!-- Список неисправностей проекта -->
             <div class="card">
@@ -262,9 +299,9 @@ function renderProject(project) {
     document.getElementById('projectUnit').textContent = project.unit || 'Не указан';
     document.getElementById('projectType').textContent = project.type || 'Не указан';
     document.getElementById('projectContactName').textContent = project.contact_name || 'Не указано';
+    document.getElementById('projectContactPosition').textContent = project.contact_position || 'Не указана';
     document.getElementById('projectContactPhone').textContent = project.contact_phone || 'Не указан';
     document.getElementById('projectContactEmail').textContent = project.contact_email || 'Не указан';
-    document.getElementById('projectContactPosition').textContent = project.contact_position || 'Не указана';
     document.getElementById('projectDescription').textContent = project.description || 'Нет описания';
     document.getElementById('projectCreated').textContent = new Date(project.created_at).toLocaleString('ru-RU');
     document.getElementById('projectUpdated').textContent = project.updated_at 
@@ -449,6 +486,107 @@ document.getElementById('updateProjectBtn').addEventListener('click', async func
     } catch (error) {
         console.error('Ошибка обновления:', error);
         alert('Ошибка: ' + (error.response?.data?.detail || error.message));
+    }
+});
+
+// ======= УПРАВЛЕНИЕ КОНТАКТНОЙ ИНФОРМАЦИЕЙ =======
+let isContactsEditing = false;
+let originalContacts = {};
+
+document.getElementById('editContactsBtn').addEventListener('click', function() {
+    const viewMode = document.getElementById('contactsView');
+    const editMode = document.getElementById('contactsEdit');
+    
+    if (isContactsEditing) {
+        // Выход из режима редактирования без сохранения
+        editMode.style.display = 'none';
+        viewMode.style.display = 'block';
+        this.innerHTML = '<i class="bi bi-pencil"></i> Редактировать';
+        this.className = 'btn btn-sm btn-outline-primary';
+        isContactsEditing = false;
+        return;
+    }
+    
+    // Вход в режим редактирования
+    viewMode.style.display = 'none';
+    editMode.style.display = 'block';
+    this.innerHTML = '<i class="bi bi-x"></i> Отменить';
+    this.className = 'btn btn-sm btn-outline-danger';
+    isContactsEditing = true;
+    
+    // Заполняем форму текущими данными
+    document.getElementById('editContactName').value = document.getElementById('projectContactName').textContent !== 'Не указано' 
+        ? document.getElementById('projectContactName').textContent 
+        : '';
+    document.getElementById('editContactPosition').value = document.getElementById('projectContactPosition').textContent !== 'Не указана' 
+        ? document.getElementById('projectContactPosition').textContent 
+        : '';
+    document.getElementById('editContactPhone').value = document.getElementById('projectContactPhone').textContent !== 'Не указан' 
+        ? document.getElementById('projectContactPhone').textContent 
+        : '';
+    document.getElementById('editContactEmail').value = document.getElementById('projectContactEmail').textContent !== 'Не указан' 
+        ? document.getElementById('projectContactEmail').textContent 
+        : '';
+});
+
+document.getElementById('cancelContactsBtn').addEventListener('click', function() {
+    document.getElementById('contactsEdit').style.display = 'none';
+    document.getElementById('contactsView').style.display = 'block';
+    document.getElementById('editContactsBtn').innerHTML = '<i class="bi bi-pencil"></i> Редактировать';
+    document.getElementById('editContactsBtn').className = 'btn btn-sm btn-outline-primary';
+    isContactsEditing = false;
+});
+
+document.getElementById('saveContactsBtn').addEventListener('click', async function() {
+    const contactName = document.getElementById('editContactName').value.trim();
+    
+    // Проверяем, что хотя бы имя заполнено
+    if (!contactName) {
+        alert('Пожалуйста, укажите контактное лицо');
+        return;
+    }
+    
+    const data = {
+        contact_name: contactName,
+        contact_position: document.getElementById('editContactPosition').value.trim() || null,
+        contact_phone: document.getElementById('editContactPhone').value.trim() || null,
+        contact_email: document.getElementById('editContactEmail').value.trim() || null
+    };
+    
+    try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        this.disabled = true;
+        this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
+        
+        const response = await axios.put(`/api/projects/${projectId}`, data);
+        const project = response.data;
+        
+        // Обновляем отображение
+        renderProject(project);
+        
+        // Закрываем режим редактирования
+        document.getElementById('contactsEdit').style.display = 'none';
+        document.getElementById('contactsView').style.display = 'block';
+        document.getElementById('editContactsBtn').innerHTML = '<i class="bi bi-pencil"></i> Редактировать';
+        document.getElementById('editContactsBtn').className = 'btn btn-sm btn-outline-primary';
+        isContactsEditing = false;
+        
+        // Обновляем историю
+        await loadHistory();
+        
+        showNotification('✅ Контактная информация обновлена!');
+    } catch (error) {
+        console.error('❌ Ошибка обновления контактов:', error);
+        alert('Ошибка при обновлении контактов: ' + (error.response?.data?.detail || error.message));
+    } finally {
+        this.disabled = false;
+        this.innerHTML = '<i class="bi bi-check"></i> Сохранить';
     }
 });
 

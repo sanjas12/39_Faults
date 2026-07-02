@@ -463,3 +463,21 @@
     padding: 0.2rem 0.5rem;
     font-size: 0.8rem;
 }
+
+/* Редактирование контактов */
+#contactsEdit .form-control {
+    font-size: 0.9rem;
+}
+
+#contactsEdit .btn {
+    font-size: 0.85rem;
+    padding: 0.3rem 1rem;
+}
+
+#editContactsBtn {
+    transition: all 0.3s ease;
+}
+
+#editContactsBtn:hover {
+    transform: scale(1.05);
+}
