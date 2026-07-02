@@ -441,3 +441,25 @@
 #knowledge-list::-webkit-scrollbar-thumb:hover {
     background: #555;
 }
+
+/* Управление категорией */
+#categoryDisplay {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.8rem;
+}
+
+#editCategoryBtn,
+#removeCategoryBtn {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.8rem;
+}
+
+#categoryEdit select {
+    max-width: 200px;
+    display: inline-block;
+}
+
+#categoryEdit .btn {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.8rem;
+}

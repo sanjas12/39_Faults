@@ -129,6 +129,40 @@
                 </div>
             </div>
 
+            <!-- категория -->
+            <div class="col-md-4">
+                <small class="text-muted">Категория:</small>
+                <div id="faultCategory">
+                    <span id="categoryDisplay" class="badge bg-info">Загрузка...</span>
+                    <button class="btn btn-sm btn-outline-primary ms-1" id="editCategoryBtn" title="Изменить категорию">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger ms-1" id="removeCategoryBtn" title="Удалить категорию" style="display: none;">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+                <div id="categoryEdit" style="display: none;" class="mt-1">
+                    <select class="form-select form-select-sm" id="categorySelect">
+                        <option value="">Без категории</option>
+                        <option value="Аппаратная неисправность">Аппаратная неисправность</option>
+                        <option value="Программная ошибка">Программная ошибка</option>
+                        <option value="Сбой связи">Сбой связи</option>
+                        <option value="Ошибка пользователя">Ошибка пользователя</option>
+                        <option value="Профилактика">Профилактика</option>
+                        <option value="Модернизация">Модернизация</option>
+                        <option value="Другое">Другое</option>
+                    </select>
+                    <div class="mt-1">
+                        <button class="btn btn-sm btn-success" id="saveCategoryBtn">
+                            <i class="bi bi-check"></i> Сохранить
+                        </button>
+                        <button class="btn btn-sm btn-secondary" id="cancelCategoryBtn">
+                            <i class="bi bi-x"></i> Отмена
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- ===== СВЯЗАННЫЕ СТАТЬИ ИЗ БАЗЫ ЗНАНИЙ ===== -->
             <div class="card mb-3">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -495,6 +529,23 @@ function renderFault(fault) {
         categoryEl.innerHTML = fault.category 
             ? `<span class="badge bg-info">${fault.category}</span>`
             : '<span class="text-muted">Не указана</span>';
+    }
+
+    // Категория
+    const categoryDisplay = document.getElementById('categoryDisplay');
+    const removeCategoryBtn = document.getElementById('removeCategoryBtn');
+    const editCategoryBtn = document.getElementById('editCategoryBtn');
+    
+    if (fault.category) {
+        categoryDisplay.textContent = fault.category;
+        categoryDisplay.className = 'badge bg-info';
+        categoryDisplay.style.display = 'inline';
+        if (removeCategoryBtn) removeCategoryBtn.style.display = 'inline-block';
+    } else {
+        categoryDisplay.textContent = 'Не указана';
+        categoryDisplay.className = 'badge bg-secondary';
+        categoryDisplay.style.display = 'inline';
+        if (removeCategoryBtn) removeCategoryBtn.style.display = 'none';
     }
     
     // Статус
@@ -1413,6 +1464,111 @@ function showNotification(message) {
     document.body.appendChild(alertDiv);
     setTimeout(() => alertDiv.remove(), 3000);
 }
+
+// ======= УПРАВЛЕНИЕ КАТЕГОРИЕЙ =======
+let isCategoryEditing = false;
+
+document.getElementById('editCategoryBtn').addEventListener('click', function() {
+    const editMode = document.getElementById('categoryEdit');
+    const displayMode = document.getElementById('faultCategory');
+    const categorySelect = document.getElementById('categorySelect');
+    const categoryDisplay = document.getElementById('categoryDisplay');
+    
+    if (isCategoryEditing) {
+        // Выход из режима редактирования без сохранения
+        editMode.style.display = 'none';
+        displayMode.style.display = 'block';
+        this.innerHTML = '<i class="bi bi-pencil"></i>';
+        isCategoryEditing = false;
+        return;
+    }
+    
+    // Вход в режим редактирования
+    editMode.style.display = 'block';
+    displayMode.style.display = 'none';
+    this.innerHTML = '<i class="bi bi-x"></i>';
+    isCategoryEditing = true;
+    
+    // Устанавливаем текущее значение в select
+    const currentCategory = currentFault?.category || '';
+    categorySelect.value = currentCategory;
+});
+
+document.getElementById('cancelCategoryBtn').addEventListener('click', function() {
+    document.getElementById('categoryEdit').style.display = 'none';
+    document.getElementById('faultCategory').style.display = 'block';
+    document.getElementById('editCategoryBtn').innerHTML = '<i class="bi bi-pencil"></i>';
+    isCategoryEditing = false;
+});
+
+document.getElementById('saveCategoryBtn').addEventListener('click', async function() {
+    const category = document.getElementById('categorySelect').value || null;
+    
+    try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        const response = await axios.patch(`/api/faults/${faultId}`, {
+            category: category
+        });
+        
+        // Обновляем currentFault
+        currentFault = response.data;
+        
+        // Закрываем режим редактирования
+        document.getElementById('categoryEdit').style.display = 'none';
+        document.getElementById('faultCategory').style.display = 'block';
+        document.getElementById('editCategoryBtn').innerHTML = '<i class="bi bi-pencil"></i>';
+        isCategoryEditing = false;
+        
+        // Обновляем отображение категории
+        renderFault(currentFault);
+        
+        // Обновляем историю
+        await loadHistory();
+        
+        showNotification('✅ Категория обновлена!');
+    } catch (error) {
+        console.error('❌ Ошибка обновления категории:', error);
+        alert('Ошибка при обновлении категории: ' + (error.response?.data?.detail || error.message));
+    }
+});
+
+document.getElementById('removeCategoryBtn').addEventListener('click', async function() {
+    if (!confirm('Удалить категорию у этой неисправности?')) return;
+    
+    try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        const response = await axios.patch(`/api/faults/${faultId}`, {
+            category: null
+        });
+        
+        // Обновляем currentFault
+        currentFault = response.data;
+        
+        // Обновляем отображение
+        renderFault(currentFault);
+        
+        // Обновляем историю
+        await loadHistory();
+        
+        showNotification('✅ Категория удалена!');
+    } catch (error) {
+        console.error('❌ Ошибка удаления категории:', error);
+        alert('Ошибка при удалении категории: ' + (error.response?.data?.detail || error.message));
+    }
+});
+
 
 // ======= ИНИЦИАЛИЗАЦИЯ =======
 document.addEventListener('DOMContentLoaded', function() {
