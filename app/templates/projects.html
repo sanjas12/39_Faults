@@ -249,6 +249,8 @@ async function loadFilters() {
 
 // ======= ЗАГРУЗКА ПРОЕКТОВ =======
 async function loadProjects() {
+    console.log('🔄 Загрузка проектов...');
+    
     try {
         const token = localStorage.getItem('auth_token');
         if (!token) {
@@ -533,6 +535,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     
+    console.log('🚀 Загрузка страницы проектов...');
     await loadFilters();
     await loadProjects();
 });
