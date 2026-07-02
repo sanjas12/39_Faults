@@ -322,8 +322,9 @@ def update_fault(
         "status": fault.status,
         "category": fault.category or "",
         "project_id": fault.project_id,
+        "parent_fault_id": fault.parent_fault_id,
         "linked_knowledge_ids": fault.linked_knowledge_ids or "",
-        "planned_actions": fault.planned_actions or "" 
+        "planned_actions": fault.planned_actions or ""
     }
     
     # Проверяем project_id
@@ -347,7 +348,7 @@ def update_fault(
     db.commit()
     db.refresh(fault)
     
-    # ✅ Записываем историю и обновляем связанные статьи
+    # Записываем историю
     author = current_user.username or "system"
     field_labels = {
         "title": "Название",
@@ -356,40 +357,34 @@ def update_fault(
         "status": "Статус",
         "category": "Категория",
         "project_id": "Проект",
+        "parent_fault_id": "Родительская неисправность",
         "linked_knowledge_ids": "Связанные статьи",
         "planned_actions": "Планируемые мероприятия"
     }
-
-    # После обновления, если изменился статус — отправляем уведомление
-    status_changed = False
-    new_status = None
     
     for field, old_value in old_values.items():
         new_value = getattr(fault, field, None)
         
-        if field == "status" and old_value_str != new_value_str:
-            status_changed = True
-            new_status = new_value_str
-
         if field == "project_id":
             old_project = db.query(Project).filter(Project.id == old_value).first()
             new_project = db.query(Project).filter(Project.id == new_value).first()
             old_value_str = old_project.name if old_project else "Без проекта"
             new_value_str = new_project.name if new_project else "Без проекта"
+        elif field == "parent_fault_id":
+            old_parent = db.query(Fault).filter(Fault.id == old_value).first()
+            new_parent = db.query(Fault).filter(Fault.id == new_value).first()
+            old_value_str = f"#{old_parent.id} {old_parent.title}" if old_parent else "Нет"
+            new_value_str = f"#{new_parent.id} {new_parent.title}" if new_parent else "Нет"
         elif field == "linked_knowledge_ids":
-            # ✅ Обновляем связанные статьи
             old_ids = [int(id.strip()) for id in old_value.split(',') if id.strip()] if old_value else []
             new_ids = [int(id.strip()) for id in new_value.split(',') if id.strip()] if new_value else []
             
-            # Получаем названия статей
             old_articles = db.query(KnowledgeBase).filter(KnowledgeBase.id.in_(old_ids)).all() if old_ids else []
             new_articles = db.query(KnowledgeBase).filter(KnowledgeBase.id.in_(new_ids)).all() if new_ids else []
             
             old_value_str = ', '.join([a.title for a in old_articles]) if old_articles else "Нет статей"
             new_value_str = ', '.join([a.title for a in new_articles]) if new_articles else "Нет статей"
             
-            # ✅ Обновляем related_faults в статьях
-            # 1. Удаляем эту неисправность из старых статей
             for article in old_articles:
                 if article.id not in new_ids:
                     article_fault_ids = [int(id.strip()) for id in article.related_faults.split(',') if id.strip()] if article.related_faults else []
@@ -398,7 +393,6 @@ def update_fault(
                         article.related_faults = ','.join([str(id) for id in article_fault_ids]) if article_fault_ids else None
                         db.add(article)
             
-            # 2. Добавляем эту неисправность в новые статьи
             for article in new_articles:
                 if article.id not in old_ids:
                     article_fault_ids = [int(id.strip()) for id in article.related_faults.split(',') if id.strip()] if article.related_faults else []
@@ -423,59 +417,59 @@ def update_fault(
                 author=author
             )
     
-    # Отправляем уведомление об изменении статус
-    if status_changed and new_status:
-        try:
-            # Получаем всех пользователей
-            recipients = db.query(User).filter(User.id != current_user.id).all()
-            recipient_emails = [u.email for u in recipients if u.is_active and u.email]
-
-            if recipient_emails:
-                email_service.send_fault_status_changed(
-                    fault=fault,
-                    new_status=new_status,
-                    user_name=current_user.username,
-                    recipients=recipient_emails
-                )
-        except Exception as e:
-            print(f"❌ Ошибка отправки уведомлений: {e}")
-
-
-    # Записываем в историю изменения связанных статей
-    if field == "linked_knowledge_ids" and old_value_str != new_value_str:
-        # Дополнительная запись в историю для каждой привязанной/отвязанной статьи
-        old_ids = [int(id.strip()) for id in old_value.split(',') if id.strip()] if old_value else []
-        new_ids = [int(id.strip()) for id in new_value.split(',') if id.strip()] if new_value else []
-        
-        added_ids = [id for id in new_ids if id not in old_ids]
-        removed_ids = [id for id in old_ids if id not in new_ids]
-        
-        if added_ids:
-            added_articles = db.query(KnowledgeBase).filter(KnowledgeBase.id.in_(added_ids)).all()
-            for article in added_articles:
-                log_history(
-                    db=db,
-                    fault_id=fault.id,
-                    event_type="field_change",
-                    field="Привязана статья",
-                    old_value=None,
-                    new_value=article.title,
-                    author=author
-                )
-        
-        if removed_ids:
-            removed_articles = db.query(KnowledgeBase).filter(KnowledgeBase.id.in_(removed_ids)).all()
-            for article in removed_articles:
-                log_history(
-                    db=db,
-                    fault_id=fault.id,
-                    event_type="field_change",
-                    field="Отвязана статья",
-                    old_value=article.title,
-                    new_value=None,
-                    author=author
-                )
-    return fault
+    # ✅ Возвращаем правильно сериализованный ответ
+    db.refresh(fault)
+    
+    fault_with_relations = db.query(Fault).options(
+        joinedload(Fault.project),
+        joinedload(Fault.parent_fault),
+        joinedload(Fault.clones)
+    ).filter(Fault.id == fault.id).first()
+    
+    response_data = {
+        "id": fault_with_relations.id,
+        "title": fault_with_relations.title,
+        "description": fault_with_relations.description,
+        "severity": fault_with_relations.severity,
+        "status": fault_with_relations.status,
+        "category": fault_with_relations.category,
+        "project_id": fault_with_relations.project_id,
+        "linked_knowledge_ids": fault_with_relations.linked_knowledge_ids,
+        "planned_actions": fault_with_relations.planned_actions,
+        "created_at": fault_with_relations.created_at,
+        "updated_at": fault_with_relations.updated_at,
+        "resolved_at": fault_with_relations.resolved_at,
+        "project": {
+            "id": fault_with_relations.project.id,
+            "name": fault_with_relations.project.name,
+            "description": fault_with_relations.project.description,
+            "client": fault_with_relations.project.client,
+            "station": fault_with_relations.project.station,
+            "unit": fault_with_relations.project.unit,
+            "type": fault_with_relations.project.type,
+            "created_at": fault_with_relations.project.created_at,
+            "updated_at": fault_with_relations.project.updated_at
+        } if fault_with_relations.project else None,
+        "comments": [],
+        "linked_knowledge": [],
+        "parent_fault": {
+            "id": fault_with_relations.parent_fault.id,
+            "title": fault_with_relations.parent_fault.title,
+            "severity": fault_with_relations.parent_fault.severity,
+            "status": fault_with_relations.parent_fault.status
+        } if fault_with_relations.parent_fault else None,
+        "clones": [
+            {
+                "id": clone.id,
+                "title": clone.title,
+                "severity": clone.severity,
+                "status": clone.status
+            }
+            for clone in fault_with_relations.clones
+        ] if fault_with_relations.clones else []
+    }
+    
+    return response_data
 
 
 @router.delete(
