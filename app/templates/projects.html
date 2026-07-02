@@ -88,6 +88,26 @@
                         <label for="projectClient" class="form-label">Клиент</label>
                         <input type="text" class="form-control" id="projectClient">
                     </div>
+                    <!-- ✅ Контактная информация -->
+                    <div class="border p-3 mb-3 rounded bg-light">
+                        <h6 class="mb-2"><i class="bi bi-person"></i> Контактная информация</h6>
+                        <div class="mb-2">
+                            <label for="projectContactName" class="form-label">Контактное лицо (ФИО)</label>
+                            <input type="text" class="form-control" id="projectContactName" placeholder="Иванов Иван Иванович">
+                        </div>
+                        <div class="mb-2">
+                            <label for="projectContactPhone" class="form-label">Телефон</label>
+                            <input type="text" class="form-control" id="projectContactPhone" placeholder="+7 (999) 123-45-67">
+                        </div>
+                        <div class="mb-2">
+                            <label for="projectContactEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="projectContactEmail" placeholder="ivanov@example.com">
+                        </div>
+                        <div class="mb-0">
+                            <label for="projectContactPosition" class="form-label">Должность</label>
+                            <input type="text" class="form-control" id="projectContactPosition" placeholder="Главный инженер">
+                        </div>
+                    </div>
                     <div class="mb-3">
                         <label for="projectDescription" class="form-label">Описание</label>
                         <textarea class="form-control" id="projectDescription" rows="3"></textarea>
@@ -425,6 +445,10 @@ async function editProject(id) {
         document.getElementById('editProjectUnit').value = project.unit || '';
         document.getElementById('editProjectType').value = project.type || '';
         document.getElementById('editProjectClient').value = project.client || '';
+        document.getElementById('editContactName').value = project.contact_name || '';
+        document.getElementById('editContactPhone').value = project.contact_phone || '';
+        document.getElementById('editContactEmail').value = project.contact_email || '';
+        document.getElementById('editContactPosition').value = project.contact_position || '';
         document.getElementById('editProjectDescription').value = project.description || '';
         
         const modal = new bootstrap.Modal(document.getElementById('editProjectModal'));
@@ -450,6 +474,10 @@ document.getElementById('updateProjectBtn').addEventListener('click', async func
         unit: parseInt(document.getElementById('editProjectUnit').value) || null,
         type: document.getElementById('editProjectType').value.trim() || null,
         client: document.getElementById('editProjectClient').value.trim() || null,
+        contact_name: document.getElementById('editContactName').value.trim() || null,
+        contact_phone: document.getElementById('editContactPhone').value.trim() || null,
+        contact_email: document.getElementById('editContactEmail').value.trim() || null,
+        contact_position: document.getElementById('editContactPosition').value.trim() || null,
         description: document.getElementById('editProjectDescription').value.trim() || null
     };
     
@@ -508,5 +536,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     await loadFilters();
     await loadProjects();
 });
+
+${project.contact_name ? `
+    <p class="text-muted small mb-1">
+        <i class="bi bi-person"></i> ${project.contact_name}
+        ${project.contact_phone ? ` • <i class="bi bi-telephone"></i> ${project.contact_phone}` : ''}
+    </p>
+` : ''}
+
 </script>
 {% endblock %}

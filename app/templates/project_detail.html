@@ -98,6 +98,33 @@
                 </div>
             </div>
 
+            <!-- Контактная информация -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-person"></i> Контактная информация</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <small class="text-muted">Контактное лицо:</small>
+                            <p id="projectContactName" class="fw-bold">Не указано</p>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted">Должность:</small>
+                            <p id="projectContactPosition">Не указана</p>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted">Телефон:</small>
+                            <p id="projectContactPhone">Не указан</p>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted">Email:</small>
+                            <p id="projectContactEmail">Не указан</p>
+                        </div>
+                    </div>
+                </div>
+            </div>    
+
             <!-- Список неисправностей проекта -->
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -234,6 +261,10 @@ function renderProject(project) {
     document.getElementById('projectStation').textContent = project.station || 'Не указана';
     document.getElementById('projectUnit').textContent = project.unit || 'Не указан';
     document.getElementById('projectType').textContent = project.type || 'Не указан';
+    document.getElementById('projectContactName').textContent = project.contact_name || 'Не указано';
+    document.getElementById('projectContactPhone').textContent = project.contact_phone || 'Не указан';
+    document.getElementById('projectContactEmail').textContent = project.contact_email || 'Не указан';
+    document.getElementById('projectContactPosition').textContent = project.contact_position || 'Не указана';
     document.getElementById('projectDescription').textContent = project.description || 'Нет описания';
     document.getElementById('projectCreated').textContent = new Date(project.created_at).toLocaleString('ru-RU');
     document.getElementById('projectUpdated').textContent = project.updated_at 

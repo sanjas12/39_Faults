@@ -143,6 +143,10 @@ def update_project(
         "station": project.station or "",  # ✅ Добавляем
         "unit": project.unit,
         "type": project.type or ""
+        "contact_name": project.contact_name or "",
+        "contact_phone": project.contact_phone or "",
+        "contact_email": project.contact_email or "",
+        "contact_position": project.contact_position or ""
     }
     
     # Проверяем имя
@@ -171,9 +175,13 @@ def update_project(
         "name": "Название",
         "description": "Описание",
         "client": "Клиент",
-        "station": "Станция",      # ✅ Добавляем
+        "station": "Станция",
         "unit": "Блок",
         "type": "Тип"
+        "contact_name": "Контактное лицо",
+        "contact_phone": "Телефон",
+        "contact_email": "Email",
+        "contact_position": "Должность"
     }
     
     for field, old_value in old_values.items():

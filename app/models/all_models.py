@@ -47,6 +47,13 @@ class Project(Base):
     station = Column(String(200), nullable=True)
     type = Column(String(200), nullable=True)
     unit = Column(Integer, nullable=True)
+
+    # ✅ Контактная информация
+    contact_name = Column(String(200), nullable=True)
+    contact_phone = Column(String(50), nullable=True)
+    contact_email = Column(String(200), nullable=True)
+    contact_position = Column(String(200), nullable=True)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
