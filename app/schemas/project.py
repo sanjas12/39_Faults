@@ -42,7 +42,7 @@ class ProjectUpdate(BaseModel):
     contact_name: Optional[str] = Field(None, max_length=200)
     contact_phone: Optional[str] = Field(None, max_length=50)
     contact_email: Optional[str] = Field(None, max_length=200)
-    contact_position: Optional[str] = Field(None, max_length=200
+    contact_position: Optional[str] = Field(None, max_length=200)
 
     @validator('name')
     def name_not_empty(cls, v):

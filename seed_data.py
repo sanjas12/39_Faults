@@ -9,6 +9,58 @@ import random
 import os
 from pathlib import Path
 
+# ===== КОНТАКТНЫЕ ДАННЫЕ ДЛЯ ПРОЕКТОВ =====
+CONTACTS = [
+    {
+        "name": "Иванов Иван Иванович",
+        "phone": "+7 (495) 123-45-67",
+        "email": "i.ivanov@kolskaya.ru",
+        "position": "Главный инженер проекта"
+    },
+    {
+        "name": "Петров Пётр Петрович",
+        "phone": "+7 (495) 234-56-78",
+        "email": "p.petrov@kolskaya.ru",
+        "position": "Ведущий инженер"
+    },
+    {
+        "name": "Сидорова Мария Ивановна",
+        "phone": "+7 (495) 345-67-89",
+        "email": "m.sidorova@smolensk.ru",
+        "position": "Руководитель проекта"
+    },
+    {
+        "name": "Козлов Дмитрий Алексеевич",
+        "phone": "+7 (495) 456-78-90",
+        "email": "d.kozlov@kursk.ru",
+        "position": "Инженер-электроник"
+    },
+    {
+        "name": "Смирнов Андрей Васильевич",
+        "phone": "+7 (495) 567-89-01",
+        "email": "a.smirnov@leningrad.ru",
+        "position": "Главный специалист"
+    },
+    {
+        "name": "Волкова Екатерина Дмитриевна",
+        "phone": "+7 (495) 678-90-12",
+        "email": "e.volkova@novovoronezh.ru",
+        "position": "Инженер-программист"
+    },
+    {
+        "name": "Новиков Сергей Олегович",
+        "phone": "+7 (495) 789-01-23",
+        "email": "s.novikov@balakovo.ru",
+        "position": "Технический директор"
+    },
+    {
+        "name": "Морозова Анна Сергеевна",
+        "phone": "+7 (495) 890-12-34",
+        "email": "a.morozova@rostov.ru",
+        "position": "Ведущий инженер-электроник"
+    },
+]
+
 def seed_data():
     db = SessionLocal()
     try:
@@ -138,12 +190,26 @@ def seed_data():
         ]
 
         projects = []
-        for p_data in projects_data:
-            project = Project(**p_data)
+        for i, p_data in enumerate(projects_data):
+            # ✅ Добавляем контактную информацию (по кругу)
+            contact = CONTACTS[i % len(CONTACTS)]
+            project = Project(
+                name=p_data["name"],
+                description=p_data["description"],
+                client=p_data["client"],
+                station=p_data["station"],
+                unit=p_data["unit"],
+                type=p_data["type"],
+                # ✅ Контакты
+                contact_name=contact["name"],
+                contact_phone=contact["phone"],
+                contact_email=contact["email"],
+                contact_position=contact["position"],
+            )
             db.add(project)
             projects.append(project)
         db.flush()
-        print(f"   ✅ Создано {len(projects)} проектов")
+        print(f"   ✅ Создано {len(projects)} проектов с контактной информацией")
 
         # ===== СОЗДАЁМ НЕИСПРАВНОСТИ =====
         fault_templates = [
@@ -253,72 +319,31 @@ def seed_data():
 - [x] Проверка питания
 - [ ] Проверка сигналов
 - [ ] Проверка связи с SCADA""",
-            
-            """# Программа работ
+        ]
 
-## Основные задачи
-- **Диагностика системы**
-- **Выявление корневой причины**
-- **Устранение неисправности**
-- **Валидация решения**
-
-## Ответственные
-- Инженер-электроник: Иванов И.П.
-- Инженер-программист: Петров П.С.
-- Руководитель: Сидорова М.И.
-
-## Сроки
-- Начало: {date}
-- Окончание: {date}
-
-## Ресурсы
-- Измерительное оборудование
-- Запасные компоненты
-- Техническая документация""",
-            
-            """# Мероприятия по повышению надёжности
-
-## Короткий срок (1-2 дня)
-- Заменить изношенные компоненты
-- Провести профилактические работы
-- Обновить программное обеспечение
-
-## Средний срок (1 неделя)
-- Внедрить систему мониторинга
-- Настроить автоматическое оповещение
-- Провести обучение персонала
-
-## Долгосрочные меры
-- Модернизировать оборудование
-- Разработать план Б
-- Провести аудит системы"""
+        CATEGORIES = [
+            "Аппаратная неисправность",
+            "Программная ошибка",
+            "Сбой связи",
+            "Ошибка пользователя",
+            "Профилактика",
+            "Модернизация",
+            "Другое"
         ]
 
         components = ["температуры", "давления", "уровня", "положения", "вибрации", "тока", "напряжения"]
         locations = ["на магистрали", "в турбинном цехе", "на трубопроводе", "в распределительном щите"]
         
-        CATEGORIES = [
-            "Аппаратная неисправность",
-            "Программная ошибка",
-            "Сбой связи",
-            "Документация",
-            "Алгоритм",
-            "Модернизация",
-            "Другое"
-        ]
-
         faults = []
         
         # Генерируем неисправности для каждого проекта
         for i, project in enumerate(projects):
-            # Для каждого проекта создаём от 3 до 7 неисправностей
             num_faults = random.randint(3, 7)
             
             for j in range(num_faults):
                 template = random.choice(fault_templates)
                 component = random.choice(components)
                 
-                # Заменяем плейсхолдеры
                 title = template["title"].format(
                     project_name=project.name,
                     component=component,
@@ -337,7 +362,6 @@ def seed_data():
                     error_code=random.randint(100, 999),
                 )
                 
-                # Выбираем статус и важность
                 if j < 2:
                     status = "open"
                     severity = random.choice(["critical", "major"])
@@ -348,9 +372,12 @@ def seed_data():
                     status = random.choice(["review", "closed"])
                     severity = random.choice(["minor", "trivial"])
                 
-                # ✅ Добавляем планируемые мероприятия
+                # Выбираем категорию
+                category = random.choice(CATEGORIES) if random.random() > 0.2 else None
+                
+                # Планируемые мероприятия
                 planned_actions = None
-                if random.random() > 0.4:  # 60% неисправностей будут иметь мероприятия
+                if random.random() > 0.4:
                     action_template = random.choice(planned_actions_templates)
                     if "{date}" in action_template:
                         date = (datetime.now() + timedelta(days=random.randint(1, 14))).strftime("%d.%m.%Y")
@@ -358,9 +385,6 @@ def seed_data():
                     else:
                         planned_actions = action_template
                 
-                # Выбираем категорию    
-                category = random.choice(CATEGORIES) if random.random() > 0.2 else None  # 80% с категорией
-
                 fault = Fault(
                     title=title[:200],
                     description=description[:500],
@@ -394,7 +418,6 @@ def seed_data():
         }
         
         for fault in faults:
-            # 1. Создание неисправности
             author = random.choice(history_authors)
             created_date = fault.created_at - timedelta(days=random.randint(0, 3))
             
@@ -409,7 +432,6 @@ def seed_data():
             )
             db.add(creation_history)
             
-            # 2. Если статус изменился — добавляем историю изменений статуса
             if fault.status != "open" and random.random() > 0.3:
                 status_change_date = created_date + timedelta(hours=random.randint(1, 24))
                 new_status = fault.status
@@ -433,7 +455,6 @@ def seed_data():
                 )
                 db.add(status_history)
             
-            # 3. Если важность изменилась — добавляем историю
             if fault.severity != "minor" and random.random() > 0.5:
                 severity_change_date = created_date + timedelta(hours=random.randint(2, 48))
                 old_severity = random.choice(["minor", "major"])
@@ -475,7 +496,6 @@ def seed_data():
         ]
         
         for fault in faults:
-            # Для каждой неисправности создаём от 0 до 3 комментариев
             num_comments = random.randint(0, 3)
             for _ in range(num_comments):
                 comment = FaultComment(
@@ -586,12 +606,10 @@ def seed_data():
         # ===== СОЗДАЁМ СВЯЗИ МЕЖДУ СТАТЬЯМИ И НЕИСПРАВНОСТЯМИ =====
         print("   🔗 Создаём связи между статьями и неисправностями...")
 
-        # Получаем все статьи и неисправности
         all_articles = db.query(KnowledgeBase).all()
         all_faults = db.query(Fault).all()
 
         if all_articles and all_faults:
-            # Для каждой статьи привязываем 1-3 случайные неисправности
             for article in all_articles:
                 num_faults = random.randint(1, min(3, len(all_faults)))
                 selected_faults = random.sample(all_faults, num_faults)
@@ -599,7 +617,6 @@ def seed_data():
                 article.related_faults = ','.join([str(id) for id in fault_ids])
                 db.add(article)
                 
-                # Обновляем linked_knowledge_ids в неисправностях
                 for fault in selected_faults:
                     existing_ids = [int(id.strip()) for id in fault.linked_knowledge_ids.split(',') if id.strip()] if fault.linked_knowledge_ids else []
                     if article.id not in existing_ids:
@@ -609,7 +626,6 @@ def seed_data():
             
             db.commit()
             print(f"   ✅ Созданы связи между статьями и неисправностями")
-
 
         db.commit()
 
@@ -625,7 +641,6 @@ def seed_data():
         total_history = db.query(FaultHistory).count()
         total_knowledge = db.query(KnowledgeBase).count()
         
-        # Считаем количество неисправностей с планируемыми мероприятиями
         faults_with_actions = db.query(Fault).filter(Fault.planned_actions.isnot(None)).count()
         
         print(f"   👤 Пользователей: {total_users}")

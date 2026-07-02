@@ -140,9 +140,9 @@ def update_project(
         "name": project.name,
         "description": project.description or "",
         "client": project.client or "",
-        "station": project.station or "",  # ✅ Добавляем
+        "station": project.station or "",
         "unit": project.unit,
-        "type": project.type or ""
+        "type": project.type or "",
         "contact_name": project.contact_name or "",
         "contact_phone": project.contact_phone or "",
         "contact_email": project.contact_email or "",
@@ -177,7 +177,7 @@ def update_project(
         "client": "Клиент",
         "station": "Станция",
         "unit": "Блок",
-        "type": "Тип"
+        "type": "Тип",
         "contact_name": "Контактное лицо",
         "contact_phone": "Телефон",
         "contact_email": "Email",
