@@ -127,15 +127,27 @@ def list_faults(
     if project_id:
         query = query.filter(Fault.project_id == project_id)
     
-    # Поиск по названию (регистронезависимый)
+    # Поиск по названию, описанию или ID
     if search:
         search_pattern = f"%{search}%"
-        query = query.filter(
-            or_(
-                func.lower(Fault.title).like(func.lower(search_pattern)),
-                func.lower(Fault.description).like(func.lower(search_pattern))
+        # Проверяем, является ли поиск числом (ID)
+        if search.isdigit():
+            # Ищем по ID ИЛИ по тексту
+            query = query.filter(
+                or_(
+                    Fault.id == int(search),
+                    func.lower(Fault.title).like(func.lower(search_pattern)),
+                    func.lower(Fault.description).like(func.lower(search_pattern))
+                )
             )
-        )
+        else:
+            # Обычный текстовый поиск
+            query = query.filter(
+                or_(
+                    func.lower(Fault.title).like(func.lower(search_pattern)),
+                    func.lower(Fault.description).like(func.lower(search_pattern))
+                )
+            )
     
     # Сортировка
     query = query.order_by(

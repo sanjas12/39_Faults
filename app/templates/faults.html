@@ -10,9 +10,9 @@
 <div class="card mb-3">
     <div class="card-body">
         <div class="row g-3">
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <div class="input-group">
-                    <input type="text" class="form-control" id="searchInput" placeholder="Поиск по названию или описанию...">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Поиск по названию, описанию или ID...">
                     <button class="btn btn-outline-secondary" type="button" id="searchBtn">
                         <i class="bi bi-search"></i>
                     </button>
@@ -20,6 +20,7 @@
                         <i class="bi bi-x-circle"></i>
                     </button>
                 </div>
+                <small class="text-muted">Введите ID (например, 123) для поиска по номеру</small>
             </div>
             <div class="col-md-2">
                 <select class="form-select" id="statusFilter">
@@ -313,7 +314,7 @@ async function loadFaults(searchTerm = '') {
         const severity = document.getElementById('severityFilter').value;
         if (severity) params.append('severity', severity);
         
-        const category = document.getElementById('categoryFilter').value;  // ✅ Добавляем
+        const category = document.getElementById('categoryFilter').value;
         if (category) params.append('category', category);
         
         const project = document.getElementById('projectFilter').value;
@@ -324,6 +325,13 @@ async function loadFaults(searchTerm = '') {
         }
         
         params.append('limit', '1000');
+        
+        // Показываем индикатор загрузки
+        document.getElementById('faultsList').innerHTML = `
+            <tr><td colspan="10" class="text-center text-muted">
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Поиск...
+            </td></tr>
+        `;
         
         const response = await axios.get(`/api/faults?${params.toString()}`);
         let data = response.data;
@@ -337,11 +345,34 @@ async function loadFaults(searchTerm = '') {
         }
         
         allFaultsData = data;
-        document.getElementById('faultsCount').textContent = `Всего: ${allFaultsData.length}`;
+        
+        const resultCount = allFaultsData.length;
+        document.getElementById('faultsCount').textContent = `Всего: ${resultCount}`;
+        
+        if (searchTerm && resultCount === 0) {
+            document.getElementById('faultsList').innerHTML = `
+                <tr>
+                    <td colspan="10" class="text-center text-muted py-4">
+                        <i class="bi bi-search" style="font-size: 32px;"></i>
+                        <p class="mt-2">По запросу "<strong>${searchTerm}</strong>" ничего не найдено</p>
+                    </td>
+                </tr>
+            `;
+            updatePagination();
+            return;
+        }
+        
         currentPage = 1;
         renderTable();
     } catch (error) {
-        // ... обработка ошибок ...
+        console.error('Ошибка загрузки неисправностей:', error);
+        if (error.response?.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+        document.getElementById('faultsList').innerHTML = `
+            <tr><td colspan="10" class="text-center text-danger">Ошибка загрузки данных</td></tr>
+        `;
     }
 }
 
