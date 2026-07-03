@@ -104,12 +104,17 @@ def list_faults(
     severity: Optional[SeverityEnum] = Query(None, description="Фильтр по важности"),
     category: Optional[str] = Query(None, description="Фильтр по категории"),
     project_id: Optional[int] = Query(None, description="Фильтр по проекту"),
-    search: Optional[str] = Query(None, description="Поиск по названию"),
+    search: Optional[str] = Query(None, description="Поиск по названию, описанию или ID (регистронезависимый)"),
     db: Session = Depends(get_db),
     current_user: UserResponse = Depends(get_current_user)
 ):
     """
-    Получение списка неисправностей с фильтрацией и поиском.
+    Получение списка неисправностей с фильтрацией и регистронезависимым поиском.
+    
+    Поиск работает:
+    - По ID (если введено число)
+    - По названию (без учёта регистра)
+    - По описанию (без учёта регистра)
     """
     query = db.query(Fault).options(
         joinedload(Fault.project),
@@ -127,29 +132,29 @@ def list_faults(
     if project_id:
         query = query.filter(Fault.project_id == project_id)
     
-    # Поиск по названию, описанию или ID
+    # ✅ Регистронезависимый поиск по названию, описанию или ID
     if search:
         search_pattern = f"%{search}%"
         # Проверяем, является ли поиск числом (ID)
         if search.isdigit():
-            # Ищем по ID ИЛИ по тексту
+            # Ищем по ID ИЛИ по тексту (без учёта регистра через COLLATE NOCASE)
             query = query.filter(
                 or_(
                     Fault.id == int(search),
-                    func.lower(Fault.title).like(func.lower(search_pattern)),
-                    func.lower(Fault.description).like(func.lower(search_pattern))
+                    Fault.title.collate('NOCASE').like(search_pattern),
+                    Fault.description.collate('NOCASE').like(search_pattern)
                 )
             )
         else:
-            # Обычный текстовый поиск
+            # Обычный текстовый поиск (без учёта регистра через COLLATE NOCASE)
             query = query.filter(
                 or_(
-                    func.lower(Fault.title).like(func.lower(search_pattern)),
-                    func.lower(Fault.description).like(func.lower(search_pattern))
+                    Fault.title.collate('NOCASE').like(search_pattern),
+                    Fault.description.collate('NOCASE').like(search_pattern)
                 )
             )
     
-    # Сортировка
+    # Сортировка: сначала критические, потом по дате создания
     query = query.order_by(
         Fault.severity.desc(),
         Fault.created_at.desc()

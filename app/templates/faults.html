@@ -82,7 +82,7 @@
                         <th style="width: 140px;">Создана</th>
                         <th style="width: 140px;">Изменена</th>
                         <th style="width: 100px;">Мероприятия</th>
-                        <th style="width: 120px;">Планируемые мероприятия</th> 
+                        <th style="width: 120px;">Действия</th> 
                     </tr>
                 </thead>
                 <tbody id="faultsList">
@@ -321,10 +321,12 @@ async function loadFaults(searchTerm = '') {
         if (project) params.append('project_id', project);
         
         if (searchTerm) {
+            console.log(`🔍 Поиск по запросу: "${searchTerm}"`);
             params.append('search', searchTerm);
         }
         
         params.append('limit', '1000');
+        console.log('📤 Параметры запроса:', params.toString());
         
         // Показываем индикатор загрузки
         document.getElementById('faultsList').innerHTML = `
@@ -334,6 +336,8 @@ async function loadFaults(searchTerm = '') {
         `;
         
         const response = await axios.get(`/api/faults?${params.toString()}`);
+        console.log('📥 Получено результатов:', response.data.length);
+        
         let data = response.data;
         
         // Фильтр по планируемым мероприятиям
@@ -387,7 +391,7 @@ function renderTable() {
     if (pageItems.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="8" class="text-center text-muted py-4">  <!-- ✅ Изменяем colspan на 8 -->
+                <td colspan="10" class="text-center text-muted py-4">
                     <i class="bi bi-inbox" style="font-size: 32px;"></i>
                     <p class="mt-2">Неисправности не найдены</p>
                 </td>
