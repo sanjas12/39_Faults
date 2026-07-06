@@ -168,8 +168,22 @@ def update_user(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Пользователь не найден"
         )
-
-    # Проверяем уникальность
+    
+    # Защита: нельзя изменять другого администратора
+    if user.role == UserRole.ADMIN and user.id != admin_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Нельзя изменять другого администратора"
+        )
+    
+    # ✅ Защита: нельзя менять свою роль с admin
+    if user.id == admin_user.id and user_data.role is not None and user_data.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Нельзя понизить себя с роли администратора"
+        )
+    
+        # Проверяем уникальность
     if user_data.username:
         existing = (
             db.query(User)
@@ -187,19 +201,34 @@ def update_user(
             db.query(User)
             .filter(User.email == user_data.email, User.id != user_id)
             .first()
+
+
+@router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(require_admin),
+):
+    """Удаление пользователя (только админ)"""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Пользователь не найден"
         )
-        if existing:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="Email уже используется"
-            )
 
-    update_data = user_data.model_dump(exclude_unset=True, exclude={"password"})
-    for field, value in update_data.items():
-        setattr(user, field, value)
+    # ✅ Защита: нельзя удалять другого администратора
+    if user.role == UserRole.ADMIN and user.id != admin_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Нельзя удалять другого администратора"
+        )
 
-    if user_data.password:
-        user.password_hash = get_password_hash(user_data.password)
+    if user.id == admin_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Нельзя удалить самого себя"
+        )
 
+    db.delete(user)
     db.commit()
     db.refresh(user)
     return user

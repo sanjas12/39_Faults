@@ -272,7 +272,6 @@ async function loadUsers() {
 }
 
 // ======= ОТОБРАЖЕНИЕ ПОЛЬЗОВАТЕЛЕЙ =======
-// ======= ОТОБРАЖЕНИЕ ПОЛЬЗОВАТЕЛЕЙ =======
 function renderUsers(users) {
     const tbody = document.getElementById('usersList');
     const start = (currentPage - 1) * itemsPerPage;
@@ -303,38 +302,66 @@ function renderUsers(users) {
         'manager': 'info'
     };
     
-    tbody.innerHTML = pageItems.map(user => `
-        <tr>
-            <td><strong>${user.id}</strong></td>
-            <td><strong>${user.username}</strong></td>
-            <td>${user.email}</td>
-            <td>${user.full_name || '—'}</td>
-            <td>
-                <select class="form-select form-select-sm role-select" data-userid="${user.id}" style="min-width: 120px;">
-                    <option value="manager" ${user.role === 'manager' ? 'selected' : ''}>Менеджер</option>
-                    <option value="engineer" ${user.role === 'engineer' ? 'selected' : ''}>Инженер</option>
-                    <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Администратор</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select form-select-sm status-select" data-userid="${user.id}" style="min-width: 100px;">
-                    <option value="true" ${user.is_active ? 'selected' : ''}>Активен</option>
-                    <option value="false" ${!user.is_active ? 'selected' : ''}>Заблокирован</option>
-                </select>
-            </td>
-            <td><small class="text-muted">${new Date(user.created_at).toLocaleDateString('ru-RU')}</small></td>
-            <td>
-                <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-danger" onclick="deleteUser(${user.id})" title="Удалить" ${user.username === 'admin' ? 'disabled' : ''}>
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </div>
-            </td>
-        </tr>
-    `).join('');
+    // ✅ Получаем текущего пользователя
+    const currentUserId = currentUser?.id;
+    const isCurrentUserAdmin = currentUser?.role === 'admin';
     
-    // ✅ Добавляем обработчики для изменения роли и статуса
-    document.querySelectorAll('.role-select').forEach(select => {
+    tbody.innerHTML = pageItems.map(user => {
+        // ✅ Проверяем, является ли пользователь администратором
+        const isAdmin = user.role === 'admin';
+        // ✅ Проверяем, является ли пользователь текущим
+        const isCurrentUser = user.id === currentUserId;
+        // ✅ Блокируем изменения для администраторов (кроме самого админа)
+        const isProtected = isAdmin && !isCurrentUser;
+        
+        return `
+            <tr>
+                <td><strong>${user.id}</strong></td>
+                <td><strong>${user.username}</strong>${isCurrentUser ? ' <span class="badge bg-primary">Вы</span>' : ''}</td>
+                <td>${user.email}</td>
+                <td>${user.full_name || '—'}</td>
+                <td>
+                    ${isProtected ? `
+                        <span class="badge bg-${roleColors[user.role] || 'secondary'}">
+                            ${roleLabels[user.role] || user.role}
+                        </span>
+                        <small class="text-muted d-block">(защищено)</small>
+                    ` : `
+                        <select class="form-select form-select-sm role-select" data-userid="${user.id}" ${isCurrentUser ? 'disabled' : ''} style="min-width: 120px;">
+                            <option value="manager" ${user.role === 'manager' ? 'selected' : ''}>Менеджер</option>
+                            <option value="engineer" ${user.role === 'engineer' ? 'selected' : ''}>Инженер</option>
+                            <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Администратор</option>
+                        </select>
+                    `}
+                </td>
+                <td>
+                    ${isProtected ? `
+                        <span class="badge ${user.is_active ? 'bg-success' : 'bg-danger'}">
+                            ${user.is_active ? 'Активен' : 'Заблокирован'}
+                        </span>
+                        <small class="text-muted d-block">(защищено)</small>
+                    ` : `
+                        <select class="form-select form-select-sm status-select" data-userid="${user.id}" ${isCurrentUser ? 'disabled' : ''} style="min-width: 100px;">
+                            <option value="true" ${user.is_active ? 'selected' : ''}>Активен</option>
+                            <option value="false" ${!user.is_active ? 'selected' : ''}>Заблокирован</option>
+                        </select>
+                    `}
+                </td>
+                <td><small class="text-muted">${new Date(user.created_at).toLocaleDateString('ru-RU')}</small></td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-danger" onclick="deleteUser(${user.id})" title="Удалить" 
+                            ${isProtected || isCurrentUser ? 'disabled' : ''}>
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+    
+    // ✅ Добавляем обработчики для изменения роли и статуса (только для не защищённых)
+    document.querySelectorAll('.role-select:not([disabled])').forEach(select => {
         select.addEventListener('change', function() {
             const userId = parseInt(this.dataset.userid);
             const newRole = this.value;
@@ -342,7 +369,7 @@ function renderUsers(users) {
         });
     });
     
-    document.querySelectorAll('.status-select').forEach(select => {
+    document.querySelectorAll('.status-select:not([disabled])').forEach(select => {
         select.addEventListener('change', function() {
             const userId = parseInt(this.dataset.userid);
             const newStatus = this.value === 'true';
@@ -351,6 +378,83 @@ function renderUsers(users) {
     });
     
     updatePagination(users.length);
+}
+
+// ======= ОБНОВЛЕНИЕ РОЛИ =======
+async function updateUserRole(userId, newRole) {
+    // ✅ Проверяем, не пытается ли пользователь изменить роль админа
+    const user = allUsers.find(u => u.id === userId);
+    if (user && user.role === 'admin' && userId !== currentUser?.id) {
+        showNotification('❌ Нельзя изменить роль администратора!', 'danger');
+        await loadUsers();
+        return;
+    }
+    
+    try {
+        const token = localStorage.getItem('auth_token');
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        await axios.put(`/api/auth/users/${userId}`, {
+            role: newRole
+        });
+        
+        showNotification('✅ Роль пользователя обновлена!', 'success');
+        await loadUsers();
+    } catch (error) {
+        console.error('❌ Ошибка обновления роли:', error);
+        showNotification('❌ Ошибка при обновлении роли: ' + (error.response?.data?.detail || error.message), 'danger');
+        await loadUsers();
+    }
+}
+
+// ======= ОБНОВЛЕНИЕ СТАТУСА =======
+async function updateUserStatus(userId, isActive) {
+    // ✅ Проверяем, не пытается ли пользователь изменить статус админа
+    const user = allUsers.find(u => u.id === userId);
+    if (user && user.role === 'admin' && userId !== currentUser?.id) {
+        showNotification('❌ Нельзя изменить статус администратора!', 'danger');
+        await loadUsers();
+        return;
+    }
+    
+    try {
+        const token = localStorage.getItem('auth_token');
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        await axios.put(`/api/auth/users/${userId}`, {
+            is_active: isActive
+        });
+        
+        showNotification(`✅ Пользователь ${isActive ? 'активирован' : 'заблокирован'}!`, 'success');
+        await loadUsers();
+    } catch (error) {
+        console.error('❌ Ошибка обновления статуса:', error);
+        showNotification('❌ Ошибка при обновлении статуса: ' + (error.response?.data?.detail || error.message), 'danger');
+        await loadUsers();
+    }
+}
+
+// ======= УДАЛЕНИЕ ПОЛЬЗОВАТЕЛЯ =======
+function deleteUser(id) {
+    const user = allUsers.find(u => u.id === id);
+    if (!user) return;
+    
+    // ✅ Проверяем, не пытается ли пользователь удалить админа
+    if (user.role === 'admin' && user.id !== currentUser?.id) {
+        showNotification('❌ Нельзя удалить администратора!', 'danger');
+        return;
+    }
+    
+    if (user.id === currentUser?.id) {
+        showNotification('❌ Нельзя удалить самого себя!', 'danger');
+        return;
+    }
+    
+    document.getElementById('deleteUserName').textContent = `${user.username} (${user.full_name || user.email})`;
+    currentDeleteId = id;
+    
+    const modal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
+    modal.show();
 }
 
 // ======= ОБНОВЛЕНИЕ РОЛИ =======
