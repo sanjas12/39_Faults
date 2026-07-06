@@ -13,7 +13,7 @@ from app.middleware.auth import auth_middleware
 from app.core.security import verify_password, create_access_token, decode_token
 from app.core.database import SessionLocal
 from app.models.all_models import User
-from app.api import auth, comments, faults, projects, history, knowledge_base, project_history, backup, attachments
+from app.api import auth, comments, faults, projects, history, knowledge_base, project_history, backup, attachments, dashboard
 from app.services.scheduler import start_scheduler
 
 from _version import __version__
@@ -49,7 +49,7 @@ app.include_router(knowledge_base.router, prefix="/api")
 app.include_router(project_history.router, prefix="/api")
 app.include_router(backup.router, prefix="/api")
 app.include_router(attachments.router, prefix="/api")
-
+app.include_router(dashboard.router, prefix="/api")
 
 def is_authenticated(request: Request) -> bool:
     """Проверка авторизации пользователя (cookies + localStorage)"""

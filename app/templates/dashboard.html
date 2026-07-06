@@ -206,6 +206,7 @@
 
 {% block scripts %}
 <script>
+
 async function loadDashboard() {
     console.log('🔄 Загрузка дашборда...');
     
@@ -217,58 +218,26 @@ async function loadDashboard() {
         }
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-        // Загружаем все данные параллельно
-        const [faultsRes, projectsRes, knowledgeRes] = await Promise.all([
-            axios.get('/api/faults?limit=1000'),
-            axios.get('/api/projects'),
-            axios.get('/api/knowledge?limit=10')
-        ]);
-
-        const faults = faultsRes.data || [];
-        const projects = projectsRes.data || [];
-        const knowledge = knowledgeRes.data || [];
-
-        console.log(`📊 Загружено: ${faults.length} неисправностей, ${projects.length} проектов, ${knowledge.length} статей`);
+        // ✅ Один запрос вместо нескольких
+        const response = await axios.get('/api/dashboard/stats');
+        const data = response.data;
+        
+        console.log('📊 Данные дашборда загружены:', data);
 
         // === СТАТИСТИКА ===
-        const total = faults.length;
-        const critical = faults.filter(f => f.severity === 'critical').length;
-        const inProgress = faults.filter(f => f.status === 'in_progress').length;
-        const closed = faults.filter(f => f.status === 'closed').length;
-        const withActions = faults.filter(f => f.planned_actions && f.planned_actions.trim().length > 0).length;
-        
-        // Подсчёт вложений
-        let withAttachments = 0;
-        for (const fault of faults) {
-            try {
-                const attRes = await axios.get(`/api/faults/${fault.id}/attachments`);
-                if (attRes.data && attRes.data.length > 0) {
-                    withAttachments++;
-                }
-            } catch (e) {
-                // Игнорируем ошибки
-            }
-        }
+        const stats = data.stats;
+        document.getElementById('total-faults').textContent = stats.total || 0;
+        document.getElementById('critical-faults').textContent = stats.critical || 0;
+        document.getElementById('inprogress-faults').textContent = stats.in_progress || 0;
+        document.getElementById('closed-faults').textContent = stats.closed || 0;
+        document.getElementById('faults-with-actions').textContent = stats.with_actions || 0;
+        document.getElementById('faults-with-attachments').textContent = stats.with_attachments || 0;
+        document.getElementById('total-knowledge').textContent = stats.knowledge || 0;
 
-        document.getElementById('total-faults').textContent = total;
-        document.getElementById('critical-faults').textContent = critical;
-        document.getElementById('inprogress-faults').textContent = inProgress;
-        document.getElementById('closed-faults').textContent = closed;
-        document.getElementById('faults-with-actions').textContent = withActions;
-        document.getElementById('faults-with-attachments').textContent = withAttachments;
-        document.getElementById('total-knowledge').textContent = knowledge.length;
-
-        // === ПОСЛЕДНИЕ НЕИСПРАВНОСТИ (по дате изменения) ===
+        // === ПОСЛЕДНИЕ НЕИСПРАВНОСТИ ===
         const tbody = document.getElementById('faults-list');
-
-        const sortedFaults = [...faults].sort((a, b) => {
-            const dateA = a.updated_at ? new Date(a.updated_at) : new Date(a.created_at);
-            const dateB = b.updated_at ? new Date(b.updated_at) : new Date(b.created_at);
-            return dateB - dateA;
-        });
-
-        const recentFaults = sortedFaults.slice(0, 5);
-
+        const recentFaults = data.recent_faults || [];
+        
         if (recentFaults.length === 0) {
             tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Нет неисправностей</td></tr>';
         } else {
@@ -292,10 +261,10 @@ async function loadDashboard() {
             };
             
             tbody.innerHTML = recentFaults.map(f => {
-                const projectName = f.project?.name || 'Без проекта';
                 const hasActions = f.planned_actions && f.planned_actions.trim().length > 0;
-                const changeDate = f.updated_at ? new Date(f.updated_at) : new Date(f.created_at);
-                const dateStr = changeDate.toLocaleDateString('ru-RU') + ' ' + changeDate.toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'});
+                const changeDate = f.updated_at ? new Date(f.updated_at) : new Date();
+                const dateStr = changeDate.toLocaleDateString('ru-RU') + ' ' + 
+                               changeDate.toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'});
                 const category = f.category || '—';
                 
                 return `
@@ -307,7 +276,7 @@ async function loadDashboard() {
                             </a>
                             <br><small class="text-muted"><i class="bi bi-clock"></i> ${dateStr}</small>
                         </td>
-                        <td>${projectName}</td>
+                        <td>${f.project_name || 'Без проекта'}</td>
                         <td><span class="badge bg-${severityColors[f.severity] || 'secondary'}">${f.severity}</span></td>
                         <td><span class="badge bg-${statusColors[f.status] || 'secondary'}">${statusLabels[f.status] || f.status}</span></td>
                         <td>
@@ -327,40 +296,35 @@ async function loadDashboard() {
 
         // === ПРОЕКТЫ ===
         const projectsContainer = document.getElementById('projects-list');
+        const projects = data.projects || [];
+        
         if (projects.length === 0) {
             projectsContainer.innerHTML = '<div class="text-center text-muted">Нет проектов</div>';
         } else {
-            const faultsByProject = {};
-            faults.forEach(f => {
-                if (f.project_id) {
-                    faultsByProject[f.project_id] = (faultsByProject[f.project_id] || 0) + 1;
-                }
-            });
-            
-            projectsContainer.innerHTML = projects.slice(0, 5).map(p => {
-                const count = faultsByProject[p.id] || 0;
-                return `
-                    <div class="project-item mb-2 p-2 border rounded">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <a href="/projects/${p.id}" class="text-decoration-none fw-bold">
-                                    ${p.name.length > 20 ? p.name.slice(0, 20) + '...' : p.name}
-                                </a>
-                                ${p.client ? `<br><small class="text-muted">${p.client}</small>` : ''}
-                            </div>
-                            <span class="badge bg-primary">${count} неиспр.</span>
+            projectsContainer.innerHTML = projects.map(p => `
+                <div class="project-item mb-2 p-2 border rounded">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <a href="/projects/${p.id}" class="text-decoration-none fw-bold">
+                                ${p.name.length > 20 ? p.name.slice(0, 20) + '...' : p.name}
+                            </a>
+                            ${p.client ? `<br><small class="text-muted">${p.client}</small>` : ''}
                         </div>
+                        <span class="badge bg-primary">${p.faults_count || 0} неиспр.</span>
                     </div>
-                `;
-            }).join('');
+                </div>
+            `).join('');
         }
 
-        // === БАЗА ЗНАНИЙ ===
+        // === БАЗА ЗНАНИЙ (отдельный запрос, но оставляем) ===
+        const knowledgeRes = await axios.get('/api/knowledge?limit=5');
+        const knowledge = knowledgeRes.data || [];
         const knowledgeContainer = document.getElementById('knowledge-list');
+        
         if (knowledge.length === 0) {
             knowledgeContainer.innerHTML = '<div class="text-center text-muted">Нет статей</div>';
         } else {
-            knowledgeContainer.innerHTML = knowledge.slice(0, 5).map(a => `
+            knowledgeContainer.innerHTML = knowledge.map(a => `
                 <div class="knowledge-item mb-2 p-2 border rounded">
                     <a href="/knowledge/${a.id}" class="text-decoration-none fw-bold">
                         ${a.title.length > 30 ? a.title.slice(0, 30) + '...' : a.title}
