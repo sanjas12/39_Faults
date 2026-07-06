@@ -1,4 +1,10 @@
 """Точка входа FastAPI-приложения для системы учёта неисправностей (Faults)."""
+# Патч для reportlab
+try:
+    import patch_reportlab
+except ImportError:
+    pass
+
 
 from typing import Dict, Optional
 
