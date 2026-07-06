@@ -41,10 +41,10 @@ function updateUserUI() {
         if (adminNav) {
             if (currentUser.role === 'admin') {
                 adminNav.style.display = 'block';
-                console.log('✅ Админ-панель показана');
+                console.log('✅ Админ-панель показана (admin)');
             } else {
                 adminNav.style.display = 'none';
-                console.log('🔒 Админ-панель скрыта (не admin)');
+                console.log('🔒 Админ-панель скрыта (роль: ' + currentUser.role + ')');
             }
         }
     } else {
@@ -57,12 +57,9 @@ function updateUserUI() {
             loginLink.style.display = 'block';
         }
         
-        // ✅ Скрываем пункт "Настройки"
         if (settingsNav) {
             settingsNav.style.display = 'none';
         }
-        
-        // ✅ Скрываем пункт "Админ-панель"
         if (adminNav) {
             adminNav.style.display = 'none';
         }
@@ -93,6 +90,7 @@ function logout() {
 }
 
 // Функция входа
+// Функция входа
 async function login(username, password) {
     console.log('🔑 login вызван');
     
@@ -120,7 +118,22 @@ async function login(username, password) {
         // ✅ Устанавливаем cookie для middleware
         document.cookie = `access_token=${data.access_token}; path=/; max-age=86400; samesite=lax`;
 
+        // ✅ ПРИНУДИТЕЛЬНО обновляем UI
         updateUserUI();
+        
+        // ✅ ДОПОЛНИТЕЛЬНО: если admin, показываем админ-панель
+        const adminNav = document.getElementById('adminNavItem');
+        if (adminNav && currentUser && currentUser.role === 'admin') {
+            adminNav.style.display = 'block';
+            console.log('✅ Админ-панель принудительно показана после входа');
+        }
+        
+        // ✅ Обновляем настройки
+        const settingsNav = document.getElementById('settingsNavItem');
+        if (settingsNav) {
+            settingsNav.style.display = 'block';
+        }
+
         return { success: true, user: currentUser };
     } catch (error) {
         console.error('❌ Ошибка входа:', error);
@@ -163,9 +176,9 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             currentUser = JSON.parse(userData);
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-            // ✅ Восстанавливаем cookie
             document.cookie = `access_token=${token}; path=/; max-age=86400; samesite=lax`;
             console.log('✅ Пользователь восстановлен:', currentUser.username);
+            console.log('✅ Роль пользователя:', currentUser.role);
         } catch (e) {
             console.error('❌ Ошибка восстановления:', e);
             localStorage.removeItem('auth_token');
@@ -174,9 +187,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // ✅ Обновляем UI
     updateUserUI();
     
-    // ✅ Дублируем обработчик для кнопки выхода (на случай если onclick не сработает)
+    // ✅ Дополнительная проверка для админ-панели (на случай если updateUserUI не сработал)
+    const adminNav = document.getElementById('adminNavItem');
+    if (adminNav && currentUser && currentUser.role === 'admin') {
+        adminNav.style.display = 'block';
+        console.log('✅ Админ-панель показана при загрузке (доп. проверка)');
+    }
+    
+    // Кнопка выхода
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', function(e) {
