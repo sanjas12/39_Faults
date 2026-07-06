@@ -481,3 +481,16 @@
 #editContactsBtn:hover {
     transform: scale(1.05);
 }
+
+/* Админ-панель иконка */
+#adminNavItem .bi-shield-lock {
+    color: #ffc107;
+}
+
+#adminNavItem.active .bi-shield-lock {
+    color: #fff;
+}
+
+#adminNavItem a:hover .bi-shield-lock {
+    color: #ffd700;
+}

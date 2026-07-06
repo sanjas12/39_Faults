@@ -202,5 +202,12 @@ def register_page(request: Request) -> HTMLResponse:
 @app.get("/admin/users")
 def admin_users_page(request: Request):
     """Страница управления пользователями (только админ)"""
-    return _render_protected_page(request, "admin/users.html", active_page="admin")
+    # Проверяем авторизацию и роль
+    if not is_authenticated(request):
+        return RedirectResponse(url='/login', status_code=302)
     
+    user = getattr(request.state, 'user', None)
+    if not user or user.role != 'admin':
+        return RedirectResponse(url='/', status_code=302)
+    
+    return _render_protected_page(request, "admin/users.html", active_page="admin")

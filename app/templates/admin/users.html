@@ -245,13 +245,17 @@ async function loadUsers() {
         const status = document.getElementById('statusFilter').value;
         if (status) params.append('status', status);
         
+        console.log('📤 Загрузка пользователей с параметрами:', params.toString());
+        
         const response = await axios.get(`/api/auth/users?${params.toString()}`);
         allUsers = response.data;
+        console.log('📥 Загружено пользователей:', allUsers.length);
+        
         renderUsers(allUsers);
         
         document.getElementById('usersCount').textContent = `Всего: ${allUsers.length}`;
     } catch (error) {
-        console.error('Ошибка загрузки пользователей:', error);
+        console.error('❌ Ошибка загрузки пользователей:', error);
         if (error.response?.status === 401) {
             window.location.href = '/login';
             return;
@@ -300,7 +304,7 @@ function renderUsers(users) {
     
     tbody.innerHTML = pageItems.map(user => `
         <tr>
-            <td>${user.id}</td>
+            <td><strong>${user.id}</strong></td>
             <td><strong>${user.username}</strong></td>
             <td>${user.email}</td>
             <td>${user.full_name || '—'}</td>
@@ -515,7 +519,12 @@ function deleteUser(id) {
     if (!user) return;
     
     if (user.username === 'admin') {
-        alert('Нельзя удалить администратора!');
+        alert('❌ Нельзя удалить администратора!');
+        return;
+    }
+    
+    if (user.id === currentUser?.id) {
+        alert('❌ Нельзя удалить самого себя!');
         return;
     }
     

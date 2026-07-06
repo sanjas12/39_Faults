@@ -10,6 +10,7 @@ function updateUserUI() {
     const logoutBtn = document.getElementById('logoutBtn');
     const loginLink = document.getElementById('loginLink');
     const settingsNav = document.getElementById('settingsNavItem');
+    const adminNav = document.getElementById('adminNavItem');
     
     console.log('🔄 updateUserUI вызван');
     console.log('🔍 currentUser:', currentUser);
@@ -30,9 +31,21 @@ function updateUserUI() {
         if (loginLink) {
             loginLink.style.display = 'none';
         }
+        
         // ✅ Показываем пункт "Настройки"
         if (settingsNav) {
             settingsNav.style.display = 'block';
+        }
+        
+        // ✅ Показываем пункт "Админ-панель" только для администраторов
+        if (adminNav) {
+            if (currentUser.role === 'admin') {
+                adminNav.style.display = 'block';
+                console.log('✅ Админ-панель показана');
+            } else {
+                adminNav.style.display = 'none';
+                console.log('🔒 Админ-панель скрыта (не admin)');
+            }
         }
     } else {
         // Гость
@@ -43,9 +56,15 @@ function updateUserUI() {
         if (loginLink) {
             loginLink.style.display = 'block';
         }
+        
         // ✅ Скрываем пункт "Настройки"
         if (settingsNav) {
             settingsNav.style.display = 'none';
+        }
+        
+        // ✅ Скрываем пункт "Админ-панель"
+        if (adminNav) {
+            adminNav.style.display = 'none';
         }
     }
 }

@@ -54,9 +54,9 @@
                                 <i class="bi bi-gear"></i> <span class="nav-text">Настройки</span>
                             </a>
                         </li>
-                        <!-- В боковом меню, перед настройками -->
+                        <!-- Админ-панель (только для администраторов) -->
                         {% if current_user and current_user.role == 'admin' %}
-                        <li class="nav-item">
+                        <li class="nav-item" id="adminNavItem" style="display: none;">
                             <a class="nav-link text-white {% if active_page == 'admin' %}active bg-primary{% endif %}" href="/admin/users">
                                 <i class="bi bi-shield-lock"></i> <span class="nav-text">Админ-панель</span>
                             </a>
