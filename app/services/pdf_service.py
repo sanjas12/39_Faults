@@ -5,7 +5,7 @@ from io import BytesIO
 from pathlib import Path
 from typing import List, Dict, Any
 
-from reportlab.lib.pagesizes import letter
+from reportlab.lib.pagesizes import landscape, A4, letter
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -60,61 +60,23 @@ def safe_project_name(project: Any) -> str:
     return str(project) or "Без проекта"
 
 
-def draw_wrapped_lines(
-    c: canvas.Canvas,
-    text_lines: List[str],
-    font_name: str,
-    font_size: int,
-    x: int,
-    y: int,
-    max_width: int,
-    line_height: int = 18,
-    bottom_margin: int = 50,
-) -> int:
-    """
-    Рисует строки текста с переносами по ширине.
-    Возвращает текущую координату Y после вывода.
-    """
-    c.setFont(font_name, font_size)
-    page_width, page_height = letter
-    for line in text_lines:
-        words = line.split(" ")
-        buffer = ""
-        for word in words:
-            test_line = f"{buffer} {word}".strip()
-            if c.stringWidth(test_line, font_name, font_size) > max_width:
-                c.drawString(x, y, buffer)
-                y -= line_height
-                buffer = word
-            else:
-                buffer = test_line
-        if buffer:
-            c.drawString(x, y, buffer)
-            y -= line_height
-        y -= 6  # дополнительный отступ между строками
-
-        if y < bottom_margin:
-            c.showPage()
-            c.setFont(font_name, font_size)
-            y = page_height - 50
-    return y
-
-
 def generate_faults_pdf(faults: List[Dict[str, Any]], title: str = "Отчёт по неисправностям") -> BytesIO:
-    """Генерация PDF-отчёта по неисправностям"""
+    """Генерация PDF-отчёта по неисправностям в альбомной ориентации"""
     
     buffer = BytesIO()
     font_name = register_font()
     
-    c = canvas.Canvas(buffer, pagesize=letter)
-    page_width, page_height = letter
+    # Альбомная ориентация
+    page_width, page_height = landscape(A4)
+    
+    c = canvas.Canvas(buffer, pagesize=(page_width, page_height))
     
     # Заголовок
     c.setFont(font_name, 16)
     c.drawString(50, page_height - 50, title)
     
     # Дата отчета
-    c.setFont(font_name, 12)
+    c.setFont(font_name, 10)
     c.drawString(
         50,
         page_height - 80,
@@ -124,52 +86,65 @@ def generate_faults_pdf(faults: List[Dict[str, Any]], title: str = "Отчёт �
     
     # Таблица
     y_position = page_height - 130
-    c.setFont(font_name, 10)
     
     if faults:
-        # Заголовки таблицы
-        headers = ['ID', 'Название', 'Проект', 'Категория', 'Важность', 'Статус']
-        col_widths = [30, 100, 60, 50, 40, 40]
+        # ✅ Все колонки (расширены)
+        headers = ['ID', 'Название', 'Проект', 'Категория', 'Важность', 'Статус', 'Создана', 'Изменена', 'Закрыта', 'Мероприятия']
+        # Расширенные ширины колонок для альбомной ориентации
+        col_widths = [22, 90, 90, 65, 40, 40, 50, 50, 50, 45]
         
         # Рисуем заголовок
         x_pos = 50
-        c.setFont(font_name, 10)
-        c.setFillColorRGB(0.05, 0.43, 0.99)  # синий фон
+        c.setFont(font_name, 7)
+        c.setFillColorRGB(0.05, 0.43, 0.99)
         c.rect(x_pos, y_position - 15, sum(col_widths), 15, fill=1)
-        c.setFillColorRGB(1, 1, 1)  # белый текст
+        c.setFillColorRGB(1, 1, 1)
         for i, header in enumerate(headers):
-            c.drawString(x_pos + 5, y_position - 10, header)
+            c.drawString(x_pos + 3, y_position - 10, header)
             x_pos += col_widths[i]
         y_position -= 15
         
         # Данные
-        c.setFillColorRGB(0, 0, 0)  # чёрный текст
+        c.setFillColorRGB(0, 0, 0)
         for i, fault in enumerate(faults[:100]):
             # Чередование цветов строк
             if i % 2 == 0:
-                c.setFillColorRGB(0.95, 0.95, 0.95)  # светло-серый
+                c.setFillColorRGB(0.95, 0.95, 0.95)
                 c.rect(50, y_position - 12, sum(col_widths), 12, fill=1)
                 c.setFillColorRGB(0, 0, 0)
             
-            # ✅ Безопасное получение значений
-            fault_id = safe_str(fault.get('id'), 0)
-            fault_title = safe_str(fault.get('title'), 30)
-            fault_project = safe_project_name(fault.get('project'))
-            fault_category = safe_str(fault.get('category'), 12)
-            fault_severity = safe_str(fault.get('severity'), 10)
-            fault_status = safe_str(fault.get('status'), 10)
+            # Получаем названия статусов и важности на русском
+            severity_map = {
+                'critical': 'Критическая',
+                'major': 'Серьёзная',
+                'minor': 'Незначительная',
+                'trivial': 'Тривиальная'
+            }
+            status_map = {
+                'open': 'Открыта',
+                'in_progress': 'В работе',
+                'review': 'На проверке',
+                'closed': 'Закрыта'
+            }
+            
+            severity = fault.get('severity', '')
+            status = fault.get('status', '')
             
             row = [
-                fault_id,
-                fault_title,
-                fault_project[:15] + ('...' if len(fault_project) > 15 else ''),
-                fault_category,
-                fault_severity,
-                fault_status,
+                safe_str(fault.get('id'), 0),
+                safe_str(fault.get('title'), 25),
+                safe_project_name(fault.get('project'))[:25] + ('...' if len(safe_project_name(fault.get('project'))) > 25 else ''),
+                safe_str(fault.get('category'), 15),
+                severity_map.get(severity, severity) or '—',
+                status_map.get(status, status) or '—',
+                safe_str(fault.get('created_at', ''), 10) if fault.get('created_at') else '—',
+                safe_str(fault.get('updated_at', ''), 10) if fault.get('updated_at') else '—',
+                safe_str(fault.get('resolved_at', ''), 10) if fault.get('resolved_at') else '—',
+                'Есть' if fault.get('planned_actions') else 'Нет',
             ]
             
             x_pos = 50
-            c.setFont(font_name, 8)
+            c.setFont(font_name, 6.5)
             for j, cell in enumerate(row):
                 c.drawString(x_pos + 2, y_position - 7, str(cell))
                 x_pos += col_widths[j]
@@ -178,7 +153,7 @@ def generate_faults_pdf(faults: List[Dict[str, Any]], title: str = "Отчёт �
             if y_position < 50:
                 c.showPage()
                 y_position = page_height - 50
-                c.setFont(font_name, 10)
+                c.setFont(font_name, 7)
         
         # Если записей больше 100
         if len(faults) > 100:
@@ -207,15 +182,16 @@ def generate_single_fault_pdf(fault: Dict[str, Any]) -> BytesIO:
     buffer = BytesIO()
     font_name = register_font()
     
-    c = canvas.Canvas(buffer, pagesize=letter)
-    page_width, page_height = letter
+    page_width, page_height = landscape(A4)
+    
+    c = canvas.Canvas(buffer, pagesize=(page_width, page_height))
     
     # Заголовок
     c.setFont(font_name, 16)
     c.drawString(50, page_height - 50, f"Неисправность #{fault.get('id', '')}")
     
     # Дата
-    c.setFont(font_name, 12)
+    c.setFont(font_name, 10)
     c.drawString(
         50,
         page_height - 80,
@@ -224,41 +200,72 @@ def generate_single_fault_pdf(fault: Dict[str, Any]) -> BytesIO:
     
     y_position = page_height - 110
     
-    # Основная информация
-    fields = [
+    # Основная информация (в две колонки)
+    severity_map = {
+        'critical': 'Критическая',
+        'major': 'Серьёзная',
+        'minor': 'Незначительная',
+        'trivial': 'Тривиальная'
+    }
+    status_map = {
+        'open': 'Открыта',
+        'in_progress': 'В работе',
+        'review': 'На проверке',
+        'closed': 'Закрыта'
+    }
+    
+    fields_left = [
         ('Название', safe_str(fault.get('title'), 0)),
         ('Описание', safe_str(fault.get('description'), 0) or '—'),
         ('Проект', safe_project_name(fault.get('project'))),
         ('Категория', safe_str(fault.get('category'), 0) or '—'),
-        ('Важность', safe_str(fault.get('severity'), 0) or '—'),
-        ('Статус', safe_str(fault.get('status'), 0) or '—'),
+    ]
+    
+    fields_right = [
+        ('Важность', severity_map.get(fault.get('severity'), fault.get('severity') or '—')),
+        ('Статус', status_map.get(fault.get('status'), fault.get('status') or '—')),
         ('Создана', safe_str(fault.get('created_at'), 0) or '—'),
         ('Изменена', safe_str(fault.get('updated_at'), 0) or 'Не изменялась'),
         ('Закрыта', safe_str(fault.get('resolved_at'), 0) or 'Не закрыта'),
     ]
     
     c.setFont(font_name, 10)
-    for label, value in fields:
+    
+    # Левая колонка
+    x_left = 50
+    y_left = y_position
+    for label, value in fields_left:
         c.setFont(font_name, 10)
-        c.drawString(50, y_position, f"{label}:")
+        c.drawString(x_left, y_left, f"{label}:")
         c.setFont(font_name, 10)
-        c.drawString(150, y_position, str(value)[:80])
-        y_position -= 18
+        c.drawString(x_left + 100, y_left, str(value)[:60])
+        y_left -= 18
+    
+    # Правая колонка
+    x_right = 350
+    y_right = y_position
+    for label, value in fields_right:
+        c.setFont(font_name, 10)
+        c.drawString(x_right, y_right, f"{label}:")
+        c.setFont(font_name, 10)
+        c.drawString(x_right + 90, y_right, str(value)[:40])
+        y_right -= 18
+    
+    y_position = min(y_left, y_right) - 20
     
     # Планируемые мероприятия
     if fault.get('planned_actions'):
-        y_position -= 10
         c.setFont(font_name, 12)
         c.drawString(50, y_position, "Планируемые мероприятия:")
         y_position -= 20
-        c.setFont(font_name, 10)
+        c.setFont(font_name, 9)
         lines = fault['planned_actions'].split('\n')
         for line in lines[:10]:
             if y_position < 50:
                 c.showPage()
                 y_position = page_height - 50
-                c.setFont(font_name, 10)
-            c.drawString(70, y_position, line[:80])
+                c.setFont(font_name, 9)
+            c.drawString(70, y_position, line[:100])
             y_position -= 15
     
     # Связанные статьи
@@ -267,12 +274,12 @@ def generate_single_fault_pdf(fault: Dict[str, Any]) -> BytesIO:
         c.setFont(font_name, 12)
         c.drawString(50, y_position, "Связанные статьи:")
         y_position -= 20
-        c.setFont(font_name, 10)
+        c.setFont(font_name, 9)
         for article in fault.get('linked_knowledge', [])[:5]:
             if y_position < 50:
                 c.showPage()
                 y_position = page_height - 50
-                c.setFont(font_name, 10)
+                c.setFont(font_name, 9)
             title = safe_str(article.get('title'), 60)
             c.drawString(70, y_position, f"• {title}")
             y_position -= 15
@@ -283,12 +290,12 @@ def generate_single_fault_pdf(fault: Dict[str, Any]) -> BytesIO:
         c.setFont(font_name, 12)
         c.drawString(50, y_position, "Клоны:")
         y_position -= 20
-        c.setFont(font_name, 10)
+        c.setFont(font_name, 9)
         for clone in fault.get('clones', [])[:5]:
             if y_position < 50:
                 c.showPage()
                 y_position = page_height - 50
-                c.setFont(font_name, 10)
+                c.setFont(font_name, 9)
             clone_title = safe_str(clone.get('title'), 50)
             c.drawString(70, y_position, f"• #{clone.get('id', '')} {clone_title}")
             y_position -= 15
@@ -299,7 +306,7 @@ def generate_single_fault_pdf(fault: Dict[str, Any]) -> BytesIO:
         c.setFont(font_name, 12)
         c.drawString(50, y_position, "Родительская неисправность:")
         y_position -= 20
-        c.setFont(font_name, 10)
+        c.setFont(font_name, 9)
         parent = fault['parent_fault']
         parent_title = safe_str(parent.get('title'), 60)
         c.drawString(70, y_position, f"#{parent.get('id', '')} {parent_title}")
