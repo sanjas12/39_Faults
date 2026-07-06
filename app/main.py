@@ -197,3 +197,10 @@ def register_page(request: Request) -> HTMLResponse:
         return RedirectResponse(url='/', status_code=302)
     context = {"request": request}
     return templates.TemplateResponse("register.html", context)
+
+
+@app.get("/admin/users")
+def admin_users_page(request: Request):
+    """Страница управления пользователями (только админ)"""
+    return _render_protected_page(request, "admin/users.html", active_page="admin")
+    

@@ -1,0 +1,562 @@
+{% extends "base.html" %}
+
+{% block title %}Админ-панель - Пользователи{% endblock %}
+{% block page_title %}
+    <div class="d-flex justify-content-between align-items-center">
+        <span>Управление пользователями</span>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
+            <i class="bi bi-person-plus"></i> Создать пользователя
+        </button>
+    </div>
+{% endblock %}
+{% set active_page = 'admin' %}
+
+{% block content %}
+<!-- Панель фильтров -->
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Поиск по имени, email или роли...">
+                    <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    <button class="btn btn-outline-secondary" type="button" id="clearSearchBtn" title="Очистить">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="roleFilter">
+                    <option value="">Все роли</option>
+                    <option value="admin">Администратор</option>
+                    <option value="engineer">Инженер</option>
+                    <option value="manager">Менеджер</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="statusFilter">
+                    <option value="">Все статусы</option>
+                    <option value="active">Активные</option>
+                    <option value="inactive">Заблокированные</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-outline-secondary w-100" id="resetFiltersBtn" title="Сбросить фильтры">
+                    <i class="bi bi-arrow-counterclockwise"></i> Сбросить
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Таблица пользователей -->
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 40px;">ID</th>
+                        <th>Имя пользователя</th>
+                        <th>Email</th>
+                        <th>Полное имя</th>
+                        <th>Роль</th>
+                        <th>Статус</th>
+                        <th>Создан</th>
+                        <th style="width: 150px;">Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="usersList">
+                    <tr>
+                        <td colspan="8" class="text-center text-muted">Загрузка пользователей...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer d-flex justify-content-between align-items-center">
+        <div>
+            <span class="text-muted" id="usersCount">Всего: 0</span>
+        </div>
+        <div>
+            <nav aria-label="Page navigation">
+                <ul class="pagination pagination-sm mb-0" id="pagination">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" id="prevPage">←</a>
+                    </li>
+                    <li class="page-item active">
+                        <a class="page-link" href="#" id="currentPage">1</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#" id="nextPage">→</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- ===== МОДАЛЬНОЕ ОКНО СОЗДАНИЯ ПОЛЬЗОВАТЕЛЯ ===== -->
+<div class="modal fade" id="createUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Создать пользователя</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createUserForm">
+                    <div class="mb-3">
+                        <label for="newUsername" class="form-label">Имя пользователя *</label>
+                        <input type="text" class="form-control" id="newUsername" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newEmail" class="form-label">Email *</label>
+                        <input type="email" class="form-control" id="newEmail" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newFullName" class="form-label">Полное имя</label>
+                        <input type="text" class="form-control" id="newFullName">
+                    </div>
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label">Пароль *</label>
+                        <input type="password" class="form-control" id="newPassword" minlength="6" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newRole" class="form-label">Роль</label>
+                        <select class="form-select" id="newRole">
+                            <option value="manager">Менеджер</option>
+                            <option value="engineer">Инженер</option>
+                            <option value="admin">Администратор</option>
+                        </select>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="newActive" checked>
+                        <label class="form-check-label" for="newActive">Активен</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="saveUserBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ ===== -->
+<div class="modal fade" id="editUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редактировать пользователя</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editUserForm">
+                    <input type="hidden" id="editUserId">
+                    <div class="mb-3">
+                        <label for="editUsername" class="form-label">Имя пользователя *</label>
+                        <input type="text" class="form-control" id="editUsername" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editEmail" class="form-label">Email *</label>
+                        <input type="email" class="form-control" id="editEmail" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editFullName" class="form-label">Полное имя</label>
+                        <input type="text" class="form-control" id="editFullName">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editPassword" class="form-label">Новый пароль (оставьте пустым, если не хотите менять)</label>
+                        <input type="password" class="form-control" id="editPassword" minlength="6" placeholder="******">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editRole" class="form-label">Роль</label>
+                        <select class="form-select" id="editRole">
+                            <option value="manager">Менеджер</option>
+                            <option value="engineer">Инженер</option>
+                            <option value="admin">Администратор</option>
+                        </select>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="editActive">
+                        <label class="form-check-label" for="editActive">Активен</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="updateUserBtn">Обновить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ УДАЛЕНИЯ ===== -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Подтверждение удаления</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Вы уверены, что хотите удалить пользователя <strong id="deleteUserName"></strong>?</p>
+                <p class="text-danger"><small>Это действие необратимо!</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteUserBtn">Удалить</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ======= ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ =======
+let allUsers = [];
+let currentPage = 1;
+const itemsPerPage = 10;
+let currentDeleteId = null;
+
+// ======= ЗАГРУЗКА ПОЛЬЗОВАТЕЛЕЙ =======
+async function loadUsers() {
+    try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        const params = new URLSearchParams();
+        
+        const search = document.getElementById('searchInput').value.trim();
+        if (search) params.append('search', search);
+        
+        const role = document.getElementById('roleFilter').value;
+        if (role) params.append('role', role);
+        
+        const status = document.getElementById('statusFilter').value;
+        if (status) params.append('status', status);
+        
+        const response = await axios.get(`/api/auth/users?${params.toString()}`);
+        allUsers = response.data;
+        renderUsers(allUsers);
+        
+        document.getElementById('usersCount').textContent = `Всего: ${allUsers.length}`;
+    } catch (error) {
+        console.error('Ошибка загрузки пользователей:', error);
+        if (error.response?.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+        if (error.response?.status === 403) {
+            alert('Доступ запрещён. Требуются права администратора.');
+            window.location.href = '/';
+            return;
+        }
+        document.getElementById('usersList').innerHTML = `
+            <tr><td colspan="8" class="text-center text-danger">Ошибка загрузки пользователей</td></tr>
+        `;
+    }
+}
+
+// ======= ОТОБРАЖЕНИЕ ПОЛЬЗОВАТЕЛЕЙ =======
+function renderUsers(users) {
+    const tbody = document.getElementById('usersList');
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    const pageItems = users.slice(start, end);
+    
+    if (pageItems.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center text-muted py-4">
+                    <i class="bi bi-person" style="font-size: 32px;"></i>
+                    <p class="mt-2">Пользователи не найдены</p>
+                </td>
+            </tr>
+        `;
+        updatePagination(users.length);
+        return;
+    }
+    
+    const roleLabels = {
+        'admin': 'Администратор',
+        'engineer': 'Инженер',
+        'manager': 'Менеджер'
+    };
+    const roleColors = {
+        'admin': 'danger',
+        'engineer': 'warning',
+        'manager': 'info'
+    };
+    
+    tbody.innerHTML = pageItems.map(user => `
+        <tr>
+            <td>${user.id}</td>
+            <td><strong>${user.username}</strong></td>
+            <td>${user.email}</td>
+            <td>${user.full_name || '—'}</td>
+            <td>
+                <span class="badge bg-${roleColors[user.role] || 'secondary'}">
+                    ${roleLabels[user.role] || user.role}
+                </span>
+            </td>
+            <td>
+                ${user.is_active 
+                    ? '<span class="badge bg-success">Активен</span>'
+                    : '<span class="badge bg-danger">Заблокирован</span>'}
+            </td>
+            <td><small class="text-muted">${new Date(user.created_at).toLocaleDateString('ru-RU')}</small></td>
+            <td>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary" onclick="editUser(${user.id})" title="Редактировать">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-outline-danger" onclick="deleteUser(${user.id})" title="Удалить">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+    
+    updatePagination(users.length);
+}
+
+// ======= ПАГИНАЦИЯ =======
+function updatePagination(totalItems) {
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const currentPageSpan = document.getElementById('currentPage');
+    const prevBtn = document.getElementById('prevPage');
+    const nextBtn = document.getElementById('nextPage');
+    
+    currentPageSpan.textContent = currentPage;
+    
+    if (currentPage <= 1) {
+        prevBtn.parentElement.classList.add('disabled');
+    } else {
+        prevBtn.parentElement.classList.remove('disabled');
+    }
+    
+    if (currentPage >= totalPages || totalPages === 0) {
+        nextBtn.parentElement.classList.add('disabled');
+    } else {
+        nextBtn.parentElement.classList.remove('disabled');
+    }
+}
+
+document.getElementById('prevPage').addEventListener('click', function(e) {
+    e.preventDefault();
+    if (currentPage > 1) {
+        currentPage--;
+        renderUsers(allUsers);
+    }
+});
+
+document.getElementById('nextPage').addEventListener('click', function(e) {
+    e.preventDefault();
+    const totalPages = Math.ceil(allUsers.length / itemsPerPage);
+    if (currentPage < totalPages) {
+        currentPage++;
+        renderUsers(allUsers);
+    }
+});
+
+// ======= ФИЛЬТРЫ =======
+function applyFilters() {
+    currentPage = 1;
+    loadUsers();
+}
+
+document.getElementById('searchBtn').addEventListener('click', applyFilters);
+document.getElementById('clearSearchBtn').addEventListener('click', function() {
+    document.getElementById('searchInput').value = '';
+    applyFilters();
+});
+document.getElementById('searchInput').addEventListener('keyup', function(e) {
+    if (e.key === 'Enter') applyFilters();
+});
+document.getElementById('roleFilter').addEventListener('change', applyFilters);
+document.getElementById('statusFilter').addEventListener('change', applyFilters);
+
+document.getElementById('resetFiltersBtn').addEventListener('click', function() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('roleFilter').value = '';
+    document.getElementById('statusFilter').value = '';
+    applyFilters();
+});
+
+// ======= СОЗДАНИЕ ПОЛЬЗОВАТЕЛЯ =======
+document.getElementById('saveUserBtn').addEventListener('click', async function() {
+    const username = document.getElementById('newUsername').value.trim();
+    const email = document.getElementById('newEmail').value.trim();
+    const password = document.getElementById('newPassword').value;
+    const fullName = document.getElementById('newFullName').value.trim();
+    
+    if (!username || !email || !password) {
+        alert('Заполните все обязательные поля!');
+        return;
+    }
+    
+    if (password.length < 6) {
+        alert('Пароль должен быть не менее 6 символов');
+        return;
+    }
+    
+    const data = {
+        username: username,
+        email: email,
+        password: password,
+        full_name: fullName || null,
+        role: document.getElementById('newRole').value,
+        is_active: document.getElementById('newActive').checked
+    };
+    
+    try {
+        const token = localStorage.getItem('auth_token');
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        await axios.post('/api/auth/register', data);
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('createUserModal'));
+        modal.hide();
+        document.getElementById('createUserForm').reset();
+        document.getElementById('newActive').checked = true;
+        
+        await loadUsers();
+        alert('✅ Пользователь создан!');
+    } catch (error) {
+        console.error('Ошибка создания пользователя:', error);
+        alert('Ошибка: ' + (error.response?.data?.detail || error.message));
+    }
+});
+
+// ======= РЕДАКТИРОВАНИЕ ПОЛЬЗОВАТЕЛЯ =======
+async function editUser(id) {
+    try {
+        const token = localStorage.getItem('auth_token');
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        const response = await axios.get(`/api/auth/users/${id}`);
+        const user = response.data;
+        
+        document.getElementById('editUserId').value = user.id;
+        document.getElementById('editUsername').value = user.username;
+        document.getElementById('editEmail').value = user.email;
+        document.getElementById('editFullName').value = user.full_name || '';
+        document.getElementById('editRole').value = user.role;
+        document.getElementById('editActive').checked = user.is_active;
+        document.getElementById('editPassword').value = '';
+        
+        const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+        modal.show();
+    } catch (error) {
+        console.error('Ошибка загрузки пользователя:', error);
+        alert('Ошибка при загрузке данных пользователя');
+    }
+}
+
+document.getElementById('updateUserBtn').addEventListener('click', async function() {
+    const id = parseInt(document.getElementById('editUserId').value);
+    const username = document.getElementById('editUsername').value.trim();
+    const email = document.getElementById('editEmail').value.trim();
+    const password = document.getElementById('editPassword').value;
+    const fullName = document.getElementById('editFullName').value.trim();
+    
+    if (!username || !email) {
+        alert('Имя пользователя и Email обязательны!');
+        return;
+    }
+    
+    const data = {
+        username: username,
+        email: email,
+        full_name: fullName || null,
+        role: document.getElementById('editRole').value,
+        is_active: document.getElementById('editActive').checked
+    };
+    
+    if (password) {
+        if (password.length < 6) {
+            alert('Пароль должен быть не менее 6 символов');
+            return;
+        }
+        data.password = password;
+    }
+    
+    try {
+        const token = localStorage.getItem('auth_token');
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        await axios.put(`/api/auth/users/${id}`, data);
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
+        modal.hide();
+        
+        await loadUsers();
+        alert('✅ Пользователь обновлён!');
+    } catch (error) {
+        console.error('Ошибка обновления пользователя:', error);
+        alert('Ошибка: ' + (error.response?.data?.detail || error.message));
+    }
+});
+
+// ======= УДАЛЕНИЕ ПОЛЬЗОВАТЕЛЯ =======
+function deleteUser(id) {
+    const user = allUsers.find(u => u.id === id);
+    if (!user) return;
+    
+    if (user.username === 'admin') {
+        alert('Нельзя удалить администратора!');
+        return;
+    }
+    
+    document.getElementById('deleteUserName').textContent = `${user.username} (${user.full_name || user.email})`;
+    currentDeleteId = id;
+    
+    const modal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
+    modal.show();
+}
+
+document.getElementById('confirmDeleteUserBtn').addEventListener('click', async function() {
+    if (!currentDeleteId) return;
+    
+    try {
+        const token = localStorage.getItem('auth_token');
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        await axios.delete(`/api/auth/users/${currentDeleteId}`);
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('deleteUserModal'));
+        modal.hide();
+        
+        await loadUsers();
+        alert('✅ Пользователь удалён!');
+    } catch (error) {
+        console.error('Ошибка удаления пользователя:', error);
+        alert('Ошибка: ' + (error.response?.data?.detail || error.message));
+    }
+});
+
+// ======= ИНИЦИАЛИЗАЦИЯ =======
+document.addEventListener('DOMContentLoaded', async function() {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+        window.location.href = '/login';
+        return;
+    }
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    
+    console.log('🚀 Загрузка страницы управления пользователями');
+    await loadUsers();
+});
+</script>
+{% endblock %}

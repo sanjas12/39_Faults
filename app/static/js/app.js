@@ -217,3 +217,7 @@ axios.interceptors.response.use(
         return Promise.reject(error);
     }
 );
+
+function isAdmin() {
+    return currentUser && currentUser.role === 'admin';
+}
