@@ -56,6 +56,17 @@
                     <option value="no">Нет</option>
                 </select>
             </div>
+            <!-- В панели фильтров, рядом с кнопкой создания -->
+            <div class="col-md-2">
+                <div class="d-flex gap-2">
+                    <button class="btn btn-success w-100" id="exportPdfBtn">
+                        <i class="bi bi-file-pdf"></i> PDF
+                    </button>
+                    <button class="btn btn-primary w-100" id="createFaultBtn" data-bs-toggle="modal" data-bs-target="#createFaultModal">
+                        <i class="bi bi-plus-circle"></i>
+                    </button>
+                </div>
+            </div>
             <div class="col-md-12 mt-2">
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                     <span class="text-muted small">Сортировать по:</span>
@@ -270,7 +281,7 @@
 let allFaults = [];
 let allProjects = [];
 let currentPage = 1;
-const itemsPerPage = 10;
+const itemsPerPage = 20;
 let currentDeleteId = null;
 let allFaultsData = [];
 
@@ -498,6 +509,31 @@ function renderTable() {
     
     updatePagination();
 }
+
+// ======= ЭКСПОРТ В PDF =======
+document.getElementById('exportPdfBtn').addEventListener('click', function() {
+    // Собираем текущие параметры фильтров
+    const params = new URLSearchParams();
+    
+    const status = document.getElementById('statusFilter').value;
+    if (status) params.append('status', status);
+    
+    const severity = document.getElementById('severityFilter').value;
+    if (severity) params.append('severity', severity);
+    
+    const category = document.getElementById('categoryFilter').value;
+    if (category) params.append('category', category);
+    
+    const project = document.getElementById('projectFilter').value;
+    if (project) params.append('project_id', project);
+    
+    const search = document.getElementById('searchInput').value.trim();
+    if (search) params.append('search', search);
+    
+    // Открываем ссылку для скачивания
+    window.open(`/api/export/faults/pdf?${params.toString()}`, '_blank');
+});
+
 
 // ======= ПАГИНАЦИЯ =======
 

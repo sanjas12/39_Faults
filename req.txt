@@ -6,3 +6,4 @@ factory-boy
 apscheduler
 aiofiles
 python-multipart
+reportlab

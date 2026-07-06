@@ -8,6 +8,15 @@
             <button class="btn btn-outline-secondary btn-sm" onclick="history.back()">
                 <i class="bi bi-arrow-left"></i> Назад
             </button>
+            <button class="btn btn-sm btn-outline-success me-1" onclick="exportFaultPdf()">
+                <i class="bi bi-file-pdf"></i> PDF
+            </button>
+            <button class="btn btn-sm btn-outline-primary me-1" onclick="toggleEdit()">
+                <i class="bi bi-pencil"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteFault()">
+                <i class="bi bi-trash"></i>
+            </button>
         </div>
     </div>
 {% endblock %}
@@ -1387,6 +1396,11 @@ document.getElementById('confirmCloneBtn').addEventListener('click', async funct
         this.innerHTML = '<i class="bi bi-files"></i> Клонировать';
     }
 });
+
+// ======= ЭКСПОРТ ОДНОЙ НЕИСПРАВНОСТИ В PDF =======
+function exportFaultPdf() {
+    window.open(`/api/export/faults/${faultId}/pdf`, '_blank');
+}
 
 // ======= РЕДАКТИРОВАНИЕ =======
 function toggleEdit() {
