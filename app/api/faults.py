@@ -3,7 +3,7 @@ from pathlib import Path
 import shutil
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import or_, func
+from sqlalchemy import or_, func, desc, asc
 from typing import List, Optional
 from datetime import datetime
 
@@ -104,17 +104,14 @@ def list_faults(
     severity: Optional[SeverityEnum] = Query(None, description="Фильтр по важности"),
     category: Optional[str] = Query(None, description="Фильтр по категории"),
     project_id: Optional[int] = Query(None, description="Фильтр по проекту"),
-    search: Optional[str] = Query(None, description="Поиск по названию, описанию или ID (регистронезависимый)"),
+    search: Optional[str] = Query(None, description="Поиск по названию, описанию или ID"),
+    sort_by: Optional[str] = Query("created_at", description="Поле для сортировки: id, title, severity, status, created_at, updated_at"),
+    sort_order: Optional[str] = Query("desc", description="Порядок сортировки: asc, desc"),
     db: Session = Depends(get_db),
     current_user: UserResponse = Depends(get_current_user)
 ):
     """
-    Получение списка неисправностей с фильтрацией и регистронезависимым поиском.
-    
-    Поиск работает:
-    - По ID (если введено число)
-    - По названию (без учёта регистра)
-    - По описанию (без учёта регистра)
+    Получение списка неисправностей с фильтрацией, поиском и сортировкой.
     """
     query = db.query(Fault).options(
         joinedload(Fault.project),
@@ -132,40 +129,51 @@ def list_faults(
     if project_id:
         query = query.filter(Fault.project_id == project_id)
     
-    # ✅ Регистронезависимый поиск по названию, описанию или ID
+    # Поиск
     if search:
+        print(f"🔍 Поиск: '{search}'")
         search_pattern = f"%{search}%"
-        # Проверяем, является ли поиск числом (ID)
+        
         if search.isdigit():
-            # Ищем по ID ИЛИ по тексту (без учёта регистра через COLLATE NOCASE)
             query = query.filter(
                 or_(
                     Fault.id == int(search),
-                    Fault.title.collate('NOCASE').like(search_pattern),
-                    Fault.description.collate('NOCASE').like(search_pattern)
+                    Fault.title.ilike(search_pattern),
+                    Fault.description.ilike(search_pattern)
                 )
             )
         else:
-            # Обычный текстовый поиск (без учёта регистра через COLLATE NOCASE)
             query = query.filter(
                 or_(
-                    Fault.title.collate('NOCASE').like(search_pattern),
-                    Fault.description.collate('NOCASE').like(search_pattern)
+                    Fault.title.ilike(search_pattern),
+                    Fault.description.ilike(search_pattern)
                 )
             )
     
-    # Сортировка: сначала критические, потом по дате создания
-    query = query.order_by(
-        Fault.severity.desc(),
-        Fault.created_at.desc()
-    )
+    # ✅ Сортировка
+    sort_field_map = {
+        "id": Fault.id,
+        "title": Fault.title,
+        "severity": Fault.severity,
+        "status": Fault.status,
+        "category": Fault.category,
+        "created_at": Fault.created_at,
+        "updated_at": Fault.updated_at,
+        "resolved_at": Fault.resolved_at
+    }
+    
+    sort_field = sort_field_map.get(sort_by, Fault.created_at)
+    
+    if sort_order.lower() == "asc":
+        query = query.order_by(asc(sort_field))
+    else:
+        query = query.order_by(desc(sort_field))
     
     faults = query.offset(skip).limit(limit).all()
     
-    # ✅ Формируем ответ вручную для каждого fault
+    # Формируем ответ
     result = []
     for fault in faults:
-        # Загружаем связанные статьи
         linked_knowledge = []
         if fault.linked_knowledge_ids:
             ids = [int(id.strip()) for id in fault.linked_knowledge_ids.split(',') if id.strip()]

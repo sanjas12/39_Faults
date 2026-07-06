@@ -6,7 +6,6 @@
 
 {% block content %}
 <!-- Панель фильтров -->
-<!-- Панель фильтров -->
 <div class="card mb-3">
     <div class="card-body">
         <div class="row g-3">
@@ -56,6 +55,27 @@
                     <option value="yes">Есть</option>
                     <option value="no">Нет</option>
                 </select>
+            </div>
+            <div class="col-md-12 mt-2">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="text-muted small">Сортировать по:</span>
+                    <select class="form-select form-select-sm" id="sortBy" style="width: auto;">
+                        <option value="id">ID</option>
+                        <option value="title">Названию</option>
+                        <option value="severity">Важности</option>
+                        <option value="status">Статусу</option>
+                        <option value="category">Категории</option>
+                        <option value="created_at" selected>Дате создания</option>
+                        <option value="updated_at">Дате изменения</option>
+                    </select>
+                    <select class="form-select form-select-sm" id="sortOrder" style="width: auto;">
+                        <option value="desc">По убыванию</option>
+                        <option value="asc">По возрастанию</option>
+                    </select>
+                    <button class="btn btn-sm btn-outline-secondary" id="applySortBtn">
+                        <i class="bi bi-arrow-repeat"></i> Применить
+                    </button>
+                </div>
             </div>
             <div class="col-md-1">
                 <button class="btn btn-primary w-100" id="createFaultBtn" data-bs-toggle="modal" data-bs-target="#createFaultModal">
@@ -325,13 +345,19 @@ async function loadFaults(searchTerm = '') {
             params.append('search', searchTerm);
         }
         
+        //Добавляем параметры сортировки
+        const sortBy = document.getElementById('sortBy').value;
+        const sortOrder = document.getElementById('sortOrder').value;
+        params.append('sort_by', sortBy);
+        params.append('sort_order', sortOrder);
+        
         params.append('limit', '1000');
         console.log('📤 Параметры запроса:', params.toString());
         
         // Показываем индикатор загрузки
         document.getElementById('faultsList').innerHTML = `
             <tr><td colspan="10" class="text-center text-muted">
-                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Поиск...
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Загрузка...
             </td></tr>
         `;
         
@@ -340,7 +366,7 @@ async function loadFaults(searchTerm = '') {
         
         let data = response.data;
         
-        // Фильтр по планируемым мероприятиям
+        // Фильтр по планируемым мероприятиям (клиентская фильтрация)
         const plannedFilter = document.getElementById('plannedActionsFilter')?.value;
         if (plannedFilter === 'yes') {
             data = data.filter(f => f.planned_actions && f.planned_actions.trim().length > 0);
@@ -725,6 +751,55 @@ function applyFilters() {
     currentPage = 1;
     loadFaults(search);
 }
+
+// Обработчики для всех фильтров
+document.getElementById('statusFilter').addEventListener('change', applyFilters);
+document.getElementById('severityFilter').addEventListener('change', applyFilters);
+document.getElementById('projectFilter').addEventListener('change', applyFilters);
+document.getElementById('plannedActionsFilter').addEventListener('change', applyFilters);
+document.getElementById('categoryFilter').addEventListener('change', function() {
+    currentPage = 1;
+    const search = document.getElementById('searchInput').value.trim();
+    loadFaults(search);
+});
+
+// ✅ Сортировка
+document.getElementById('applySortBtn').addEventListener('click', function() {
+    const search = document.getElementById('searchInput').value.trim();
+    currentPage = 1;
+    loadFaults(search);
+});
+
+// Поиск
+document.getElementById('searchBtn').addEventListener('click', function() {
+    const search = document.getElementById('searchInput').value.trim();
+    loadFaults(search);
+});
+
+document.getElementById('searchInput').addEventListener('keyup', function(e) {
+    if (e.key === 'Enter') {
+        const search = document.getElementById('searchInput').value.trim();
+        loadFaults(search);
+    }
+});
+
+document.getElementById('clearSearchBtn').addEventListener('click', function() {
+    document.getElementById('searchInput').value = '';
+    loadFaults('');
+});
+
+// Сброс фильтров
+document.getElementById('resetFiltersBtn').addEventListener('click', function() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('statusFilter').value = '';
+    document.getElementById('severityFilter').value = '';
+    document.getElementById('projectFilter').value = '';
+    document.getElementById('categoryFilter').value = '';
+    document.getElementById('plannedActionsFilter').value = '';
+    document.getElementById('sortBy').value = 'created_at';
+    document.getElementById('sortOrder').value = 'desc';
+    applyFilters();
+});
 
 // Обработчики для всех фильтров
 document.getElementById('statusFilter').addEventListener('change', applyFilters);
