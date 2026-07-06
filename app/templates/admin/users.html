@@ -62,10 +62,10 @@
                         <th>Имя пользователя</th>
                         <th>Email</th>
                         <th>Полное имя</th>
-                        <th>Роль</th>
-                        <th>Статус</th>
+                        <th style="width: 130px;">Роль</th>
+                        <th style="width: 120px;">Статус</th>
                         <th>Создан</th>
-                        <th style="width: 150px;">Действия</th>
+                        <th style="width: 180px;">Действия</th>
                     </tr>
                 </thead>
                 <tbody id="usersList">
@@ -272,6 +272,7 @@ async function loadUsers() {
 }
 
 // ======= ОТОБРАЖЕНИЕ ПОЛЬЗОВАТЕЛЕЙ =======
+// ======= ОТОБРАЖЕНИЕ ПОЛЬЗОВАТЕЛЕЙ =======
 function renderUsers(users) {
     const tbody = document.getElementById('usersList');
     const start = (currentPage - 1) * itemsPerPage;
@@ -309,22 +310,22 @@ function renderUsers(users) {
             <td>${user.email}</td>
             <td>${user.full_name || '—'}</td>
             <td>
-                <span class="badge bg-${roleColors[user.role] || 'secondary'}">
-                    ${roleLabels[user.role] || user.role}
-                </span>
+                <select class="form-select form-select-sm role-select" data-userid="${user.id}" style="min-width: 120px;">
+                    <option value="manager" ${user.role === 'manager' ? 'selected' : ''}>Менеджер</option>
+                    <option value="engineer" ${user.role === 'engineer' ? 'selected' : ''}>Инженер</option>
+                    <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Администратор</option>
+                </select>
             </td>
             <td>
-                ${user.is_active 
-                    ? '<span class="badge bg-success">Активен</span>'
-                    : '<span class="badge bg-danger">Заблокирован</span>'}
+                <select class="form-select form-select-sm status-select" data-userid="${user.id}" style="min-width: 100px;">
+                    <option value="true" ${user.is_active ? 'selected' : ''}>Активен</option>
+                    <option value="false" ${!user.is_active ? 'selected' : ''}>Заблокирован</option>
+                </select>
             </td>
             <td><small class="text-muted">${new Date(user.created_at).toLocaleDateString('ru-RU')}</small></td>
             <td>
                 <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary" onclick="editUser(${user.id})" title="Редактировать">
-                        <i class="bi bi-pencil"></i>
-                    </button>
-                    <button class="btn btn-outline-danger" onclick="deleteUser(${user.id})" title="Удалить">
+                    <button class="btn btn-outline-danger" onclick="deleteUser(${user.id})" title="Удалить" ${user.username === 'admin' ? 'disabled' : ''}>
                         <i class="bi bi-trash"></i>
                     </button>
                 </div>
@@ -332,7 +333,77 @@ function renderUsers(users) {
         </tr>
     `).join('');
     
+    // ✅ Добавляем обработчики для изменения роли и статуса
+    document.querySelectorAll('.role-select').forEach(select => {
+        select.addEventListener('change', function() {
+            const userId = parseInt(this.dataset.userid);
+            const newRole = this.value;
+            updateUserRole(userId, newRole);
+        });
+    });
+    
+    document.querySelectorAll('.status-select').forEach(select => {
+        select.addEventListener('change', function() {
+            const userId = parseInt(this.dataset.userid);
+            const newStatus = this.value === 'true';
+            updateUserStatus(userId, newStatus);
+        });
+    });
+    
     updatePagination(users.length);
+}
+
+// ======= ОБНОВЛЕНИЕ РОЛИ =======
+async function updateUserRole(userId, newRole) {
+    try {
+        const token = localStorage.getItem('auth_token');
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        await axios.put(`/api/auth/users/${userId}`, {
+            role: newRole
+        });
+        
+        showNotification('✅ Роль пользователя обновлена!', 'success');
+        await loadUsers();
+    } catch (error) {
+        console.error('❌ Ошибка обновления роли:', error);
+        showNotification('❌ Ошибка при обновлении роли: ' + (error.response?.data?.detail || error.message), 'danger');
+        // Восстанавливаем список
+        await loadUsers();
+    }
+}
+
+// ======= ОБНОВЛЕНИЕ СТАТУСА =======
+async function updateUserStatus(userId, isActive) {
+    try {
+        const token = localStorage.getItem('auth_token');
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        await axios.put(`/api/auth/users/${userId}`, {
+            is_active: isActive
+        });
+        
+        showNotification(`✅ Пользователь ${isActive ? 'активирован' : 'заблокирован'}!`, 'success');
+        await loadUsers();
+    } catch (error) {
+        console.error('❌ Ошибка обновления статуса:', error);
+        showNotification('❌ Ошибка при обновлении статуса: ' + (error.response?.data?.detail || error.message), 'danger');
+        await loadUsers();
+    }
+}
+
+// ======= УВЕДОМЛЕНИЯ =======
+function showNotification(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    const bgColor = type === 'success' ? 'bg-success' : type === 'danger' ? 'bg-danger' : 'bg-info';
+    alertDiv.className = `alert ${bgColor} text-white alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+    alertDiv.style.zIndex = '9999';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    setTimeout(() => alertDiv.remove(), 3000);
 }
 
 // ======= ПАГИНАЦИЯ =======
