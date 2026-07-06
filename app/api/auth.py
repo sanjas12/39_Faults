@@ -201,6 +201,7 @@ def update_user(
             db.query(User)
             .filter(User.email == user_data.email, User.id != user_id)
             .first()
+        )   
 
 
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)

@@ -61,6 +61,24 @@ CONTACTS = [
     },
 ]
 
+# ===== РАСШИРЕННЫЙ СПИСОК СТАНЦИЙ =====
+STATIONS = [
+    "Кольская", "Смоленская", "Курская", "Ленинградская", 
+    "Нововоронежская", "Балаковская", "Ростовская", "Калининская",
+    "Тверская", "Ярославская", "Владимирская", "Нижегородская",
+    "Казанская", "Самарская", "Саратовская", "Волгоградская"
+]
+
+# ===== РАСШИРЕННЫЙ СПИСОК ТИПОВ =====
+TYPES = ["САРЗ", "САУ", "САР", "САУ-Т", "САРЗ-М", "САУ-К", "САР-Н"]
+
+# ===== РАСШИРЕННЫЙ СПИСОК КЛИЕНТОВ =====
+CLIENTS = [
+    "Росатом", "Росэнергоатом", "ТГК-1", "ТГК-2", "ТГК-3",
+    "Мосэнерго", "Ленэнерго", "Кубаньэнерго", "Смоленскэнерго",
+    "Курскэнерго", "Балаковская АЭС", "Ростовская АЭС"
+]
+
 def seed_data():
     db = SessionLocal()
     try:
@@ -114,6 +132,31 @@ def seed_data():
                 role=UserRole.MANAGER,
                 is_active=True,
             ),
+            # ✅ Добавляем дополнительных пользователей
+            User(
+                username="engineer3",
+                email="engineer3@diakont.com",
+                password_hash=get_password_hash("eng123"),
+                full_name="Смирнов Андрей Васильевич",
+                role=UserRole.ENGINEER,
+                is_active=True,
+            ),
+            User(
+                username="engineer4",
+                email="engineer4@diakont.com",
+                password_hash=get_password_hash("eng123"),
+                full_name="Волкова Екатерина Дмитриевна",
+                role=UserRole.ENGINEER,
+                is_active=True,
+            ),
+            User(
+                username="operator2",
+                email="operator2@diakont.com",
+                password_hash=get_password_hash("op123"),
+                full_name="Новиков Сергей Олегович",
+                role=UserRole.MANAGER,
+                is_active=True,
+            ),
         ]
 
         for user in users:
@@ -121,77 +164,27 @@ def seed_data():
         db.flush()
         print(f"   ✅ Создано {len(users)} пользователей")
 
-        # ===== СОЗДАЁМ ПРОЕКТЫ =====
-        projects_data = [
-            {
-                "name": "Кольская САРЗ-1",
-                "description": "Модернизация системы управления котлами ТЭЦ-5",
-                "client": "Кольская АЭС",
-                "station": "Кольская",
-                "unit": 1,
-                "type": "САРЗ",
-            },
-            {
-                "name": "Кольская САРЗ-2",
-                "description": "Внедрение системы диспетчерского контроля нефтепровода",
-                "client": "Кольская АЭС",
-                "station": "Кольская",
-                "unit": 2,
-                "type": "САРЗ",
-            },
-            {
-                "name": "Смоленская САРЗ-2",
-                "description": "Система автоматического управления дизель-генератора",
-                "client": "Смоленская АЭС",
-                "station": "Смоленская",
-                "unit": 2,
-                "type": "САРЗ",
-            },
-            {
-                "name": "Курская САУ-1",
-                "description": "Система автоматического управления турбиной К-500",
-                "client": "Курская АЭС",
-                "station": "Курская",
-                "unit": 1,
-                "type": "САУ",
-            },
-            {
-                "name": "Ленинградская САУ-3",
-                "description": "Автоматизация системы охлаждения реактора",
-                "client": "Ленинградская АЭС",
-                "station": "Ленинградская",
-                "unit": 3,
-                "type": "САУ",
-            },
-            {
-                "name": "Нововоронежская САРЗ-1",
-                "description": "Резервирование системы управления парогенераторами",
-                "client": "Нововоронежская АЭС",
-                "station": "Нововоронежская",
-                "unit": 1,
-                "type": "САРЗ",
-            },
-            {
-                "name": "Балаковская САУ-2",
-                "description": "Модернизация системы управления турбиной",
-                "client": "Балаковская АЭС",
-                "station": "Балаковская",
-                "unit": 2,
-                "type": "САУ",
-            },
-            {
-                "name": "Ростовская САРЗ-1",
-                "description": "Автоматизация системы управления парогенераторами",
-                "client": "Ростовская АЭС",
-                "station": "Ростовская",
-                "unit": 1,
-                "type": "САРЗ",
-            },
-        ]
+        # ===== СОЗДАЁМ ПРОЕКТЫ (УВЕЛИЧЕНО ДО 24) =====
+        projects_data = []
+        
+        # Генерируем 24 проекта (3x от 8)
+        for i in range(24):
+            station = random.choice(STATIONS)
+            type_ = random.choice(TYPES)
+            unit = random.randint(1, 4)
+            client = random.choice(CLIENTS)
+            
+            projects_data.append({
+                "name": f"{station} {type_}-{unit}",
+                "description": f"Проект автоматизации на {station} (блок {unit}, тип {type_})",
+                "client": client,
+                "station": station,
+                "unit": unit,
+                "type": type_,
+            })
 
         projects = []
         for i, p_data in enumerate(projects_data):
-            # ✅ Добавляем контактную информацию (по кругу)
             contact = CONTACTS[i % len(CONTACTS)]
             project = Project(
                 name=p_data["name"],
@@ -200,7 +193,6 @@ def seed_data():
                 station=p_data["station"],
                 unit=p_data["unit"],
                 type=p_data["type"],
-                # ✅ Контакты
                 contact_name=contact["name"],
                 contact_phone=contact["phone"],
                 contact_email=contact["email"],
@@ -211,7 +203,7 @@ def seed_data():
         db.flush()
         print(f"   ✅ Создано {len(projects)} проектов с контактной информацией")
 
-        # ===== СОЗДАЁМ НЕИСПРАВНОСТИ =====
+        # ===== СОЗДАЁМ НЕИСПРАВНОСТИ (УВЕЛИЧЕНО В 3 РАЗА) =====
         fault_templates = [
             {
                 "title": "Ошибка контроллера {project_name}",
@@ -260,6 +252,18 @@ def seed_data():
                 "description": "При переключении на резервный канал произошла ошибка {error_code}",
                 "severity": "critical",
                 "status": "review",
+            },
+            {
+                "title": "Пропадание питания на {component}",
+                "description": "На {component} пропало питание на {time} секунд",
+                "severity": "major",
+                "status": "open",
+            },
+            {
+                "title": "Ошибка синхронизации данных",
+                "description": "Расхождение данных между основным и резервным сервером на {value}%",
+                "severity": "minor",
+                "status": "in_progress",
             },
         ]
 
@@ -319,6 +323,28 @@ def seed_data():
 - [x] Проверка питания
 - [ ] Проверка сигналов
 - [ ] Проверка связи с SCADA""",
+            
+            """# Программа работ
+
+## Основные задачи
+- **Диагностика системы**
+- **Выявление корневой причины**
+- **Устранение неисправности**
+- **Валидация решения**
+
+## Ответственные
+- Инженер-электроник
+- Инженер-программист
+- Руководитель
+
+## Сроки
+- Начало: {date}
+- Окончание: {date}
+
+## Ресурсы
+- Измерительное оборудование
+- Запасные компоненты
+- Техническая документация""",
         ]
 
         CATEGORIES = [
@@ -328,17 +354,19 @@ def seed_data():
             "Ошибка пользователя",
             "Профилактика",
             "Модернизация",
-            "Другое"
+            "Другое",
+            "Документация",
+            "Алгоритм"
         ]
 
-        components = ["температуры", "давления", "уровня", "положения", "вибрации", "тока", "напряжения"]
-        locations = ["на магистрали", "в турбинном цехе", "на трубопроводе", "в распределительном щите"]
+        components = ["температуры", "давления", "уровня", "положения", "вибрации", "тока", "напряжения", "частоты", "фазы"]
+        locations = ["на магистрали", "в турбинном цехе", "на трубопроводе", "в распределительном щите", "на пульте управления", "в серверной"]
         
         faults = []
         
-        # Генерируем неисправности для каждого проекта
+        # Генерируем неисправности для каждого проекта (увеличено до 9-15 на проект)
         for i, project in enumerate(projects):
-            num_faults = random.randint(3, 7)
+            num_faults = random.randint(9, 15)  # Было 3-7
             
             for j in range(num_faults):
                 template = random.choice(fault_templates)
@@ -358,26 +386,28 @@ def seed_data():
                     value=random.randint(5, 30),
                     time=random.randint(5, 15),
                     temp=random.randint(75, 95),
-                    reason=random.choice(["перегрузка", "короткое замыкание", "обрыв цепи", "сбой ПО"]),
+                    reason=random.choice(["перегрузка", "короткое замыкание", "обрыв цепи", "сбой ПО", "износ оборудования"]),
                     error_code=random.randint(100, 999),
                 )
                 
-                if j < 2:
+                # Распределение статусов
+                if j < 3:
                     status = "open"
                     severity = random.choice(["critical", "major"])
-                elif j < 4:
+                elif j < 6:
                     status = random.choice(["in_progress", "review"])
                     severity = random.choice(["major", "minor"])
-                else:
+                elif j < 9:
                     status = random.choice(["review", "closed"])
                     severity = random.choice(["minor", "trivial"])
+                else:
+                    status = random.choice(["open", "in_progress", "review", "closed"])
+                    severity = random.choice(["critical", "major", "minor", "trivial"])
                 
-                # Выбираем категорию
-                category = random.choice(CATEGORIES) if random.random() > 0.2 else None
+                category = random.choice(CATEGORIES) if random.random() > 0.15 else None
                 
-                # Планируемые мероприятия
                 planned_actions = None
-                if random.random() > 0.4:
+                if random.random() > 0.35:
                     action_template = random.choice(planned_actions_templates)
                     if "{date}" in action_template:
                         date = (datetime.now() + timedelta(days=random.randint(1, 14))).strftime("%d.%m.%Y")
@@ -403,7 +433,7 @@ def seed_data():
         # ===== СОЗДАЁМ ИСТОРИЮ ДЛЯ НЕИСПРАВНОСТЕЙ =====
         print("   📝 Создаём историю для неисправностей...")
         
-        history_authors = ["admin", "engineer", "engineer2", "manager", "operator"]
+        history_authors = ["admin", "engineer", "engineer2", "manager", "operator", "engineer3", "engineer4", "operator2"]
         status_labels = {
             "open": "Открыта",
             "in_progress": "В работе",
@@ -419,7 +449,7 @@ def seed_data():
         
         for fault in faults:
             author = random.choice(history_authors)
-            created_date = fault.created_at - timedelta(days=random.randint(0, 3))
+            created_date = fault.created_at - timedelta(days=random.randint(0, 5))
             
             creation_history = FaultHistory(
                 fault_id=fault.id,
@@ -432,56 +462,48 @@ def seed_data():
             )
             db.add(creation_history)
             
-            if fault.status != "open" and random.random() > 0.3:
-                status_change_date = created_date + timedelta(hours=random.randint(1, 24))
-                new_status = fault.status
-                old_status = "open"
-                
-                if new_status == "in_progress":
-                    old_status = "open"
-                elif new_status == "review":
-                    old_status = random.choice(["open", "in_progress"])
-                elif new_status == "closed":
-                    old_status = random.choice(["open", "in_progress", "review"])
-                
-                status_history = FaultHistory(
-                    fault_id=fault.id,
-                    event_type="field_change",
-                    field="Статус",
-                    old_value=status_labels.get(old_status, old_status),
-                    new_value=status_labels.get(new_status, new_status),
-                    author=random.choice(history_authors),
-                    created_at=status_change_date
-                )
-                db.add(status_history)
+            # Добавляем несколько изменений статуса
+            num_changes = random.randint(0, 3)
+            current_status = "open"
+            for _ in range(num_changes):
+                new_status = random.choice(["in_progress", "review", "closed"])
+                if new_status != current_status:
+                    status_change_date = created_date + timedelta(hours=random.randint(1, 48))
+                    status_history = FaultHistory(
+                        fault_id=fault.id,
+                        event_type="field_change",
+                        field="Статус",
+                        old_value=status_labels.get(current_status, current_status),
+                        new_value=status_labels.get(new_status, new_status),
+                        author=random.choice(history_authors),
+                        created_at=status_change_date
+                    )
+                    db.add(status_history)
+                    current_status = new_status
             
-            if fault.severity != "minor" and random.random() > 0.5:
+            # Добавляем изменение важности
+            if random.random() > 0.5:
                 severity_change_date = created_date + timedelta(hours=random.randint(2, 48))
                 old_severity = random.choice(["minor", "major"])
                 new_severity = fault.severity
-                
-                if new_severity == "critical":
-                    old_severity = random.choice(["major", "minor"])
-                elif new_severity == "major":
-                    old_severity = random.choice(["minor", "trivial"])
-                
-                severity_history = FaultHistory(
-                    fault_id=fault.id,
-                    event_type="field_change",
-                    field="Важность",
-                    old_value=severity_labels.get(old_severity, old_severity),
-                    new_value=severity_labels.get(new_severity, new_severity),
-                    author=random.choice(history_authors),
-                    created_at=severity_change_date
-                )
-                db.add(severity_history)
+                if old_severity != new_severity:
+                    severity_history = FaultHistory(
+                        fault_id=fault.id,
+                        event_type="field_change",
+                        field="Важность",
+                        old_value=severity_labels.get(old_severity, old_severity),
+                        new_value=severity_labels.get(new_severity, new_severity),
+                        author=random.choice(history_authors),
+                        created_at=severity_change_date
+                    )
+                    db.add(severity_history)
 
         print(f"   ✅ Создана история для неисправностей")
 
-        # ===== СОЗДАЁМ КОММЕНТАРИИ =====
+        # ===== СОЗДАЁМ КОММЕНТАРИИ (УВЕЛИЧЕНО) =====
         print("   💬 Создаём комментарии...")
         
-        comment_authors = ["engineer", "engineer2", "manager", "operator"]
+        comment_authors = ["engineer", "engineer2", "manager", "operator", "engineer3", "engineer4", "operator2"]
         comment_texts = [
             "Проверил, подтверждаю проблему.",
             "Начал диагностику, предварительно проблема в блоке питания.",
@@ -493,23 +515,28 @@ def seed_data():
             "Связался с поставщиком, жду ответа.",
             "Обновил ПО, ошибка исчезла.",
             "Провел дополнительное тестирование, всё работает штатно.",
+            "Требуется согласование с руководством.",
+            "Запросил техническую документацию.",
+            "Провел анализ логов, проблема в прошивке.",
+            "Отправил запрос на замену оборудования.",
+            "Провел профилактические работы.",
         ]
         
         for fault in faults:
-            num_comments = random.randint(0, 3)
+            num_comments = random.randint(0, 5)  # Увеличено до 5
             for _ in range(num_comments):
                 comment = FaultComment(
                     fault_id=fault.id,
                     author=random.choice(comment_authors),
                     content=random.choice(comment_texts),
                     is_internal=1 if random.random() > 0.7 else 0,
-                    created_at=datetime.now() - timedelta(days=random.randint(0, 10)),
+                    created_at=datetime.now() - timedelta(days=random.randint(0, 14)),
                 )
                 db.add(comment)
                 
         print(f"   ✅ Созданы комментарии к неисправностям")
 
-        # ===== СОЗДАЁМ СТАТЬИ ДЛЯ БАЗЫ ЗНАНИЙ =====
+        # ===== СОЗДАЁМ СТАТЬИ ДЛЯ БАЗЫ ЗНАНИЙ (УВЕЛИЧЕНО) =====
         print("   📚 Создаём статьи для базы знаний...")
 
         knowledge_articles = [
@@ -587,7 +614,46 @@ def seed_data():
                 "category": "Инструкция",
                 "tags": "авария, отключение, безопасность",
                 "author": "admin"
-            }
+            },
+            {
+                "title": "Калибровка датчиков температуры",
+                "content": """# Калибровка датчиков температуры
+
+## Подготовка
+1. Отключите датчик от системы
+2. Подготовьте эталонный термометр
+
+## Калибровка
+1. Поместите датчик в калибровочную среду
+2. Сравните показания
+3. Отрегулируйте при необходимости
+
+## Проверка
+- Проведите тестирование в рабочем режиме""",
+                "category": "Инструкция",
+                "tags": "калибровка, температура, датчик",
+                "author": "engineer3"
+            },
+            {
+                "title": "Обновление прошивки контроллера",
+                "content": """# Обновление прошивки
+
+## Подготовка
+- Скачайте актуальную прошивку
+- Сделайте резервную копию
+
+## Процесс обновления
+1. Подключитесь к контроллеру
+2. Загрузите прошивку
+3. Перезагрузите контроллер
+
+## Проверка
+- Проверьте версию прошивки
+- Проверьте работоспособность""",
+                "category": "Инструкция",
+                "tags": "прошивка, обновление, контроллер",
+                "author": "engineer4"
+            },
         ]
 
         for article_data in knowledge_articles:
@@ -611,8 +677,8 @@ def seed_data():
 
         if all_articles and all_faults:
             for article in all_articles:
-                num_faults = random.randint(1, min(3, len(all_faults)))
-                selected_faults = random.sample(all_faults, num_faults)
+                num_faults = random.randint(2, 5)  # Увеличено до 5
+                selected_faults = random.sample(all_faults, min(num_faults, len(all_faults)))
                 fault_ids = [f.id for f in selected_faults]
                 article.related_faults = ','.join([str(id) for id in fault_ids])
                 db.add(article)
@@ -666,8 +732,11 @@ def seed_data():
         print("   👤 admin / admin123 (Администратор)")
         print("   👤 engineer / eng123 (Инженер)")
         print("   👤 engineer2 / eng123 (Инженер)")
+        print("   👤 engineer3 / eng123 (Инженер)")
+        print("   👤 engineer4 / eng123 (Инженер)")
         print("   👤 manager / ma123 (Менеджер)")
         print("   👤 operator / op123 (Оператор)")
+        print("   👤 operator2 / op123 (Оператор)")
         print("="*50)
         print("✅ Готово! Запустите сервер и откройте http://localhost:3000")
         print("   Не забудьте выполнить миграции БД: python init_db.py")
