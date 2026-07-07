@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+export PYTHONIOENCODING=utf-8
+
 rm faults.db
 
 source .venv/Scripts/activate
