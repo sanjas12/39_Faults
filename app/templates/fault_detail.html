@@ -377,20 +377,45 @@ function parseMarkdown(text) {
     if (!text) return '';
     
     let html = text;
-    // Заголовки
     html = html.replace(/^### (.*$)/gim, '<h4>$1</h4>');
     html = html.replace(/^## (.*$)/gim, '<h3>$1</h3>');
     html = html.replace(/^# (.*$)/gim, '<h2>$1</h2>');
-    // Жирный
     html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    // Курсив
     html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    // Списки
     html = html.replace(/^\s*-\s(.*$)/gim, '<li>$1</li>');
     html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
-    // Переносы строк
     html = html.replace(/\n/g, '<br>');
     return html;
+}
+
+// ======= ФУНКЦИИ ФОРМАТИРОВАНИЯ ДАТ =======
+function formatLocalDate(dateString) {
+    if (!dateString) return '—';
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return dateString;
+        return date.toLocaleString('ru-RU', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+    } catch (e) {
+        return dateString;
+    }
+}
+
+function formatLocalDateShort(dateString) {
+    if (!dateString) return '—';
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return dateString;
+        return date.toLocaleDateString('ru-RU');
+    } catch (e) {
+        return dateString;
+    }
 }
 
 // ======= ЗАГРУЗКА ДАННЫХ =======
@@ -462,9 +487,6 @@ function renderFault(fault) {
     const titleEl = document.getElementById('faultTitle');
     if (titleEl) titleEl.textContent = fault.title;
     
-    const breadcrumbEl = document.getElementById('faultTitleBreadcrumb');
-    if (breadcrumbEl) breadcrumbEl.textContent = fault.title;
-    
     const descEl = document.getElementById('faultDescription');
     if (descEl) descEl.innerHTML = fault.description || '<span class="text-muted">Нет описания</span>';
     
@@ -527,42 +549,6 @@ function renderFault(fault) {
             </span>
         `;
     }
-
-        // Даты с локальным временем
-        const createdEl = document.getElementById('faultCreated');
-    if (createdEl) {
-        createdEl.textContent = formatLocalDate(fault.created_at);
-    }
-    
-    const updatedEl = document.getElementById('faultUpdated');
-    if (updatedEl) {
-        updatedEl.textContent = formatLocalDate(fault.updated_at);
-    }
-    
-    const resolvedEl = document.getElementById('faultResolved');
-    if (resolvedEl) {
-        resolvedEl.textContent = fault.resolved_at 
-            ? formatLocalDate(fault.resolved_at)
-            : 'Не закрыта';
-    }
-    
-    // Категория
-    const categoryDisplay = document.getElementById('categoryDisplay');
-    const removeCategoryBtn = document.getElementById('removeCategoryBtn');
-    
-    if (categoryDisplay) {
-        if (fault.category) {
-            categoryDisplay.textContent = fault.category;
-            categoryDisplay.className = 'badge bg-info';
-            categoryDisplay.style.display = 'inline';
-            if (removeCategoryBtn) removeCategoryBtn.style.display = 'inline-block';
-        } else {
-            categoryDisplay.textContent = 'Не указана';
-            categoryDisplay.className = 'badge bg-secondary';
-            categoryDisplay.style.display = 'inline';
-            if (removeCategoryBtn) removeCategoryBtn.style.display = 'none';
-        }
-    }
     
     // Статус
     const statusLabels = {
@@ -586,25 +572,39 @@ function renderFault(fault) {
         `;
     }
     
-    // Даты
+    // Категория
+    const categoryDisplay = document.getElementById('categoryDisplay');
+    const removeCategoryBtn = document.getElementById('removeCategoryBtn');
+    
+    if (categoryDisplay) {
+        if (fault.category) {
+            categoryDisplay.textContent = fault.category;
+            categoryDisplay.className = 'badge bg-info';
+            categoryDisplay.style.display = 'inline';
+            if (removeCategoryBtn) removeCategoryBtn.style.display = 'inline-block';
+        } else {
+            categoryDisplay.textContent = 'Не указана';
+            categoryDisplay.className = 'badge bg-secondary';
+            categoryDisplay.style.display = 'inline';
+            if (removeCategoryBtn) removeCategoryBtn.style.display = 'none';
+        }
+    }
+    
+    // Даты (используем formatLocalDate)
     const createdEl = document.getElementById('faultCreated');
     if (createdEl) {
-        createdEl.textContent = fault.created_at 
-            ? new Date(fault.created_at).toLocaleString('ru-RU') 
-            : 'Неизвестно';
+        createdEl.textContent = formatLocalDate(fault.created_at);
     }
     
     const updatedEl = document.getElementById('faultUpdated');
     if (updatedEl) {
-        updatedEl.textContent = fault.updated_at 
-            ? new Date(fault.updated_at).toLocaleString('ru-RU') 
-            : 'Не обновлялась';
+        updatedEl.textContent = formatLocalDate(fault.updated_at);
     }
     
     const resolvedEl = document.getElementById('faultResolved');
     if (resolvedEl) {
         resolvedEl.textContent = fault.resolved_at 
-            ? new Date(fault.resolved_at).toLocaleString('ru-RU') 
+            ? formatLocalDate(fault.resolved_at)
             : 'Не закрыта';
     }
     
