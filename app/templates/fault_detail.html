@@ -528,6 +528,24 @@ function renderFault(fault) {
         `;
     }
 
+        // Даты с локальным временем
+        const createdEl = document.getElementById('faultCreated');
+    if (createdEl) {
+        createdEl.textContent = formatLocalDate(fault.created_at);
+    }
+    
+    const updatedEl = document.getElementById('faultUpdated');
+    if (updatedEl) {
+        updatedEl.textContent = formatLocalDate(fault.updated_at);
+    }
+    
+    const resolvedEl = document.getElementById('faultResolved');
+    if (resolvedEl) {
+        resolvedEl.textContent = fault.resolved_at 
+            ? formatLocalDate(fault.resolved_at)
+            : 'Не закрыта';
+    }
+    
     // Категория
     const categoryDisplay = document.getElementById('categoryDisplay');
     const removeCategoryBtn = document.getElementById('removeCategoryBtn');
@@ -1409,6 +1427,42 @@ function toggleEdit() {
     isEditing = !isEditing;
     form.classList.toggle('d-none');
 }
+
+// ======= ФУНКЦИЯ ДЛЯ ФОРМАТИРОВАНИЯ ДАТЫ =======
+function formatLocalDate(dateString) {
+    if (!dateString) return '—';
+    try {
+        const date = new Date(dateString);
+        // Проверяем, что дата валидна
+        if (isNaN(date.getTime())) return dateString;
+        return date.toLocaleString('ru-RU', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+    } catch (e) {
+        return dateString;
+    }
+}
+
+function formatLocalDateShort(dateString) {
+    if (!dateString) return '—';
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return dateString;
+        return date.toLocaleDateString('ru-RU', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+    } catch (e) {
+        return dateString;
+    }
+}
+
 
 document.getElementById('saveEditBtn').addEventListener('click', async function() {
     const data = {

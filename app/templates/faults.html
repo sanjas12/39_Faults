@@ -496,6 +496,13 @@ function renderTable() {
             minor: 'Незначительная',
             trivial: 'Тривиальная'
         };
+
+        const createdDate = fault.created_at 
+            ? formatLocalDateShort(fault.created_at)
+            : '—';
+        const updatedDate = fault.updated_at 
+            ? formatLocalDateShort(fault.updated_at)
+            : '—';
         
         // ✅ Определяем наличие планируемых мероприятий
         const hasPlannedActions = fault.planned_actions && fault.planned_actions.trim().length > 0;
