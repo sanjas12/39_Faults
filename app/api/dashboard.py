@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, case, and_
 from typing import List, Optional
 from app.core.database import get_db
@@ -29,7 +29,7 @@ def get_dashboard_stats(
         Fault.planned_actions != ""
     ).count()
     
-    # Количество неисправностей с вложениями (один запрос!)
+    # Количество неисправностей с вложениями
     faults_with_attachments = db.query(FaultAttachment.fault_id).distinct().count()
     
     # Количество клонов
@@ -59,19 +59,25 @@ def get_dashboard_stats(
         for p in projects_stats
     ]
     
-    # Последние 5 изменённых неисправностей (оптимизировано)
+    # ✅ Последние 5 изменённых неисправностей (исправлено для SQLite)
+    # Используем ORDER BY с CASE для SQLite
     recent_faults = db.query(Fault).options(
-        # Загружаем только нужные поля
-        # Используем joinedload для проекта
+        joinedload(Fault.project)
     ).order_by(
-        func.coalesce(Fault.updated_at, Fault.created_at).desc()
+        # В SQLite используем CASE вместо COALESCE
+        case(
+            (Fault.updated_at.isnot(None), Fault.updated_at),
+            else_=Fault.created_at
+        ).desc()
     ).limit(5).all()
     
     recent_faults_list = []
     for fault in recent_faults:
         # Загружаем проект (если есть)
         project_name = None
-        if fault.project_id:
+        if fault.project:
+            project_name = fault.project.name
+        elif fault.project_id:
             project = db.query(Project).filter(Project.id == fault.project_id).first()
             if project:
                 project_name = project.name
@@ -84,7 +90,7 @@ def get_dashboard_stats(
             "category": fault.category,
             "planned_actions": fault.planned_actions,
             "project_name": project_name or "Без проекта",
-            "updated_at": fault.updated_at or fault.created_at
+            "updated_at": fault.updated_at.isoformat() if fault.updated_at else fault.created_at.isoformat()
         })
     
     return {
