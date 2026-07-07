@@ -9,7 +9,7 @@
 <div class="card mb-3">
     <div class="card-body">
         <div class="row g-3">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="input-group">
                     <input type="text" class="form-control" id="searchInput" placeholder="Поиск по названию, описанию или ID...">
                     <button class="btn btn-outline-secondary" type="button" id="searchBtn">
@@ -56,7 +56,6 @@
                     <option value="no">Нет</option>
                 </select>
             </div>
-            <!-- В панели фильтров, рядом с кнопкой создания -->
             <div class="col-md-2">
                 <div class="d-flex gap-2">
                     <button class="btn btn-success w-100" id="exportPdfBtn">
@@ -67,6 +66,12 @@
                     </button>
                 </div>
             </div>
+            <div class="col-md-1">
+                <button class="btn btn-outline-secondary w-100" id="resetFiltersBtn" title="Сбросить фильтры">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </button>
+            </div>
+            <!-- Сортировка -->
             <div class="col-md-12 mt-2">
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                     <span class="text-muted small">Сортировать по:</span>
@@ -87,11 +92,6 @@
                         <i class="bi bi-arrow-repeat"></i> Применить
                     </button>
                 </div>
-            </div>
-            <div class="col-md-1">
-                <button class="btn btn-primary w-100" id="createFaultBtn" data-bs-toggle="modal" data-bs-target="#createFaultModal">
-                    <i class="bi bi-plus-circle"></i>
-                </button>
             </div>
         </div>
     </div>
@@ -118,7 +118,7 @@
                 </thead>
                 <tbody id="faultsList">
                     <tr>
-                        <td colspan="7" class="text-center text-muted">Загрузка неисправностей...</td>
+                        <td colspan="10" class="text-center text-muted">Загрузка неисправностей...</td>
                     </tr>
                 </tbody>
             </table>
@@ -324,6 +324,38 @@ async function loadProjectsForFilters() {
         if (error.response?.status === 401) {
             window.location.href = '/login';
         }
+    }
+}
+
+// Загрузка категорий для фильтра
+async function loadCategoryFilter() {
+    try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        const response = await axios.get('/api/faults/categories/');
+        const categories = response.data || [];
+        console.log('📂 Загружено категорий:', categories.length);
+        
+        const select = document.getElementById('categoryFilter');
+        if (!select) {
+            console.warn('⚠️ categoryFilter не найден');
+            return;
+        }
+        
+        select.innerHTML = '<option value="">Все категории</option>';
+        categories.forEach(c => {
+            if (c) {
+                const option = document.createElement('option');
+                option.value = c;
+                option.textContent = c;
+                select.appendChild(option);
+            }
+        });
+        console.log('✅ categoryFilter обновлён, опций:', select.options.length);
+    } catch (error) {
+        console.error('Ошибка загрузки категорий:', error);
     }
 }
 
@@ -659,7 +691,7 @@ async function editFault(id) {
         document.getElementById('editFaultDescription').value = fault.description || '';
         document.getElementById('editFaultSeverity').value = fault.severity;
         document.getElementById('editFaultStatus').value = fault.status;
-        document.getElementById('editFaultCategory').value = fault.category || '';  // ✅ Добавляем
+        document.getElementById('editFaultCategory').value = fault.category || '';
         document.getElementById('editFaultProject').value = fault.project_id || '';
         
         const modal = new bootstrap.Modal(document.getElementById('editFaultModal'));
@@ -757,30 +789,6 @@ document.getElementById('confirmDeleteFaultBtn').addEventListener('click', async
     }
 });
 
-async function loadCategoryFilter() {
-    try {
-        const token = localStorage.getItem('auth_token');
-        if (!token) return;
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
-        const response = await axios.get('/api/faults/categories/');
-        const categories = response.data || [];
-        const select = document.getElementById('categoryFilter');
-        select.innerHTML = '<option value="">Все категории</option>';
-        categories.forEach(c => {
-            if (c) {
-                const option = document.createElement('option');
-                option.value = c;
-                option.textContent = c;
-                select.appendChild(option);
-            }
-        });
-    } catch (error) {
-        console.error('Ошибка загрузки категорий:', error);
-    }
-}
-
-
 // ======= ФИЛЬТРЫ =======
 function applyFilters() {
     const search = document.getElementById('searchInput').value.trim();
@@ -793,11 +801,7 @@ document.getElementById('statusFilter').addEventListener('change', applyFilters)
 document.getElementById('severityFilter').addEventListener('change', applyFilters);
 document.getElementById('projectFilter').addEventListener('change', applyFilters);
 document.getElementById('plannedActionsFilter').addEventListener('change', applyFilters);
-document.getElementById('categoryFilter').addEventListener('change', function() {
-    currentPage = 1;
-    const search = document.getElementById('searchInput').value.trim();
-    loadFaults(search);
-});
+document.getElementById('categoryFilter').addEventListener('change', applyFilters);
 
 // ✅ Сортировка
 document.getElementById('applySortBtn').addEventListener('click', function() {
@@ -806,25 +810,7 @@ document.getElementById('applySortBtn').addEventListener('click', function() {
     loadFaults(search);
 });
 
-// Поиск
-document.getElementById('searchBtn').addEventListener('click', function() {
-    const search = document.getElementById('searchInput').value.trim();
-    loadFaults(search);
-});
-
-document.getElementById('searchInput').addEventListener('keyup', function(e) {
-    if (e.key === 'Enter') {
-        const search = document.getElementById('searchInput').value.trim();
-        loadFaults(search);
-    }
-});
-
-document.getElementById('clearSearchBtn').addEventListener('click', function() {
-    document.getElementById('searchInput').value = '';
-    loadFaults('');
-});
-
-// Сброс фильтров
+// ✅ Сброс фильтров
 document.getElementById('resetFiltersBtn').addEventListener('click', function() {
     document.getElementById('searchInput').value = '';
     document.getElementById('statusFilter').value = '';
@@ -835,17 +821,6 @@ document.getElementById('resetFiltersBtn').addEventListener('click', function() 
     document.getElementById('sortBy').value = 'created_at';
     document.getElementById('sortOrder').value = 'desc';
     applyFilters();
-});
-
-// Обработчики для всех фильтров
-document.getElementById('statusFilter').addEventListener('change', applyFilters);
-document.getElementById('severityFilter').addEventListener('change', applyFilters);
-document.getElementById('projectFilter').addEventListener('change', applyFilters);
-document.getElementById('plannedActionsFilter').addEventListener('change', applyFilters);
-document.getElementById('categoryFilter').addEventListener('change', function() {
-    currentPage = 1;
-    const search = document.getElementById('searchInput').value.trim();
-    loadFaults(search);
 });
 
 // Поиск
@@ -880,6 +855,10 @@ document.getElementById('projectFilter').addEventListener('dblclick', function()
     applyFilters();
 });
 document.getElementById('plannedActionsFilter').addEventListener('dblclick', function() {
+    this.value = '';
+    applyFilters();
+});
+document.getElementById('categoryFilter').addEventListener('dblclick', function() {
     this.value = '';
     applyFilters();
 });
