@@ -19,7 +19,7 @@ def export_faults_pdf(
     category: Optional[str] = Query(None, description="Фильтр по категории"),
     project_id: Optional[int] = Query(None, description="Фильтр по проекту"),
     search: Optional[str] = Query(None, description="Поиск по названию"),
-    limit: int = Query(100, ge=1, le=500, description="Максимальное количество записей"),
+    limit: int = Query(5000, ge=1, le=10000, description="Максимальное количество записей"),
     db: Session = Depends(get_db),
     current_user: UserResponse = Depends(get_current_user)
 ):

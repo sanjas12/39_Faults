@@ -101,7 +101,7 @@ def generate_faults_pdf(faults: List[Dict[str, Any]], title: str = "Отчёт �
         
         # Данные
         c.setFillColorRGB(0, 0, 0)
-        for i, fault in enumerate(faults[:100]):
+        for i, fault in enumerate(faults):
             # Чередование цветов строк
             if i % 2 == 0:
                 c.setFillColorRGB(0.95, 0.95, 0.95)

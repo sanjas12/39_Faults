@@ -562,6 +562,9 @@ document.getElementById('exportPdfBtn').addEventListener('click', function() {
     const search = document.getElementById('searchInput').value.trim();
     if (search) params.append('search', search);
     
+    // ✅ Добавляем limit для экспорта всех записей
+    params.append('limit', '10000');
+    
     // Открываем ссылку для скачивания
     window.open(`/api/export/faults/pdf?${params.toString()}`, '_blank');
 });
