@@ -119,6 +119,8 @@ dependencies = [
     "factory-boy>=3.3.3",
     "apscheduler>=3.11.2",
     "aiofiles>=24.1.0",
+    "reportlab==3.6.12",
+    "pytz>=2026.2",
 ]
 
 [project.urls]

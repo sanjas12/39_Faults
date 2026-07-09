@@ -172,6 +172,8 @@ packaging==26.2 ; sys_platform == 'win32'
     #   pytest
 passlib==1.7.4 ; sys_platform == 'win32'
     # via faults
+pillow==10.4.0 ; sys_platform == 'win32'
+    # via reportlab
 platformdirs==4.3.6 ; sys_platform == 'win32'
     # via
     #   faults
@@ -236,6 +238,8 @@ python-multipart==0.0.20 ; sys_platform == 'win32'
     # via faults
 python-semantic-release==10.5.3 ; sys_platform == 'win32'
     # via faults
+pytz==2026.2 ; sys_platform == 'win32'
+    # via faults
 pyyaml==6.0.3 ; sys_platform == 'win32'
     # via
     #   commitizen
@@ -245,6 +249,8 @@ questionary==2.1.0 ; sys_platform == 'win32'
     # via
     #   commitizen
     #   faults
+reportlab==3.6.12 ; sys_platform == 'win32'
+    # via faults
 requests==2.32.4 ; sys_platform == 'win32'
     # via
     #   faults

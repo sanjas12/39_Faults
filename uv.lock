@@ -407,8 +407,10 @@ dependencies = [
     { name = "python-jose", extra = ["cryptography"], marker = "sys_platform == 'win32'" },
     { name = "python-multipart", marker = "sys_platform == 'win32'" },
     { name = "python-semantic-release", marker = "sys_platform == 'win32'" },
+    { name = "pytz", marker = "sys_platform == 'win32'" },
     { name = "pyyaml", marker = "sys_platform == 'win32'" },
     { name = "questionary", marker = "sys_platform == 'win32'" },
+    { name = "reportlab", marker = "sys_platform == 'win32'" },
     { name = "requests", marker = "sys_platform == 'win32'" },
     { name = "requests-toolbelt", marker = "sys_platform == 'win32'" },
     { name = "rich", marker = "sys_platform == 'win32'" },
@@ -519,9 +521,11 @@ requires-dist = [
     { name = "python-jose", extras = ["cryptography"], specifier = ">=3.4.0" },
     { name = "python-multipart", specifier = ">=0.0.20" },
     { name = "python-semantic-release", marker = "sys_platform == 'win32'", specifier = "==10.5.3" },
+    { name = "pytz", specifier = ">=2026.2" },
     { name = "pyyaml", marker = "sys_platform == 'win32'", specifier = "==6.0.3" },
     { name = "questionary", marker = "python_full_version < '3.9' and sys_platform == 'win32'", specifier = "==2.1.0" },
     { name = "questionary", marker = "python_full_version >= '3.9' and sys_platform == 'win32'", specifier = "==2.1.1" },
+    { name = "reportlab", specifier = "==3.6.12" },
     { name = "requests", marker = "python_full_version < '3.9' and sys_platform == 'win32'", specifier = "==2.32.4" },
     { name = "requests", marker = "python_full_version == '3.9.*' and sys_platform == 'win32'", specifier = "==2.32.5" },
     { name = "requests", marker = "python_full_version >= '3.10' and sys_platform == 'win32'", specifier = "==2.34.2" },
@@ -760,6 +764,16 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/b6/06/9da9ee59a67fae7761aab3ccc84fa4f3f33f125b370f1ccdb915bf967c11/passlib-1.7.4.tar.gz", hash = "sha256:defd50f72b65c5402ab2c573830a6978e5f202ad0d984793c8dde2c4152ebe04", size = 689844, upload-time = "2020-10-08T19:00:52.121Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/3b/a4/ab6b7589382ca3df236e03faa71deac88cae040af60c071a78d254a62172/passlib-1.7.4-py2.py3-none-any.whl", hash = "sha256:aa6bca462b8d8bda89c70b382f0c298a20b5560af6cbfa2dce410c0a2fb669f1", size = 525554, upload-time = "2020-10-08T19:00:49.856Z" },
+]
+
+[[package]]
+name = "pillow"
+version = "10.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/cd/74/ad3d526f3bf7b6d3f408b73fde271ec69dfac8b81341a318ce825f2b3812/pillow-10.4.0.tar.gz", hash = "sha256:166c1cd4d24309b30d61f79f4a9114b7b2313d7450912277855ff5dfd7cd4a06", size = 46555059, upload-time = "2024-07-01T09:48:43.583Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/69/66/03002cb5b2c27bb519cba63b9f9aa3709c6f7a5d3b285406c01f03fb77e5/pillow-10.4.0-cp38-cp38-win32.whl", hash = "sha256:e88d5e6ad0d026fba7bdab8c3f225a69f063f116462c49892b0149e21b6c0a0e", size = 2235185, upload-time = "2024-07-01T09:47:32.205Z" },
+    { url = "https://files.pythonhosted.org/packages/f2/75/3cb820b2812405fc7feb3d0deb701ef0c3de93dc02597115e00704591bc9/pillow-10.4.0-cp38-cp38-win_amd64.whl", hash = "sha256:5161eef006d335e46895297f642341111945e2c1c899eb406882a6c61a4357ab", size = 2554594, upload-time = "2024-07-01T09:47:34.285Z" },
 ]
 
 [[package]]
@@ -1017,6 +1031,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pytz"
+version = "2026.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ff/46/dd499ec9038423421951e4fad73051febaa13d2df82b4064f87af8b8c0c3/pytz-2026.2.tar.gz", hash = "sha256:0e60b47b29f21574376f218fe21abc009894a2321ea16c6754f3cad6eb7cdd6a", size = 320861, upload-time = "2026-05-04T01:35:29.667Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ec/dd/96da98f892250475bdf2328112d7468abdd4acc7b902b6af23f4ed958ea0/pytz-2026.2-py2.py3-none-any.whl", hash = "sha256:04156e608bee23d3792fd45c94ae47fae1036688e75032eea2e3bf0323d1f126", size = 510141, upload-time = "2026-05-04T01:35:27.408Z" },
+]
+
+[[package]]
 name = "pyyaml"
 version = "6.0.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1036,6 +1059,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/a8/b8/d16eb579277f3de9e56e5ad25280fab52fc5774117fb70362e8c2e016559/questionary-2.1.0.tar.gz", hash = "sha256:6302cdd645b19667d8f6e6634774e9538bfcd1aad9be287e743d96cacaf95587", size = 26775, upload-time = "2024-12-29T11:49:17.802Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ad/3f/11dd4cd4f39e05128bfd20138faea57bec56f9ffba6185d276e3107ba5b2/questionary-2.1.0-py3-none-any.whl", hash = "sha256:44174d237b68bc828e4878c763a9ad6790ee61990e0ae72927694ead57bab8ec", size = 36747, upload-time = "2024-12-29T11:49:16.734Z" },
+]
+
+[[package]]
+name = "reportlab"
+version = "3.6.12"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pillow", marker = "sys_platform == 'win32'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b8/ac/10d68a650b321bd8c4d8cbefd9994e7727d57b381c9bdb0a013273011e62/reportlab-3.6.12.tar.gz", hash = "sha256:b13cebf4e397bba14542bcd023338b6ff2c151a3a12aabca89eecbf972cb361a", size = 4519536, upload-time = "2022-10-26T08:16:45.064Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/65/b9/fd544f6ba72c8a4cd12d95737b3604c4b021ceb340055e3f267ad48c3795/reportlab-3.6.12-cp38-cp38-win32.whl", hash = "sha256:b777ddc57b2d3366cbc540616034cdc1089ca0a31fefc907028e1dd62a6bf16c", size = 2278667, upload-time = "2022-10-26T08:16:19.207Z" },
+    { url = "https://files.pythonhosted.org/packages/8a/d0/b88932ae0a508fbdf9a3e73907e0f9c0a1e6acb71546a3ae423e237baeec/reportlab-3.6.12-cp38-cp38-win_amd64.whl", hash = "sha256:c07ec796a2a5d44bf787f2b623b6e668a389b0cafb78af34cf74554ff3bc532b", size = 2337531, upload-time = "2022-10-26T08:16:21.806Z" },
 ]
 
 [[package]]
