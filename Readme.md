@@ -23,6 +23,7 @@ Bootstrap 5.1.3, Bootstrap Icons 1.8.1 и Axios 1.7.9 хранятся в
 Из Git Bash выполните `bash scripts/release.sh`. Скрипт проверяет Python-код в
 `app`, тесты, pre-commit и согласованность версии в `pyproject.toml` и
 `_version.py`; при неуспешной проверке релиз не создаётся.
+Настройки Commitizen находятся в секции `[tool.commitizen]` файла `pyproject.toml`.
 
 
 ## Запуск приложения (из репозитория)

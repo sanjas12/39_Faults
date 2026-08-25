@@ -164,9 +164,9 @@ if ! CURRENT=$(uv run --frozen cz version --project 2>&1); then
     exit 1
 fi
 
-PATCH=$(uv run --frozen cz bump --increment PATCH --dry-run 2>&1 | grep "tag to create" | awk '{print $NF}')
-MINOR=$(uv run --frozen cz bump --increment MINOR --dry-run 2>&1 | grep "tag to create" | awk '{print $NF}')
-MAJOR=$(uv run --frozen cz bump --increment MAJOR --dry-run 2>&1 | grep "tag to create" | awk '{print $NF}')
+PATCH=$(uv run --frozen cz bump --increment PATCH --dry-run --yes 2>&1 | grep "tag to create" | awk '{print $NF}')
+MINOR=$(uv run --frozen cz bump --increment MINOR --dry-run --yes 2>&1 | grep "tag to create" | awk '{print $NF}')
+MAJOR=$(uv run --frozen cz bump --increment MAJOR --dry-run --yes 2>&1 | grep "tag to create" | awk '{print $NF}')
 
 log_info "Текущая версия: $CURRENT"
 
@@ -196,21 +196,21 @@ do_bump() {
 
 case $choice in
     1)
-        uv run --frozen cz bump --dry-run
+        uv run --frozen cz bump --dry-run --yes
         read -p "Продолжить? (y/n): " confirm
-        [ "$confirm" = "y" ] && do_bump "авто" uv run --frozen cz bump || { log_info "Отменено."; exit 0; }
+        [ "$confirm" = "y" ] && do_bump "авто" uv run --frozen cz bump --yes || { log_info "Отменено."; exit 0; }
         ;;
     2)
         read -p "Продолжить? $CURRENT → $PATCH (y/n): " confirm
-        [ "$confirm" = "y" ] && do_bump "PATCH" uv run --frozen cz bump --increment PATCH || { log_info "Отменено."; exit 0; }
+        [ "$confirm" = "y" ] && do_bump "PATCH" uv run --frozen cz bump --increment PATCH --yes || { log_info "Отменено."; exit 0; }
         ;;
     3)
         read -p "Продолжить? $CURRENT → $MINOR (y/n): " confirm
-        [ "$confirm" = "y" ] && do_bump "MINOR" uv run --frozen cz bump --increment MINOR || { log_info "Отменено."; exit 0; }
+        [ "$confirm" = "y" ] && do_bump "MINOR" uv run --frozen cz bump --increment MINOR --yes || { log_info "Отменено."; exit 0; }
         ;;
     4)
         read -p "Продолжить? $CURRENT → $MAJOR (y/n): " confirm
-        [ "$confirm" = "y" ] && do_bump "MAJOR" uv run --frozen cz bump --increment MAJOR || { log_info "Отменено."; exit 0; }
+        [ "$confirm" = "y" ] && do_bump "MAJOR" uv run --frozen cz bump --increment MAJOR --yes || { log_info "Отменено."; exit 0; }
         ;;
     5)
         read -p "Введи версию (например 1.2.0): " manual_version
@@ -220,7 +220,7 @@ case $choice in
         fi
         read -p "Продолжить? $CURRENT → $manual_version (y/n): " confirm
         if [ "$confirm" = "y" ]; then
-            do_bump "manual $manual_version" uv run --frozen cz bump "$manual_version"
+            do_bump "manual $manual_version" uv run --frozen cz bump "$manual_version" --yes
         else
             log_info "Отменено."
             exit 0
