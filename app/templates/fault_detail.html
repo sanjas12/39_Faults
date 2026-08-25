@@ -1,24 +1,12 @@
 {% extends "base.html" %}
 
 {% block title %}Неисправность #{{ fault_id }}{% endblock %}
-{% block page_title %}
-    <div class="d-flex justify-content-between align-items-center">
-        <span>Неисправность #{{ fault_id }}</span>
-        <div>
-            <button class="btn btn-outline-secondary btn-sm" onclick="history.back()">
-                <i class="bi bi-arrow-left"></i> Назад
-            </button>
-            <button class="btn btn-sm btn-outline-success me-1" onclick="exportFaultPdf()">
-                <i class="bi bi-file-pdf"></i> PDF
-            </button>
-            <button class="btn btn-sm btn-outline-primary me-1" onclick="toggleEdit()">
-                <i class="bi bi-pencil"></i>
-            </button>
-            <button class="btn btn-sm btn-outline-danger" onclick="deleteFault()">
-                <i class="bi bi-trash"></i>
-            </button>
-        </div>
-    </div>
+{% block page_title %}Неисправность #{{ fault_id }}{% endblock %}
+{% block page_actions %}
+<button class="btn btn-outline-secondary btn-sm" onclick="history.back()"><i class="bi bi-arrow-left"></i> Назад</button>
+<button class="btn btn-sm btn-outline-success" onclick="exportFaultPdf()"><i class="bi bi-file-pdf"></i> PDF</button>
+<button class="btn btn-sm btn-outline-primary" onclick="toggleEdit()"><i class="bi bi-pencil"></i> Изменить</button>
+<button class="btn btn-sm btn-outline-danger" onclick="deleteFault()"><i class="bi bi-trash"></i></button>
 {% endblock %}
 {% set active_page = 'faults' %}
 
@@ -33,14 +21,14 @@
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <h4 id="faultTitle" class="card-title">Загрузка...</h4>
                     </div>
-                    
+
                     <div class="mb-3" id="faultDescription">
                         <p class="text-muted">Загрузка описания...</p>
                     </div>
-                    
+
                     <!-- Связь с родительской неисправностью и клонами -->
                     <div id="faultRelations"></div>
-                    
+
                     <div class="row g-2 mb-3">
                         <div class="col-md-4">
                             <small class="text-muted">Проект:</small>
@@ -94,7 +82,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="row g-2">
                         <div class="col-md-4">
                             <small class="text-muted">Создана:</small>
@@ -237,7 +225,7 @@
                     <div id="commentsList">
                         <p class="text-muted text-center">Загрузка комментариев...</p>
                     </div>
-                    
+
                     <hr>
                     <form id="commentForm">
                         <div class="mb-2">
@@ -257,7 +245,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Боковая панель: быстрые действия и история -->
         <div class="col-md-4">
             <!-- Быстрые действия -->
@@ -288,7 +276,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- История изменений -->
             <div class="card">
                 <div class="card-header">
@@ -345,7 +333,7 @@
                 </div>
                 <div id="cloneInfo" class="alert alert-info">
                     <small>
-                        <strong>Исходная неисправность:</strong> #<span id="cloneOriginalId"></span> 
+                        <strong>Исходная неисправность:</strong> #<span id="cloneOriginalId"></span>
                         <span id="cloneOriginalTitle"></span>
                     </small>
                 </div>
@@ -375,7 +363,7 @@ let originalPlannedActions = '';
 // ======= ФУНКЦИЯ ПАРСИНГА MARKDOWN =======
 function parseMarkdown(text) {
     if (!text) return '';
-    
+
     let html = text;
     html = html.replace(/^### (.*$)/gim, '<h4>$1</h4>');
     html = html.replace(/^## (.*$)/gim, '<h3>$1</h3>');
@@ -421,7 +409,7 @@ function formatLocalDateShort(dateString) {
 // ======= ЗАГРУЗКА ДАННЫХ =======
 async function loadFaultDetail() {
     console.log('🔄 Загрузка неисправности #' + faultId);
-    
+
     try {
         const token = localStorage.getItem('auth_token');
         if (!token) {
@@ -429,10 +417,10 @@ async function loadFaultDetail() {
             return;
         }
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
+
         const response = await axios.get(`/api/faults/${faultId}`);
         currentFault = response.data;
-        
+
         console.log('✅ Неисправность загружена:', currentFault);
         renderFault(currentFault);
         await loadAttachments();
@@ -440,17 +428,17 @@ async function loadFaultDetail() {
         await loadComments();
         await loadHistory();
         await loadProjects();
-        
+
     } catch (error) {
         console.error('❌ Ошибка загрузки неисправности:', error);
         if (error.response?.status === 401) {
             window.location.href = '/login';
             return;
         }
-        
+
         const titleEl = document.getElementById('faultTitle');
         if (titleEl) titleEl.textContent = '⚠️ Ошибка загрузки';
-        
+
         const descEl = document.getElementById('faultDescription');
         if (descEl) {
             descEl.innerHTML = `
@@ -465,7 +453,7 @@ async function loadProjects() {
     try {
         const response = await axios.get('/api/projects');
         allProjects = response.data;
-        
+
         const select = document.getElementById('editProject');
         if (select) {
             select.innerHTML = '<option value="">Без проекта</option>';
@@ -486,20 +474,20 @@ function renderFault(fault) {
     // Заголовок
     const titleEl = document.getElementById('faultTitle');
     if (titleEl) titleEl.textContent = fault.title;
-    
+
     const descEl = document.getElementById('faultDescription');
     if (descEl) descEl.innerHTML = fault.description || '<span class="text-muted">Нет описания</span>';
-    
+
     // Отображаем связи (родитель и клоны)
     renderRelations(fault);
-    
+
     // Проект со ссылкой
     const projectName = fault.project?.name || 'Без проекта';
     const projectId = fault.project?.id || null;
-    
+
     const projectLink = document.getElementById('projectLink');
     const projectNameDisplay = document.getElementById('projectNameDisplay');
-    
+
     if (projectLink && projectNameDisplay) {
         if (projectId) {
             projectLink.href = `/projects/${projectId}`;
@@ -516,7 +504,7 @@ function renderFault(fault) {
             projectLink.style.textDecoration = 'none';
         }
     }
-    
+
     // Кнопка перехода в проект
     const goToProjectBtn = document.getElementById('goToProjectBtn');
     if (goToProjectBtn) {
@@ -527,7 +515,7 @@ function renderFault(fault) {
             goToProjectBtn.style.display = 'none';
         }
     }
-    
+
     // Важность
     const severityLabels = {
         critical: 'Критическая',
@@ -549,7 +537,7 @@ function renderFault(fault) {
             </span>
         `;
     }
-    
+
     // Статус
     const statusLabels = {
         open: 'Открыта',
@@ -571,11 +559,11 @@ function renderFault(fault) {
             </span>
         `;
     }
-    
+
     // Категория
     const categoryDisplay = document.getElementById('categoryDisplay');
     const removeCategoryBtn = document.getElementById('removeCategoryBtn');
-    
+
     if (categoryDisplay) {
         if (fault.category) {
             categoryDisplay.textContent = fault.category;
@@ -589,44 +577,44 @@ function renderFault(fault) {
             if (removeCategoryBtn) removeCategoryBtn.style.display = 'none';
         }
     }
-    
+
     // Даты (используем formatLocalDate)
     const createdEl = document.getElementById('faultCreated');
     if (createdEl) {
         createdEl.textContent = formatLocalDate(fault.created_at);
     }
-    
+
     const updatedEl = document.getElementById('faultUpdated');
     if (updatedEl) {
         updatedEl.textContent = formatLocalDate(fault.updated_at);
     }
-    
+
     const resolvedEl = document.getElementById('faultResolved');
     if (resolvedEl) {
-        resolvedEl.textContent = fault.resolved_at 
+        resolvedEl.textContent = fault.resolved_at
             ? formatLocalDate(fault.resolved_at)
             : 'Не закрыта';
     }
-    
+
     // Заполняем форму редактирования
     const editIdEl = document.getElementById('editFaultId');
     if (editIdEl) editIdEl.value = fault.id;
-    
+
     const editTitleEl = document.getElementById('editTitle');
     if (editTitleEl) editTitleEl.value = fault.title;
-    
+
     const editDescEl = document.getElementById('editDescription');
     if (editDescEl) editDescEl.value = fault.description || '';
-    
+
     const editSeverityEl = document.getElementById('editSeverity');
     if (editSeverityEl) editSeverityEl.value = fault.severity;
-    
+
     const editStatusEl = document.getElementById('editStatus');
     if (editStatusEl) editStatusEl.value = fault.status;
-    
+
     const editProjectEl = document.getElementById('editProject');
     if (editProjectEl) editProjectEl.value = fault.project_id || '';
-    
+
     // Загружаем планируемые мероприятия
     loadPlannedActions(fault);
 }
@@ -635,14 +623,14 @@ function renderFault(fault) {
 function renderRelations(fault) {
     const container = document.getElementById('faultRelations');
     if (!container) return;
-    
+
     let html = '';
-    
+
     // Родительская неисправность
     if (fault.parent_fault) {
         html += `
             <div class="alert alert-info mb-2">
-                <i class="bi bi-link"></i> 
+                <i class="bi bi-link"></i>
                 <strong>Родительская неисправность</strong>
                 <a href="/faults/${fault.parent_fault.id}" class="text-decoration-none fw-bold">
                     #${fault.parent_fault.id} ${fault.parent_fault.title}
@@ -650,21 +638,21 @@ function renderRelations(fault) {
             </div>
         `;
     }
-    
+
     // Клоны
     if (fault.clones && fault.clones.length > 0) {
-        const cloneLinks = fault.clones.map(c => 
+        const cloneLinks = fault.clones.map(c =>
             `<a href="/faults/${c.id}" class="text-decoration-none">#${c.id}</a>`
         ).join(', ');
-        
+
         html += `
             <div class="alert alert-secondary mb-2">
-                <i class="bi bi-files"></i> 
+                <i class="bi bi-files"></i>
                 <strong>Клонированные неисправности:</strong> ${cloneLinks}
             </div>
         `;
     }
-    
+
     container.innerHTML = html;
 }
 
@@ -672,7 +660,7 @@ function renderRelations(fault) {
 function loadPlannedActions(fault) {
     const content = fault.planned_actions || '';
     originalPlannedActions = content;
-    
+
     // Отображаем в режиме просмотра
     const viewContainer = document.getElementById('plannedActionsContent');
     if (viewContainer) {
@@ -682,7 +670,7 @@ function loadPlannedActions(fault) {
             viewContainer.innerHTML = '<p class="text-muted">Нет запланированных мероприятий</p>';
         }
     }
-    
+
     // Заполняем текстовое поле для редактирования
     const textarea = document.getElementById('plannedActionsTextarea');
     if (textarea) {
@@ -694,7 +682,7 @@ function loadPlannedActions(fault) {
 function updatePlannedActionsPreview(text) {
     const preview = document.getElementById('plannedActionsPreview');
     if (!preview) return;
-    
+
     if (text && text.trim()) {
         preview.innerHTML = parseMarkdown(text);
     } else {
@@ -709,7 +697,7 @@ if (toggleBtn) {
         const editMode = document.getElementById('plannedActionsEdit');
         const viewMode = document.getElementById('plannedActionsView');
         const isEditing = editMode.style.display !== 'none';
-        
+
         if (isEditing) {
             // Выход из режима редактирования без сохранения
             editMode.style.display = 'none';
@@ -770,7 +758,7 @@ const saveBtn = document.getElementById('savePlannedActionsBtn');
 if (saveBtn) {
     saveBtn.addEventListener('click', async function() {
         const content = document.getElementById('plannedActionsTextarea').value.trim();
-        
+
         try {
             const token = localStorage.getItem('auth_token');
             if (!token) {
@@ -778,17 +766,17 @@ if (saveBtn) {
                 return;
             }
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-            
+
             const response = await axios.patch(`/api/faults/${faultId}`, {
                 planned_actions: content || null
             });
-            
+
             // Обновляем currentFault
             currentFault = response.data;
-            
+
             // Обновляем отображение
             loadPlannedActions(currentFault);
-            
+
             // Закрываем режим редактирования
             document.getElementById('plannedActionsEdit').style.display = 'none';
             document.getElementById('plannedActionsView').style.display = 'block';
@@ -797,10 +785,10 @@ if (saveBtn) {
                 toggleBtn.innerHTML = '<i class="bi bi-pencil"></i> Редактировать';
             }
             isPlannedActionsEditing = false;
-            
+
             // Обновляем оригинальное значение
             originalPlannedActions = content;
-            
+
             showNotification('✅ Планируемые мероприятия сохранены!');
         } catch (error) {
             console.error('❌ Ошибка сохранения:', error);
@@ -814,15 +802,15 @@ async function loadAttachments() {
     try {
         const response = await axios.get(`/api/faults/${faultId}/attachments`);
         const attachments = response.data || [];
-        
+
         const container = document.getElementById('attachmentsList');
         if (!container) return;
-        
+
         if (attachments.length === 0) {
             container.innerHTML = '<p class="text-muted text-center">Нет вложений</p>';
             return;
         }
-        
+
         container.innerHTML = attachments.map(a => {
             let icon = '📎';
             if (a.file_type) {
@@ -832,17 +820,17 @@ async function loadAttachments() {
                 else if (a.file_type === 'application/zip') icon = '📦';
                 else if (a.file_type === 'application/json') icon = '📊';
             }
-            
+
             const sizeKB = (a.file_size / 1024).toFixed(1);
-            const sizeStr = a.file_size > 1024 * 1024 
+            const sizeStr = a.file_size > 1024 * 1024
                 ? (a.file_size / (1024 * 1024)).toFixed(1) + ' MB'
                 : sizeKB + ' KB';
-            
+
             return `
                 <div class="attachment-item mb-2 p-2 border rounded d-flex justify-content-between align-items-center">
                     <div>
                         <span style="font-size: 24px;">${icon}</span>
-                        <a href="#" onclick="downloadFile(${a.id}, '${a.filename}')" 
+                        <a href="#" onclick="downloadFile(${a.id}, '${a.filename}')"
                            class="text-decoration-none fw-bold ms-2">
                             ${a.filename}
                         </a>
@@ -850,7 +838,7 @@ async function loadAttachments() {
                         ${a.description ? `<small class="text-muted ms-2">${a.description}</small>` : ''}
                         <br>
                         <small class="text-muted">
-                            <i class="bi bi-person"></i> ${a.uploaded_by} • 
+                            <i class="bi bi-person"></i> ${a.uploaded_by} •
                             ${new Date(a.created_at).toLocaleString('ru-RU')}
                         </small>
                     </div>
@@ -862,7 +850,7 @@ async function loadAttachments() {
                 </div>
             `;
         }).join('');
-        
+
     } catch (error) {
         console.error('Ошибка загрузки вложений:', error);
         const container = document.getElementById('attachmentsList');
@@ -875,7 +863,7 @@ async function loadAttachments() {
 // ======= СКАЧИВАНИЕ ФАЙЛА =======
 async function downloadFile(attachmentId, filename) {
     console.log(`📥 Скачивание файла: ${filename} (ID: ${attachmentId})`);
-    
+
     try {
         const token = localStorage.getItem('auth_token');
         if (!token) {
@@ -883,7 +871,7 @@ async function downloadFile(attachmentId, filename) {
             window.location.href = '/login';
             return;
         }
-        
+
         const response = await axios.get(
             `/api/faults/${faultId}/attachments/${attachmentId}/download`,
             {
@@ -893,28 +881,28 @@ async function downloadFile(attachmentId, filename) {
                 responseType: 'blob'
             }
         );
-        
+
         if (!response.data || response.data.size === 0) {
             throw new Error('Файл пустой или повреждён');
         }
-        
+
         const contentType = response.headers['content-type'] || 'application/octet-stream';
         const blob = new Blob([response.data], { type: contentType });
         const url = window.URL.createObjectURL(blob);
-        
+
         const link = document.createElement('a');
         link.href = url;
         link.download = filename;
         document.body.appendChild(link);
         link.click();
-        
+
         setTimeout(() => {
             link.remove();
             window.URL.revokeObjectURL(url);
         }, 100);
-        
+
         console.log(`✅ Файл "${filename}" скачан успешно`);
-        
+
     } catch (error) {
         console.error('❌ Ошибка скачивания:', error);
         if (error.response?.status === 401) {
@@ -934,38 +922,38 @@ document.getElementById('fileInput').addEventListener('change', async function(e
         console.log('⏳ Загрузка уже выполняется, пропускаем');
         return;
     }
-    
+
     const files = event.target.files;
     if (files.length === 0) return;
-    
+
     isUploading = true;
-    
+
     try {
         const description = prompt('Введите описание файла (необязательно):', '');
         if (description === null) {
             document.getElementById('fileInput').value = '';
             return;
         }
-        
+
         const formData = new FormData();
         for (const file of files) {
             formData.append('file', file);
         }
         formData.append('description', description || '');
-        
+
         const token = localStorage.getItem('auth_token');
         if (!token) {
             alert('Вы не авторизованы!');
             window.location.href = '/login';
             return;
         }
-        
+
         const uploadBtn = document.querySelector('.card-header .btn-outline-primary');
         if (uploadBtn) {
             uploadBtn.disabled = true;
             uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Загрузка...';
         }
-        
+
         await axios.post(
             `/api/faults/${faultId}/attachments`,
             formData,
@@ -976,13 +964,13 @@ document.getElementById('fileInput').addEventListener('change', async function(e
                 }
             }
         );
-        
+
         document.getElementById('fileInput').value = '';
         await loadAttachments();
         await loadHistory();
-        
+
         showNotification(`✅ Загружено ${files.length} файлов`);
-        
+
     } catch (error) {
         console.error('❌ Ошибка загрузки файлов:', error);
         alert('Ошибка загрузки файлов: ' + (error.response?.data?.detail || error.message));
@@ -1000,7 +988,7 @@ document.getElementById('fileInput').addEventListener('change', async function(e
 // ======= УДАЛЕНИЕ ВЛОЖЕНИЯ =======
 async function deleteAttachment(attachmentId) {
     if (!confirm('Вы уверены, что хотите удалить это вложение?')) return;
-    
+
     try {
         const token = localStorage.getItem('auth_token');
         await axios.delete(
@@ -1024,12 +1012,12 @@ async function deleteAttachment(attachmentId) {
 function renderLinkedKnowledge(linked) {
     const container = document.getElementById('linkedKnowledgeList');
     if (!container) return;
-    
+
     if (!linked || linked.length === 0) {
         container.innerHTML = '<p class="text-muted text-center">Нет связанных статей</p>';
         return;
     }
-    
+
     container.innerHTML = linked.map(a => `
         <div class="knowledge-link-item mb-2 p-2 border rounded">
             <div class="d-flex justify-content-between align-items-center">
@@ -1038,7 +1026,7 @@ function renderLinkedKnowledge(linked) {
                         ${a.title}
                     </a>
                     ${a.category ? `<span class="badge bg-primary">${a.category}</span>` : ''}
-                    ${a.tags ? a.tags.split(',').slice(0, 2).map(t => 
+                    ${a.tags ? a.tags.split(',').slice(0, 2).map(t =>
                         `<span class="badge bg-secondary">${t.trim()}</span>`
                     ).join(' ') : ''}
                 </div>
@@ -1055,18 +1043,18 @@ async function showLinkKnowledgeModal() {
         const response = await axios.get('/api/knowledge?limit=100');
         const articles = response.data || [];
         const currentLinkedIds = currentFault?.linked_knowledge?.map(a => a.id) || [];
-        
+
         const container = document.getElementById('knowledgeSelectList');
         if (!container) return;
-        
+
         if (articles.length === 0) {
             container.innerHTML = '<p class="text-muted text-center">Нет статей в базе знаний</p>';
             return;
         }
-        
+
         container.innerHTML = articles.map(a => `
             <div class="form-check mb-2">
-                <input class="form-check-input knowledge-checkbox" type="checkbox" 
+                <input class="form-check-input knowledge-checkbox" type="checkbox"
                        value="${a.id}" id="kb_${a.id}"
                        ${currentLinkedIds.includes(a.id) ? 'checked' : ''}>
                 <label class="form-check-label" for="kb_${a.id}">
@@ -1076,10 +1064,10 @@ async function showLinkKnowledgeModal() {
                 </label>
             </div>
         `).join('');
-        
+
         const modal = new bootstrap.Modal(document.getElementById('linkKnowledgeModal'));
         modal.show();
-        
+
     } catch (error) {
         console.error('Ошибка загрузки статей:', error);
         alert('Ошибка при загрузке статей');
@@ -1089,15 +1077,15 @@ async function showLinkKnowledgeModal() {
 document.getElementById('saveLinkedKnowledgeBtn').addEventListener('click', async function() {
     const checkboxes = document.querySelectorAll('.knowledge-checkbox:checked');
     const ids = Array.from(checkboxes).map(cb => parseInt(cb.value));
-    
+
     try {
         await axios.patch(`/api/faults/${faultId}`, {
             linked_knowledge_ids: ids.join(',')
         });
-        
+
         const modal = bootstrap.Modal.getInstance(document.getElementById('linkKnowledgeModal'));
         modal.hide();
-        
+
         await loadFaultDetail();
         showNotification('✅ Статьи привязаны к неисправности!');
     } catch (error) {
@@ -1108,15 +1096,15 @@ document.getElementById('saveLinkedKnowledgeBtn').addEventListener('click', asyn
 
 async function removeKnowledgeLink(articleId) {
     if (!confirm('Отвязать эту статью от неисправности?')) return;
-    
+
     try {
         const currentIds = currentFault?.linked_knowledge?.map(a => a.id) || [];
         const newIds = currentIds.filter(id => id !== articleId);
-        
+
         await axios.patch(`/api/faults/${faultId}`, {
             linked_knowledge_ids: newIds.join(',')
         });
-        
+
         await loadFaultDetail();
         showNotification('ℹ️ Статья отвязана');
     } catch (error) {
@@ -1134,18 +1122,18 @@ async function loadComments() {
     try {
         const response = await axios.get(`/api/faults/${faultId}/comments`);
         const comments = response.data || [];
-        
+
         const countEl = document.getElementById('commentsCount');
         if (countEl) countEl.textContent = comments.length;
-        
+
         const listEl = document.getElementById('commentsList');
         if (!listEl) return;
-        
+
         if (comments.length === 0) {
             listEl.innerHTML = '<p class="text-muted text-center">Нет комментариев</p>';
             return;
         }
-        
+
         listEl.innerHTML = comments.map(c => `
             <div class="comment-item mb-2 p-2 border rounded ${c.is_internal ? 'bg-light' : ''}">
                 <div class="d-flex justify-content-between align-items-start">
@@ -1156,7 +1144,7 @@ async function loadComments() {
                 ${c.is_internal ? '<small class="text-muted"><i class="bi bi-lock"></i> Внутренний</small>' : ''}
             </div>
         `).join('');
-        
+
     } catch (error) {
         console.error('Ошибка загрузки комментариев:', error);
         const listEl = document.getElementById('commentsList');
@@ -1170,16 +1158,16 @@ document.getElementById('addCommentBtn').addEventListener('click', async functio
         alert('Введите текст комментария');
         return;
     }
-    
+
     try {
         await axios.post(`/api/faults/${faultId}/comments`, {
             content: content,
             is_internal: document.getElementById('commentInternal').checked,
-            author: localStorage.getItem('current_user') 
-                ? JSON.parse(localStorage.getItem('current_user')).username 
+            author: localStorage.getItem('current_user')
+                ? JSON.parse(localStorage.getItem('current_user')).username
                 : 'Пользователь'
         });
-        
+
         document.getElementById('commentContent').value = '';
         document.getElementById('commentInternal').checked = false;
         await loadComments();
@@ -1195,14 +1183,14 @@ async function loadHistory() {
         const response = await axios.get(`/api/faults/${faultId}/history`);
         const history = response.data || [];
         const historyList = document.getElementById('historyList');
-        
+
         if (!historyList) return;
-        
+
         if (history.length === 0) {
             historyList.innerHTML = '<p class="text-muted text-center">Нет истории изменений</p>';
             return;
         }
-        
+
         const eventIcons = {
             'creation': 'bi-plus-circle',
             'field_change': 'bi-pencil-square',
@@ -1218,12 +1206,12 @@ async function loadHistory() {
             'field_change': 'изменил(а)',
             'comment': 'добавил(а) комментарий'
         };
-        
+
         historyList.innerHTML = history.map(h => {
             const icon = eventIcons[h.event_type] || 'bi-info-circle';
             const colorClass = eventColors[h.event_type] || 'text-secondary';
             const eventLabel = eventLabels[h.event_type] || 'изменил(а)';
-            
+
             let content = '';
             if (h.event_type === 'creation') {
                 content = `<span class="fw-bold">${h.new_value}</span>`;
@@ -1238,7 +1226,7 @@ async function loadHistory() {
                     <span class="text-success">${h.new_value || 'пусто'}</span>
                 `;
             }
-            
+
             return `
                 <div class="history-item mb-2 p-2 border-bottom" style="font-size: 0.85rem;">
                     <div class="d-flex justify-content-between align-items-start">
@@ -1253,7 +1241,7 @@ async function loadHistory() {
                 </div>
             `;
         }).join('');
-        
+
     } catch (error) {
         console.error('Ошибка загрузки истории:', error);
         const historyList = document.getElementById('historyList');
@@ -1266,23 +1254,23 @@ async function loadHistory() {
 // ======= БЫСТРЫЕ ДЕЙСТВИЯ =======
 async function updateStatus(status) {
     if (!currentFault) return;
-    
+
     try {
         console.log(`📤 Обновление статуса на: ${status}`);
-        
+
         const response = await axios.patch(`/api/faults/${faultId}`, { status });
         console.log('📥 Ответ:', response.data);
-        
+
         currentFault = response.data;
         renderFault(currentFault);
         await loadHistory();
-        
+
         if (currentFault.linked_knowledge) {
             renderLinkedKnowledge(currentFault.linked_knowledge);
         }
-        
+
         showNotification(`✅ Статус изменён на "${getStatusLabel(status)}"`);
-        
+
     } catch (error) {
         console.error('❌ Ошибка обновления статуса:', error);
         alert('Ошибка при обновлении статуса: ' + (error.response?.data?.detail || error.message));
@@ -1294,23 +1282,23 @@ async function updateStatus(status) {
 
 async function updateSeverity(severity) {
     if (!currentFault) return;
-    
+
     try {
         console.log(`📤 Обновление важности на: ${severity}`);
-        
+
         const response = await axios.patch(`/api/faults/${faultId}`, { severity });
         console.log('📥 Ответ:', response.data);
-        
+
         currentFault = response.data;
         renderFault(currentFault);
         await loadHistory();
-        
+
         if (currentFault.linked_knowledge) {
             renderLinkedKnowledge(currentFault.linked_knowledge);
         }
-        
+
         showNotification(`✅ Важность изменена на "${getSeverityLabel(severity)}"`);
-        
+
     } catch (error) {
         console.error('❌ Ошибка обновления важности:', error);
         alert('Ошибка при обновлении важности: ' + (error.response?.data?.detail || error.message));
@@ -1345,10 +1333,10 @@ async function showCloneModal() {
     try {
         const response = await axios.get('/api/projects');
         const projects = response.data || [];
-        
+
         const select = document.getElementById('cloneProjectSelect');
         select.innerHTML = '<option value="">-- Выберите проект --</option>';
-        
+
         const currentProjectId = currentFault?.project?.id;
         projects.forEach(p => {
             if (p.id !== currentProjectId) {
@@ -1358,20 +1346,20 @@ async function showCloneModal() {
                 select.appendChild(option);
             }
         });
-        
+
         if (select.options.length === 1) {
             select.innerHTML = '<option value="">Нет доступных проектов</option>';
             document.getElementById('confirmCloneBtn').disabled = true;
         } else {
             document.getElementById('confirmCloneBtn').disabled = false;
         }
-        
+
         document.getElementById('cloneOriginalId').textContent = faultId;
         document.getElementById('cloneOriginalTitle').textContent = currentFault?.title || '';
-        
+
         const modal = new bootstrap.Modal(document.getElementById('cloneModal'));
         modal.show();
-        
+
     } catch (error) {
         console.error('Ошибка загрузки проектов:', error);
         alert('Ошибка при загрузке проектов');
@@ -1384,28 +1372,28 @@ document.getElementById('confirmCloneBtn').addEventListener('click', async funct
         alert('Выберите целевой проект');
         return;
     }
-    
+
     if (!confirm(`Создать клон неисправности #${faultId} в выбранном проекте?`)) {
         return;
     }
-    
+
     try {
         this.disabled = true;
         this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Клонирование...';
-        
+
         const response = await axios.post(
             `/api/faults/${faultId}/clone?target_project_id=${targetProjectId}`
         );
-        
+
         const modal = bootstrap.Modal.getInstance(document.getElementById('cloneModal'));
         modal.hide();
-        
+
         showNotification(`✅ Клон создан! Новая неисправность #${response.data.id}`);
-        
+
         setTimeout(() => {
             window.location.href = `/faults/${response.data.id}`;
         }, 1500);
-        
+
     } catch (error) {
         console.error('❌ Ошибка клонирования:', error);
         alert('Ошибка при клонировании: ' + (error.response?.data?.detail || error.message));
@@ -1472,12 +1460,12 @@ document.getElementById('saveEditBtn').addEventListener('click', async function(
         status: document.getElementById('editStatus').value,
         project_id: parseInt(document.getElementById('editProject').value) || null
     };
-    
+
     if (!data.title) {
         alert('Название обязательно!');
         return;
     }
-    
+
     try {
         await axios.patch(`/api/faults/${faultId}`, data);
         toggleEdit();
@@ -1492,7 +1480,7 @@ document.getElementById('saveEditBtn').addEventListener('click', async function(
 // ======= УДАЛЕНИЕ =======
 async function deleteFault() {
     if (!confirm('Вы уверены, что хотите удалить эту неисправность?')) return;
-    
+
     try {
         await axios.delete(`/api/faults/${faultId}`);
         alert('Неисправность удалена!');
@@ -1535,13 +1523,13 @@ if (editCategoryBtn) {
             isCategoryEditing = false;
             return;
         }
-        
+
         // Вход в режим редактирования
         categoryEditMode.style.display = 'block';
         categoryDisplayMode.style.display = 'none';
         this.innerHTML = '<i class="bi bi-x"></i>';
         isCategoryEditing = true;
-        
+
         // Устанавливаем текущее значение в select
         const currentCategory = currentFault?.category || '';
         categorySelect.value = currentCategory;
@@ -1560,7 +1548,7 @@ if (document.getElementById('cancelCategoryBtn')) {
 if (document.getElementById('saveCategoryBtn')) {
     document.getElementById('saveCategoryBtn').addEventListener('click', async function() {
         const category = categorySelect.value || null;
-        
+
         try {
             const token = localStorage.getItem('auth_token');
             if (!token) {
@@ -1568,21 +1556,21 @@ if (document.getElementById('saveCategoryBtn')) {
                 return;
             }
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-            
+
             const response = await axios.patch(`/api/faults/${faultId}`, {
                 category: category
             });
-            
+
             currentFault = response.data;
-            
+
             categoryEditMode.style.display = 'none';
             categoryDisplayMode.style.display = 'block';
             editCategoryBtn.innerHTML = '<i class="bi bi-pencil"></i>';
             isCategoryEditing = false;
-            
+
             renderFault(currentFault);
             await loadHistory();
-            
+
             showNotification('✅ Категория обновлена!');
         } catch (error) {
             console.error('❌ Ошибка обновления категории:', error);
@@ -1594,7 +1582,7 @@ if (document.getElementById('saveCategoryBtn')) {
 if (removeCategoryBtn) {
     removeCategoryBtn.addEventListener('click', async function() {
         if (!confirm('Удалить категорию у этой неисправности?')) return;
-        
+
         try {
             const token = localStorage.getItem('auth_token');
             if (!token) {
@@ -1602,15 +1590,15 @@ if (removeCategoryBtn) {
                 return;
             }
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-            
+
             const response = await axios.patch(`/api/faults/${faultId}`, {
                 category: null
             });
-            
+
             currentFault = response.data;
             renderFault(currentFault);
             await loadHistory();
-            
+
             showNotification('✅ Категория удалена!');
         } catch (error) {
             console.error('❌ Ошибка удаления категории:', error);

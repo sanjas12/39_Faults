@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% block body_class %}auth-page{% endblock %}
 
 {% block title %}Регистрация{% endblock %}
 {% block page_title %}Регистрация{% endblock %}
@@ -9,14 +10,14 @@
         <div class="card">
             <div class="card-body">
                 <h4 class="text-center mb-4">Регистрация</h4>
-                
+
                 <form id="registerForm">
                     <div class="mb-3">
                         <label for="regUsername" class="form-label">Имя пользователя *</label>
-                        <input 
-                            type="text" 
-                            class="form-control" 
-                            id="regUsername" 
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="regUsername"
                             name="username"
                             autocomplete="username"
                             required
@@ -25,10 +26,10 @@
                     </div>
                     <div class="mb-3">
                         <label for="regEmail" class="form-label">Email *</label>
-                        <input 
-                            type="email" 
-                            class="form-control" 
-                            id="regEmail" 
+                        <input
+                            type="email"
+                            class="form-control"
+                            id="regEmail"
                             name="email"
                             autocomplete="email"
                             required
@@ -37,10 +38,10 @@
                     </div>
                     <div class="mb-3">
                         <label for="regFullName" class="form-label">Полное имя</label>
-                        <input 
-                            type="text" 
-                            class="form-control" 
-                            id="regFullName" 
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="regFullName"
                             name="full_name"
                             autocomplete="name"
                             placeholder="Иванов Иван Иванович"
@@ -48,10 +49,10 @@
                     </div>
                     <div class="mb-3">
                         <label for="regPassword" class="form-label">Пароль * (мин. 6 символов)</label>
-                        <input 
-                            type="password" 
-                            class="form-control" 
-                            id="regPassword" 
+                        <input
+                            type="password"
+                            class="form-control"
+                            id="regPassword"
                             name="password"
                             autocomplete="new-password"
                             required
@@ -63,11 +64,11 @@
                         <i class="bi bi-person-plus"></i> Зарегистрироваться
                     </button>
                 </form>
-                
+
                 <div id="registerMessage" class="mt-3 d-none" role="alert"></div>
-                
+
                 <hr class="my-3">
-                
+
                 <p class="text-center mb-0">
                     Уже есть аккаунт? <a href="/login">Войти</a>
                 </p>
@@ -82,7 +83,7 @@
 // Функция регистрации
 async function registerUser(username, email, password, fullName) {
     console.log('📝 Регистрация пользователя:', username);
-    
+
     try {
         const response = await axios.post('/api/auth/register', {
             username: username,
@@ -93,9 +94,9 @@ async function registerUser(username, email, password, fullName) {
         });
 
         console.log('✅ Ответ сервера:', response.data);
-        
+
         const data = response.data;
-        
+
         // Проверяем, что в ответе есть access_token
         if (!data.access_token) {
             throw new Error('Сервер не вернул токен доступа');
@@ -109,12 +110,12 @@ async function registerUser(username, email, password, fullName) {
         axios.defaults.headers.common['Authorization'] = `Bearer ${data.access_token}`;
 
         updateUserUI();
-        
+
         return { success: true, user: currentUser };
-        
+
     } catch (error) {
         console.error('❌ Ошибка регистрации:', error);
-        
+
         // Разбираем ошибку
         let errorMessage = 'Неизвестная ошибка';
         if (error.response) {
@@ -129,10 +130,10 @@ async function registerUser(username, email, password, fullName) {
             // Ошибка при настройке запроса
             errorMessage = error.message || 'Неизвестная ошибка';
         }
-        
-        return { 
-            success: false, 
-            error: errorMessage 
+
+        return {
+            success: false,
+            error: errorMessage
         };
     }
 }
@@ -140,60 +141,60 @@ async function registerUser(username, email, password, fullName) {
 // Обработчик формы
 document.getElementById('registerForm').addEventListener('submit', async function(event) {
     event.preventDefault();
-    
+
     const usernameField = document.getElementById('regUsername');
     const emailField = document.getElementById('regEmail');
     const passwordField = document.getElementById('regPassword');
     const fullNameField = document.getElementById('regFullName');
     const submitButton = document.getElementById('registerSubmit');
     const messageDiv = document.getElementById('registerMessage');
-    
+
     // Собираем данные
     const username = usernameField.value.trim();
     const email = emailField.value.trim();
     const password = passwordField.value;
     const fullName = fullNameField.value.trim();
-    
+
     // Валидация
     if (!username || username.length < 3) {
         showMessage('Имя пользователя должно содержать минимум 3 символа', 'danger');
         return;
     }
-    
+
     if (!email || !email.includes('@')) {
         showMessage('Введите корректный email', 'danger');
         return;
     }
-    
+
     if (!password || password.length < 6) {
         showMessage('Пароль должен содержать минимум 6 символов', 'danger');
         return;
     }
-    
+
     // Скрываем старые сообщения
     messageDiv.classList.add('d-none');
     submitButton.disabled = true;
     submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Регистрация...';
-    
+
     try {
         const result = await registerUser(username, email, password, fullName);
-        
+
         if (result.success) {
             // ✅ Успешная регистрация
             showMessage('🎉 Регистрация успешна! Перенаправление...', 'success');
-            
+
             // Редирект через 1.5 секунды
             setTimeout(() => {
                 window.location.href = '/';
             }, 1500);
-            
+
         } else {
             // ❌ Ошибка регистрации
             showMessage('❌ ' + result.error, 'danger');
             submitButton.disabled = false;
             submitButton.innerHTML = '<i class="bi bi-person-plus"></i> Зарегистрироваться';
         }
-        
+
     } catch (error) {
         console.error('❌ Необработанная ошибка:', error);
         showMessage('❌ Произошла непредвиденная ошибка. Попробуйте позже.', 'danger');

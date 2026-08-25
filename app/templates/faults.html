@@ -3,6 +3,11 @@
 {% block title %}Неисправности{% endblock %}
 {% block page_title %}Управление неисправностями{% endblock %}
 {% set active_page = 'faults' %}
+{% block page_actions %}
+<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createFaultModal">
+    <i class="bi bi-plus-lg"></i> Новая неисправность
+</button>
+{% endblock %}
 
 {% block content %}
 <!-- Панель фильтров -->
@@ -61,9 +66,6 @@
                     <button class="btn btn-success w-100" id="exportPdfBtn">
                         <i class="bi bi-file-pdf"></i> PDF
                     </button>
-                    <button class="btn btn-primary w-100" id="createFaultBtn" data-bs-toggle="modal" data-bs-target="#createFaultModal">
-                        <i class="bi bi-plus-circle"></i>
-                    </button>
                 </div>
             </div>
             <div class="col-md-1">
@@ -107,13 +109,13 @@
                         <th style="width: 40px;">ID</th>
                         <th>Название</th>
                         <th style="width: 150px;">Проект</th>
-                        <th style="width: 120px;">Категория</th> 
+                        <th style="width: 120px;">Категория</th>
                         <th style="width: 120px;">Важность</th>
                         <th style="width: 130px;">Статус</th>
                         <th style="width: 140px;">Создана</th>
                         <th style="width: 140px;">Изменена</th>
                         <th style="width: 100px;">Мероприятия</th>
-                        <th style="width: 120px;">Действия</th> 
+                        <th style="width: 120px;">Действия</th>
                     </tr>
                 </thead>
                 <tbody id="faultsList">
@@ -295,29 +297,29 @@ async function loadProjectsForFilters() {
             window.location.href = '/login';
             return;
         }
-        
+
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
+
         const response = await axios.get('/api/projects');
         allProjects = response.data;
         console.log('📁 Загружено проектов:', allProjects.length);
-        
+
         // Заполняем выпадающие списки проектов
         const selects = ['projectFilter', 'faultProject', 'editFaultProject'];
         selects.forEach(id => {
             const select = document.getElementById(id);
             if (!select) return;
-            
+
             const currentValue = select.value;
             select.innerHTML = '<option value="">Все проекты</option>';
-            
+
             allProjects.forEach(p => {
                 const option = document.createElement('option');
                 option.value = p.id;
                 option.textContent = p.name;
                 select.appendChild(option);
             });
-            
+
             select.value = currentValue;
         });
     } catch (error) {
@@ -334,17 +336,17 @@ async function loadCategoryFilter() {
         const token = localStorage.getItem('auth_token');
         if (!token) return;
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
+
         const response = await axios.get('/api/faults/categories/');
         const categories = response.data || [];
         console.log('📂 Загружено категорий:', categories.length);
-        
+
         const select = document.getElementById('categoryFilter');
         if (!select) {
             console.warn('⚠️ categoryFilter не найден');
             return;
         }
-        
+
         select.innerHTML = '<option value="">Все категории</option>';
         categories.forEach(c => {
             if (c) {
@@ -369,46 +371,46 @@ async function loadFaults(searchTerm = '') {
             return;
         }
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
+
         const params = new URLSearchParams();
-        
+
         const status = document.getElementById('statusFilter').value;
         if (status) params.append('status', status);
-        
+
         const severity = document.getElementById('severityFilter').value;
         if (severity) params.append('severity', severity);
-        
+
         const category = document.getElementById('categoryFilter').value;
         if (category) params.append('category', category);
-        
+
         const project = document.getElementById('projectFilter').value;
         if (project) params.append('project_id', project);
-        
+
         if (searchTerm) {
             console.log(`🔍 Поиск по запросу: "${searchTerm}"`);
             params.append('search', searchTerm);
         }
-        
+
         const sortBy = document.getElementById('sortBy').value;
         const sortOrder = document.getElementById('sortOrder').value;
         params.append('sort_by', sortBy);
         params.append('sort_order', sortOrder);
-        
+
         params.append('limit', '1000');
         console.log('📤 Параметры запроса:', params.toString());
-        
+
         // Показываем индикатор загрузки
         document.getElementById('faultsList').innerHTML = `
             <tr><td colspan="10" class="text-center text-muted">
                 <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Загрузка...
             </td></tr>
         `;
-        
+
         const response = await axios.get(`/api/faults?${params.toString()}`);
         console.log('📥 Получено результатов:', response.data.length);
-        
+
         let data = response.data;
-        
+
         // Фильтр по планируемым мероприятиям (клиентская фильтрация)
         const plannedFilter = document.getElementById('plannedActionsFilter')?.value;
         if (plannedFilter === 'yes') {
@@ -416,12 +418,12 @@ async function loadFaults(searchTerm = '') {
         } else if (plannedFilter === 'no') {
             data = data.filter(f => !f.planned_actions || f.planned_actions.trim().length === 0);
         }
-        
+
         allFaultsData = data;
-        
+
         const resultCount = allFaultsData.length;
         document.getElementById('faultsCount').textContent = `Всего: ${resultCount}`;
-        
+
         if (searchTerm && resultCount === 0) {
             document.getElementById('faultsList').innerHTML = `
                 <tr>
@@ -434,7 +436,7 @@ async function loadFaults(searchTerm = '') {
             updatePagination();
             return;
         }
-        
+
         currentPage = 1;
         renderTable();
     } catch (error) {
@@ -456,7 +458,7 @@ function renderTable() {
     const start = (currentPage - 1) * itemsPerPage;
     const end = start + itemsPerPage;
     const pageItems = allFaultsData.slice(start, end);
-    
+
     if (pageItems.length === 0) {
         tbody.innerHTML = `
             <tr>
@@ -469,7 +471,7 @@ function renderTable() {
         updatePagination();
         return;
     }
-    
+
     tbody.innerHTML = pageItems.map((fault) => {
         const projectName = fault.project?.name || 'Без проекта';
         const severityColors = {
@@ -496,17 +498,17 @@ function renderTable() {
             minor: 'Незначительная',
             trivial: 'Тривиальная'
         };
-        
+
         const hasPlannedActions = fault.planned_actions && fault.planned_actions.trim().length > 0;
-        const plannedActionsStatus = hasPlannedActions 
+        const plannedActionsStatus = hasPlannedActions
             ? '<span class="badge bg-success"><i class="bi bi-check-circle"></i> Есть</span>'
             : '<span class="badge bg-secondary"><i class="bi bi-x-circle"></i> Нет</span>';
-        
-        const createdDate = fault.created_at 
-            ? new Date(fault.created_at).toLocaleDateString('ru-RU') 
+
+        const createdDate = fault.created_at
+            ? new Date(fault.created_at).toLocaleDateString('ru-RU')
             : '—';
-        const updatedDate = fault.updated_at 
-            ? new Date(fault.updated_at).toLocaleDateString('ru-RU') 
+        const updatedDate = fault.updated_at
+            ? new Date(fault.updated_at).toLocaleDateString('ru-RU')
             : '—';
 
         return `
@@ -537,7 +539,7 @@ function renderTable() {
         </tr>
     `;
 }).join('');
-    
+
     updatePagination();
 }
 
@@ -545,25 +547,25 @@ function renderTable() {
 document.getElementById('exportPdfBtn').addEventListener('click', function() {
     // Собираем текущие параметры фильтров
     const params = new URLSearchParams();
-    
+
     const status = document.getElementById('statusFilter').value;
     if (status) params.append('status', status);
-    
+
     const severity = document.getElementById('severityFilter').value;
     if (severity) params.append('severity', severity);
-    
+
     const category = document.getElementById('categoryFilter').value;
     if (category) params.append('category', category);
-    
+
     const project = document.getElementById('projectFilter').value;
     if (project) params.append('project_id', project);
-    
+
     const search = document.getElementById('searchInput').value.trim();
     if (search) params.append('search', search);
-    
+
     // ✅ Добавляем limit для экспорта всех записей
     params.append('limit', '10000');
-    
+
     // Открываем ссылку для скачивания
     window.open(`/api/export/faults/pdf?${params.toString()}`, '_blank');
 });
@@ -576,15 +578,15 @@ function updatePagination() {
     const currentPageSpan = document.getElementById('currentPage');
     const prevBtn = document.getElementById('prevPage');
     const nextBtn = document.getElementById('nextPage');
-    
+
     currentPageSpan.textContent = currentPage;
-    
+
     if (currentPage <= 1) {
         prevBtn.parentElement.classList.add('disabled');
     } else {
         prevBtn.parentElement.classList.remove('disabled');
     }
-    
+
     if (currentPage >= totalPages || totalPages === 0) {
         nextBtn.parentElement.classList.add('disabled');
     } else {
@@ -640,7 +642,7 @@ document.getElementById('saveFaultBtn').addEventListener('click', async function
         alert('Название неисправности обязательно!');
         return;
     }
-    
+
     const data = {
         title: title,
         description: document.getElementById('faultDescription').value.trim() || null,
@@ -648,7 +650,7 @@ document.getElementById('saveFaultBtn').addEventListener('click', async function
         category: document.getElementById('faultCategory').value || null,
         project_id: parseInt(document.getElementById('faultProject').value) || null
     };
-    
+
     try {
         const token = localStorage.getItem('auth_token');
         if (!token) {
@@ -656,13 +658,13 @@ document.getElementById('saveFaultBtn').addEventListener('click', async function
             return;
         }
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
+
         await axios.post('/api/faults', data);
-        
+
         const modal = bootstrap.Modal.getInstance(document.getElementById('createFaultModal'));
         modal.hide();
         document.getElementById('createFaultForm').reset();
-        
+
         await loadFaults();
         alert('Неисправность создана!');
     } catch (error) {
@@ -684,10 +686,10 @@ async function editFault(id) {
             return;
         }
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
+
         const response = await axios.get(`/api/faults/${id}`);
         const fault = response.data;
-        
+
         document.getElementById('editFaultId').value = fault.id;
         document.getElementById('editFaultTitle').value = fault.title;
         document.getElementById('editFaultDescription').value = fault.description || '';
@@ -695,7 +697,7 @@ async function editFault(id) {
         document.getElementById('editFaultStatus').value = fault.status;
         document.getElementById('editFaultCategory').value = fault.category || '';
         document.getElementById('editFaultProject').value = fault.project_id || '';
-        
+
         const modal = new bootstrap.Modal(document.getElementById('editFaultModal'));
         modal.show();
     } catch (error) {
@@ -711,12 +713,12 @@ async function editFault(id) {
 document.getElementById('updateFaultBtn').addEventListener('click', async function() {
     const id = parseInt(document.getElementById('editFaultId').value);
     const title = document.getElementById('editFaultTitle').value.trim();
-    
+
     if (!title) {
         alert('Название неисправности обязательно!');
         return;
     }
-    
+
     const data = {
         title: title,
         description: document.getElementById('editFaultDescription').value.trim() || null,
@@ -725,7 +727,7 @@ document.getElementById('updateFaultBtn').addEventListener('click', async functi
         category: document.getElementById('editFaultCategory').value || null,
         project_id: parseInt(document.getElementById('editFaultProject').value) || null
     };
-    
+
     try {
         const token = localStorage.getItem('auth_token');
         if (!token) {
@@ -733,12 +735,12 @@ document.getElementById('updateFaultBtn').addEventListener('click', async functi
             return;
         }
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
+
         await axios.patch(`/api/faults/${id}`, data);
-        
+
         const modal = bootstrap.Modal.getInstance(document.getElementById('editFaultModal'));
         modal.hide();
-        
+
         await loadFaults();
         alert('Неисправность обновлена!');
     } catch (error) {
@@ -755,17 +757,17 @@ document.getElementById('updateFaultBtn').addEventListener('click', async functi
 function deleteFault(id) {
     const fault = allFaultsData.find(f => f.id === id);
     if (!fault) return;
-    
+
     document.getElementById('deleteFaultTitle').textContent = fault.title;
     currentDeleteId = id;
-    
+
     const modal = new bootstrap.Modal(document.getElementById('deleteFaultModal'));
     modal.show();
 }
 
 document.getElementById('confirmDeleteFaultBtn').addEventListener('click', async function() {
     if (!currentDeleteId) return;
-    
+
     try {
         const token = localStorage.getItem('auth_token');
         if (!token) {
@@ -773,12 +775,12 @@ document.getElementById('confirmDeleteFaultBtn').addEventListener('click', async
             return;
         }
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
+
         await axios.delete(`/api/faults/${currentDeleteId}`);
-        
+
         const modal = bootstrap.Modal.getInstance(document.getElementById('deleteFaultModal'));
         modal.hide();
-        
+
         await loadFaults();
         alert('Неисправность удалена!');
     } catch (error) {
@@ -869,7 +871,7 @@ document.getElementById('categoryFilter').addEventListener('dblclick', function(
 
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('🚀 Загрузка страницы неисправностей');
-    
+
     // Проверяем авторизацию
     const token = localStorage.getItem('auth_token');
     if (!token) {
@@ -877,9 +879,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         window.location.href = '/login';
         return;
     }
-    
+
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    
+
     await loadProjectsForFilters();
     await loadCategoryFilter();
     await loadFaults();

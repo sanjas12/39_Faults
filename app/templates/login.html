@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% block body_class %}auth-page{% endblock %}
 
 {% block title %}Вход в систему{% endblock %}
 {% block page_title %}Вход{% endblock %}
@@ -9,7 +10,7 @@
         <div class="card">
             <div class="card-body">
                 <h4 class="text-center mb-4">Вход в систему</h4>
-                
+
                 <form id="loginForm">
                     <div class="mb-3">
                         <label for="loginUsername" class="form-label">Имя пользователя</label>
@@ -37,11 +38,11 @@
                         <i class="bi bi-box-arrow-in-right"></i> Войти
                     </button>
                 </form>
-                
+
                 <div id="loginError" class="alert alert-danger mt-3 d-none" role="alert" aria-live="polite"></div>
-                
+
                 <hr class="my-3">
-                
+
                 <p class="text-center mb-0">
                     Нет аккаунта? <a href="/register">Зарегистрироваться</a>
                 </p>
@@ -54,7 +55,7 @@
 {% block scripts %}
 <script>
     console.log('📄 login.html загружен');
-    
+
     const form = document.getElementById('loginForm');
     const usernameField = document.getElementById('loginUsername');
     const passwordField = document.getElementById('loginPassword');
@@ -87,20 +88,20 @@
 
         try {
             console.log(`📤 Отправка запроса на /api/auth/login (username: ${username})`);
-            
+
             const result = await login(username, password);
             console.log('📥 Результат входа:', result);
-            
+
             if (result.success) {
                 console.log('✅ Вход успешен, редирект на /');
                 window.location.href = '/';
                 return;
             }
-            
+
             // Показываем ошибку
             errorBox.textContent = result.error || 'Неверное имя пользователя или пароль';
             errorBox.classList.remove('d-none');
-            
+
         } catch (error) {
             console.error('❌ Ошибка при входе:', error);
             errorBox.textContent = 'Не удалось выполнить вход. Проверьте соединение с сервером.';

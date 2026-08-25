@@ -1,13 +1,11 @@
 {% extends "base.html" %}
 
 {% block title %}Админ-панель - Пользователи{% endblock %}
-{% block page_title %}
-    <div class="d-flex justify-content-between align-items-center">
-        <span>Управление пользователями</span>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
-            <i class="bi bi-person-plus"></i> Создать пользователя
-        </button>
-    </div>
+{% block page_title %}Управление пользователями{% endblock %}
+{% block page_actions %}
+<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
+    <i class="bi bi-person-plus"></i> Новый пользователь
+</button>
 {% endblock %}
 {% set active_page = 'admin' %}
 
@@ -233,26 +231,26 @@ async function loadUsers() {
             return;
         }
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
+
         const params = new URLSearchParams();
-        
+
         const search = document.getElementById('searchInput').value.trim();
         if (search) params.append('search', search);
-        
+
         const role = document.getElementById('roleFilter').value;
         if (role) params.append('role', role);
-        
+
         const status = document.getElementById('statusFilter').value;
         if (status) params.append('status', status);
-        
+
         console.log('📤 Загрузка пользователей с параметрами:', params.toString());
-        
+
         const response = await axios.get(`/api/auth/users?${params.toString()}`);
         allUsers = response.data;
         console.log('📥 Загружено пользователей:', allUsers.length);
-        
+
         renderUsers(allUsers);
-        
+
         document.getElementById('usersCount').textContent = `Всего: ${allUsers.length}`;
     } catch (error) {
         console.error('❌ Ошибка загрузки пользователей:', error);
@@ -277,7 +275,7 @@ function renderUsers(users) {
     const start = (currentPage - 1) * itemsPerPage;
     const end = start + itemsPerPage;
     const pageItems = users.slice(start, end);
-    
+
     if (pageItems.length === 0) {
         tbody.innerHTML = `
             <tr>
@@ -290,7 +288,7 @@ function renderUsers(users) {
         updatePagination(users.length);
         return;
     }
-    
+
     const roleLabels = {
         'admin': 'Администратор',
         'engineer': 'Инженер',
@@ -301,11 +299,11 @@ function renderUsers(users) {
         'engineer': 'warning',
         'manager': 'info'
     };
-    
+
     // ✅ Получаем текущего пользователя
     const currentUserId = currentUser?.id;
     const isCurrentUserAdmin = currentUser?.role === 'admin';
-    
+
     tbody.innerHTML = pageItems.map(user => {
         // ✅ Проверяем, является ли пользователь администратором
         const isAdmin = user.role === 'admin';
@@ -313,7 +311,7 @@ function renderUsers(users) {
         const isCurrentUser = user.id === currentUserId;
         // ✅ Блокируем изменения для администраторов (кроме самого админа)
         const isProtected = isAdmin && !isCurrentUser;
-        
+
         return `
             <tr>
                 <td><strong>${user.id}</strong></td>
@@ -350,7 +348,7 @@ function renderUsers(users) {
                 <td><small class="text-muted">${new Date(user.created_at).toLocaleDateString('ru-RU')}</small></td>
                 <td>
                     <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-danger" onclick="deleteUser(${user.id})" title="Удалить" 
+                        <button class="btn btn-outline-danger" onclick="deleteUser(${user.id})" title="Удалить"
                             ${isProtected || isCurrentUser ? 'disabled' : ''}>
                             <i class="bi bi-trash"></i>
                         </button>
@@ -359,7 +357,7 @@ function renderUsers(users) {
             </tr>
         `;
     }).join('');
-    
+
     // ✅ Добавляем обработчики для изменения роли и статуса (только для не защищённых)
     document.querySelectorAll('.role-select:not([disabled])').forEach(select => {
         select.addEventListener('change', function() {
@@ -368,7 +366,7 @@ function renderUsers(users) {
             updateUserRole(userId, newRole);
         });
     });
-    
+
     document.querySelectorAll('.status-select:not([disabled])').forEach(select => {
         select.addEventListener('change', function() {
             const userId = parseInt(this.dataset.userid);
@@ -376,7 +374,7 @@ function renderUsers(users) {
             updateUserStatus(userId, newStatus);
         });
     });
-    
+
     updatePagination(users.length);
 }
 
@@ -389,15 +387,15 @@ async function updateUserRole(userId, newRole) {
         await loadUsers();
         return;
     }
-    
+
     try {
         const token = localStorage.getItem('auth_token');
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
+
         await axios.put(`/api/auth/users/${userId}`, {
             role: newRole
         });
-        
+
         showNotification('✅ Роль пользователя обновлена!', 'success');
         await loadUsers();
     } catch (error) {
@@ -416,15 +414,15 @@ async function updateUserStatus(userId, isActive) {
         await loadUsers();
         return;
     }
-    
+
     try {
         const token = localStorage.getItem('auth_token');
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
+
         await axios.put(`/api/auth/users/${userId}`, {
             is_active: isActive
         });
-        
+
         showNotification(`✅ Пользователь ${isActive ? 'активирован' : 'заблокирован'}!`, 'success');
         await loadUsers();
     } catch (error) {
@@ -438,21 +436,21 @@ async function updateUserStatus(userId, isActive) {
 function deleteUser(id) {
     const user = allUsers.find(u => u.id === id);
     if (!user) return;
-    
+
     // ✅ Проверяем, не пытается ли пользователь удалить админа
     if (user.role === 'admin' && user.id !== currentUser?.id) {
         showNotification('❌ Нельзя удалить администратора!', 'danger');
         return;
     }
-    
+
     if (user.id === currentUser?.id) {
         showNotification('❌ Нельзя удалить самого себя!', 'danger');
         return;
     }
-    
+
     document.getElementById('deleteUserName').textContent = `${user.username} (${user.full_name || user.email})`;
     currentDeleteId = id;
-    
+
     const modal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
     modal.show();
 }
@@ -462,11 +460,11 @@ async function updateUserRole(userId, newRole) {
     try {
         const token = localStorage.getItem('auth_token');
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
+
         await axios.put(`/api/auth/users/${userId}`, {
             role: newRole
         });
-        
+
         showNotification('✅ Роль пользователя обновлена!', 'success');
         await loadUsers();
     } catch (error) {
@@ -482,11 +480,11 @@ async function updateUserStatus(userId, isActive) {
     try {
         const token = localStorage.getItem('auth_token');
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
+
         await axios.put(`/api/auth/users/${userId}`, {
             is_active: isActive
         });
-        
+
         showNotification(`✅ Пользователь ${isActive ? 'активирован' : 'заблокирован'}!`, 'success');
         await loadUsers();
     } catch (error) {
@@ -516,15 +514,15 @@ function updatePagination(totalItems) {
     const currentPageSpan = document.getElementById('currentPage');
     const prevBtn = document.getElementById('prevPage');
     const nextBtn = document.getElementById('nextPage');
-    
+
     currentPageSpan.textContent = currentPage;
-    
+
     if (currentPage <= 1) {
         prevBtn.parentElement.classList.add('disabled');
     } else {
         prevBtn.parentElement.classList.remove('disabled');
     }
-    
+
     if (currentPage >= totalPages || totalPages === 0) {
         nextBtn.parentElement.classList.add('disabled');
     } else {
@@ -579,17 +577,17 @@ document.getElementById('saveUserBtn').addEventListener('click', async function(
     const email = document.getElementById('newEmail').value.trim();
     const password = document.getElementById('newPassword').value;
     const fullName = document.getElementById('newFullName').value.trim();
-    
+
     if (!username || !email || !password) {
         alert('Заполните все обязательные поля!');
         return;
     }
-    
+
     if (password.length < 6) {
         alert('Пароль должен быть не менее 6 символов');
         return;
     }
-    
+
     const data = {
         username: username,
         email: email,
@@ -598,18 +596,18 @@ document.getElementById('saveUserBtn').addEventListener('click', async function(
         role: document.getElementById('newRole').value,
         is_active: document.getElementById('newActive').checked
     };
-    
+
     try {
         const token = localStorage.getItem('auth_token');
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
+
         await axios.post('/api/auth/register', data);
-        
+
         const modal = bootstrap.Modal.getInstance(document.getElementById('createUserModal'));
         modal.hide();
         document.getElementById('createUserForm').reset();
         document.getElementById('newActive').checked = true;
-        
+
         await loadUsers();
         alert('✅ Пользователь создан!');
     } catch (error) {
@@ -623,10 +621,10 @@ async function editUser(id) {
     try {
         const token = localStorage.getItem('auth_token');
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
+
         const response = await axios.get(`/api/auth/users/${id}`);
         const user = response.data;
-        
+
         document.getElementById('editUserId').value = user.id;
         document.getElementById('editUsername').value = user.username;
         document.getElementById('editEmail').value = user.email;
@@ -634,7 +632,7 @@ async function editUser(id) {
         document.getElementById('editRole').value = user.role;
         document.getElementById('editActive').checked = user.is_active;
         document.getElementById('editPassword').value = '';
-        
+
         const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
         modal.show();
     } catch (error) {
@@ -649,12 +647,12 @@ document.getElementById('updateUserBtn').addEventListener('click', async functio
     const email = document.getElementById('editEmail').value.trim();
     const password = document.getElementById('editPassword').value;
     const fullName = document.getElementById('editFullName').value.trim();
-    
+
     if (!username || !email) {
         alert('Имя пользователя и Email обязательны!');
         return;
     }
-    
+
     const data = {
         username: username,
         email: email,
@@ -662,7 +660,7 @@ document.getElementById('updateUserBtn').addEventListener('click', async functio
         role: document.getElementById('editRole').value,
         is_active: document.getElementById('editActive').checked
     };
-    
+
     if (password) {
         if (password.length < 6) {
             alert('Пароль должен быть не менее 6 символов');
@@ -670,16 +668,16 @@ document.getElementById('updateUserBtn').addEventListener('click', async functio
         }
         data.password = password;
     }
-    
+
     try {
         const token = localStorage.getItem('auth_token');
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
+
         await axios.put(`/api/auth/users/${id}`, data);
-        
+
         const modal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
         modal.hide();
-        
+
         await loadUsers();
         alert('✅ Пользователь обновлён!');
     } catch (error) {
@@ -692,36 +690,36 @@ document.getElementById('updateUserBtn').addEventListener('click', async functio
 function deleteUser(id) {
     const user = allUsers.find(u => u.id === id);
     if (!user) return;
-    
+
     if (user.username === 'admin') {
         alert('❌ Нельзя удалить администратора!');
         return;
     }
-    
+
     if (user.id === currentUser?.id) {
         alert('❌ Нельзя удалить самого себя!');
         return;
     }
-    
+
     document.getElementById('deleteUserName').textContent = `${user.username} (${user.full_name || user.email})`;
     currentDeleteId = id;
-    
+
     const modal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
     modal.show();
 }
 
 document.getElementById('confirmDeleteUserBtn').addEventListener('click', async function() {
     if (!currentDeleteId) return;
-    
+
     try {
         const token = localStorage.getItem('auth_token');
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
+
         await axios.delete(`/api/auth/users/${currentDeleteId}`);
-        
+
         const modal = bootstrap.Modal.getInstance(document.getElementById('deleteUserModal'));
         modal.hide();
-        
+
         await loadUsers();
         alert('✅ Пользователь удалён!');
     } catch (error) {
@@ -738,7 +736,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         return;
     }
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    
+
     console.log('🚀 Загрузка страницы управления пользователями');
     await loadUsers();
 });

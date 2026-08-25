@@ -3,6 +3,11 @@
 {% block title %}База знаний{% endblock %}
 {% block page_title %}База знаний{% endblock %}
 {% set active_page = 'knowledge' %}
+{% block page_actions %}
+<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createArticleModal">
+    <i class="bi bi-plus-lg"></i> Новая статья
+</button>
+{% endblock %}
 
 {% block content %}
 <!-- Панель поиска -->
@@ -25,15 +30,10 @@
                     <option value="">Все категории</option>
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-4">
                 <select class="form-select" id="tagFilter">
                     <option value="">Все теги</option>
                 </select>
-            </div>
-            <div class="col-md-2">
-                <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#createArticleModal">
-                    <i class="bi bi-plus-circle"></i> Создать
-                </button>
             </div>
         </div>
     </div>
@@ -115,7 +115,7 @@
                 <div id="viewContent" style="min-height: 200px;"></div>
                 <hr>
                 <div class="text-muted small">
-                    <span id="viewAuthor">Автор</span> • 
+                    <span id="viewAuthor">Автор</span> •
                     <span id="viewDate">Дата</span>
                 </div>
             </div>
@@ -196,7 +196,7 @@ let currentArticleId = null;
 // Простой Markdown-парсер
 function parseMarkdown(text) {
     if (!text) return '';
-    
+
     let html = text;
     // Заголовки
     html = html.replace(/^### (.*$)/gim, '<h4>$1</h4>');
@@ -226,17 +226,17 @@ async function loadArticles() {
             return;
         }
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
+
         const params = new URLSearchParams();
         const search = document.getElementById('searchInput').value.trim();
         if (search) params.append('search', search);
-        
+
         const category = document.getElementById('categoryFilter').value;
         if (category) params.append('category', category);
-        
+
         const tag = document.getElementById('tagFilter').value;
         if (tag) params.append('tag', tag);
-        
+
         const response = await axios.get(`/api/knowledge?${params.toString()}`);
         allArticles = response.data;
         renderArticles(allArticles);
@@ -253,9 +253,9 @@ async function loadFilters() {
         const token = localStorage.getItem('auth_token');
         if (!token) return;
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
+
         // Загружаем категории
-        const catResponse = await axios.get('/api/knowledge/categories');
+        const catResponse = await axios.get('/api/knowledge/categories/');
         const categories = catResponse.data || [];
         const catSelect = document.getElementById('categoryFilter');
         catSelect.innerHTML = '<option value="">Все категории</option>';
@@ -267,9 +267,9 @@ async function loadFilters() {
                 catSelect.appendChild(option);
             }
         });
-        
+
         // Загружаем теги
-        const tagResponse = await axios.get('/api/knowledge/tags');
+        const tagResponse = await axios.get('/api/knowledge/tags/');
         const tags = tagResponse.data || [];
         const tagSelect = document.getElementById('tagFilter');
         tagSelect.innerHTML = '<option value="">Все теги</option>';
@@ -290,7 +290,7 @@ async function loadFilters() {
 
 function renderArticles(articles) {
     const container = document.getElementById('articlesContainer');
-    
+
     if (articles.length === 0) {
         container.innerHTML = `
             <div class="col-12 text-center text-muted py-4">
@@ -300,15 +300,15 @@ function renderArticles(articles) {
         `;
         return;
     }
-    
+
     container.innerHTML = articles.map(article => `
         <div class="col-md-6 col-lg-4 mb-3">
             <div class="card article-card h-100" onclick="viewArticle(${article.id})" style="cursor: pointer;">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
                         <h5 class="card-title">${article.title}</h5>
-                        ${article.is_published ? 
-                            '<span class="badge bg-success">Опубликовано</span>' : 
+                        ${article.is_published ?
+                            '<span class="badge bg-success">Опубликовано</span>' :
                             '<span class="badge bg-secondary">Черновик</span>'
                         }
                     </div>
@@ -317,18 +317,18 @@ function renderArticles(articles) {
                     </p>
                     <div class="mt-2">
                         ${article.category ? `<span class="badge bg-primary">${article.category}</span>` : ''}
-                        ${article.tags ? article.tags.split(',').slice(0, 3).map(t => 
+                        ${article.tags ? article.tags.split(',').slice(0, 3).map(t =>
                             `<span class="badge bg-secondary">${t.trim()}</span>`
                         ).join(' ') : ''}
                         ${article.tags && article.tags.split(',').length > 3 ? `<span class="badge bg-secondary">+${article.tags.split(',').length - 3}</span>` : ''}
-                        ${article.linked_faults && article.linked_faults.length > 0 ? 
-                            `<span class="badge bg-danger"><i class="bi bi-bug"></i> ${article.linked_faults.length}</span>` : 
+                        ${article.linked_faults && article.linked_faults.length > 0 ?
+                            `<span class="badge bg-danger"><i class="bi bi-bug"></i> ${article.linked_faults.length}</span>` :
                             ''
                         }
                     </div>
                     <div class="mt-2 small text-muted">
-                        <i class="bi bi-eye"></i> ${article.views} • 
-                        <i class="bi bi-person"></i> ${article.author} • 
+                        <i class="bi bi-eye"></i> ${article.views} •
+                        <i class="bi bi-person"></i> ${article.author} •
                         ${new Date(article.created_at).toLocaleDateString('ru-RU')}
                     </div>
                 </div>
@@ -343,12 +343,12 @@ function renderArticles(articles) {
 document.getElementById('saveArticleBtn').addEventListener('click', async function() {
     const title = document.getElementById('articleTitle').value.trim();
     const content = document.getElementById('articleContent').value.trim();
-    
+
     if (!title || !content) {
         alert('Заголовок и содержание обязательны!');
         return;
     }
-    
+
     const data = {
         title: title,
         content: content,
@@ -357,15 +357,15 @@ document.getElementById('saveArticleBtn').addEventListener('click', async functi
         related_faults: document.getElementById('articleRelated').value.trim() || null,
         is_published: document.getElementById('articlePublished').checked
     };
-    
+
     try {
         await axios.post('/api/knowledge', data);
-        
+
         const modal = bootstrap.Modal.getInstance(document.getElementById('createArticleModal'));
         modal.hide();
         document.getElementById('createArticleForm').reset();
         document.getElementById('previewContent').innerHTML = '<em class="text-muted">Предпросмотр...</em>';
-        
+
         await loadArticles();
         alert('Статья создана!');
     } catch (error) {
@@ -391,7 +391,7 @@ async function editArticle(id) {
     try {
         const response = await axios.get(`/api/knowledge/${id}`);
         const article = response.data;
-        
+
         document.getElementById('editArticleId').value = article.id;
         document.getElementById('editTitle').value = article.title;
         document.getElementById('editContent').value = article.content;
@@ -400,7 +400,7 @@ async function editArticle(id) {
         document.getElementById('editRelated').value = article.related_faults || '';
         document.getElementById('editPublished').checked = article.is_published;
         document.getElementById('editPreviewContent').innerHTML = parseMarkdown(article.content);
-        
+
         const modal = new bootstrap.Modal(document.getElementById('editArticleModal'));
         modal.show();
     } catch (error) {
@@ -413,12 +413,12 @@ document.getElementById('updateArticleBtn').addEventListener('click', async func
     const id = parseInt(document.getElementById('editArticleId').value);
     const title = document.getElementById('editTitle').value.trim();
     const content = document.getElementById('editContent').value.trim();
-    
+
     if (!title || !content) {
         alert('Заголовок и содержание обязательны!');
         return;
     }
-    
+
     const data = {
         title: title,
         content: content,
@@ -427,13 +427,13 @@ document.getElementById('updateArticleBtn').addEventListener('click', async func
         related_faults: document.getElementById('editRelated').value.trim() || null,
         is_published: document.getElementById('editPublished').checked
     };
-    
+
     try {
         await axios.put(`/api/knowledge/${id}`, data);
-        
+
         const modal = bootstrap.Modal.getInstance(document.getElementById('editArticleModal'));
         modal.hide();
-        
+
         await loadArticles();
         alert('Статья обновлена!');
     } catch (error) {
@@ -446,17 +446,17 @@ document.getElementById('updateArticleBtn').addEventListener('click', async func
 document.getElementById('viewDeleteBtn').addEventListener('click', function() {
     if (!currentArticleId) return;
     if (!confirm('Вы уверены, что хотите удалить эту статью?')) return;
-    
+
     deleteArticle(currentArticleId);
 });
 
 async function deleteArticle(id) {
     try {
         await axios.delete(`/api/knowledge/${id}`);
-        
+
         const modal = bootstrap.Modal.getInstance(document.getElementById('viewArticleModal'));
         if (modal) modal.hide();
-        
+
         await loadArticles();
         alert('Статья удалена!');
     } catch (error) {
@@ -501,7 +501,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         return;
     }
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    
+
     await loadFilters();
     await loadArticles();
 });

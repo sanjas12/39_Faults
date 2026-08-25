@@ -1,21 +1,11 @@
 {% extends "base.html" %}
 
 {% block title %}Проект {{ project_name }}{% endblock %}
-{% block page_title %}
-    <div class="d-flex justify-content-between align-items-center">
-        <span id="projectTitle">Проект: Загрузка...</span>
-        <div>
-            <button class="btn btn-outline-secondary btn-sm" onclick="history.back()">
-                <i class="bi bi-arrow-left"></i> Назад
-            </button>
-            <button class="btn btn-sm btn-outline-primary" onclick="editProject()">
-                <i class="bi bi-pencil"></i> Редактировать
-            </button>
-            <button class="btn btn-sm btn-outline-danger" onclick="deleteProject()">
-                <i class="bi bi-trash"></i> Удалить
-            </button>
-        </div>
-    </div>
+{% block page_title %}<span id="projectTitle">Проект: Загрузка...</span>{% endblock %}
+{% block page_actions %}
+<button class="btn btn-outline-secondary btn-sm" onclick="history.back()"><i class="bi bi-arrow-left"></i> Назад</button>
+<button class="btn btn-sm btn-outline-primary" onclick="editProject()"><i class="bi bi-pencil"></i> Изменить</button>
+<button class="btn btn-sm btn-outline-danger" onclick="deleteProject()"><i class="bi bi-trash"></i></button>
 {% endblock %}
 {% set active_page = 'projects' %}
 
@@ -304,15 +294,15 @@ function renderProject(project) {
     document.getElementById('projectContactEmail').textContent = project.contact_email || 'Не указан';
     document.getElementById('projectDescription').textContent = project.description || 'Нет описания';
     document.getElementById('projectCreated').textContent = new Date(project.created_at).toLocaleString('ru-RU');
-    document.getElementById('projectUpdated').textContent = project.updated_at 
-        ? new Date(project.updated_at).toLocaleString('ru-RU') 
+    document.getElementById('projectUpdated').textContent = project.updated_at
+        ? new Date(project.updated_at).toLocaleString('ru-RU')
         : 'Не обновлялся';
 
     // Заполняем форму редактирования
     document.getElementById('editProjectId').value = project.id;
     document.getElementById('editName').value = project.name;
     document.getElementById('editClient').value = project.client || '';
-    document.getElementById('editStation').value = project.station || ''; 
+    document.getElementById('editStation').value = project.station || '';
     document.getElementById('editUnit').value = project.unit || '';
     document.getElementById('editType').value = project.type || '';
     document.getElementById('editDescription').value = project.description || '';
@@ -496,7 +486,7 @@ let originalContacts = {};
 document.getElementById('editContactsBtn').addEventListener('click', function() {
     const viewMode = document.getElementById('contactsView');
     const editMode = document.getElementById('contactsEdit');
-    
+
     if (isContactsEditing) {
         // Выход из режима редактирования без сохранения
         editMode.style.display = 'none';
@@ -506,26 +496,26 @@ document.getElementById('editContactsBtn').addEventListener('click', function() 
         isContactsEditing = false;
         return;
     }
-    
+
     // Вход в режим редактирования
     viewMode.style.display = 'none';
     editMode.style.display = 'block';
     this.innerHTML = '<i class="bi bi-x"></i> Отменить';
     this.className = 'btn btn-sm btn-outline-danger';
     isContactsEditing = true;
-    
+
     // Заполняем форму текущими данными
-    document.getElementById('editContactName').value = document.getElementById('projectContactName').textContent !== 'Не указано' 
-        ? document.getElementById('projectContactName').textContent 
+    document.getElementById('editContactName').value = document.getElementById('projectContactName').textContent !== 'Не указано'
+        ? document.getElementById('projectContactName').textContent
         : '';
-    document.getElementById('editContactPosition').value = document.getElementById('projectContactPosition').textContent !== 'Не указана' 
-        ? document.getElementById('projectContactPosition').textContent 
+    document.getElementById('editContactPosition').value = document.getElementById('projectContactPosition').textContent !== 'Не указана'
+        ? document.getElementById('projectContactPosition').textContent
         : '';
-    document.getElementById('editContactPhone').value = document.getElementById('projectContactPhone').textContent !== 'Не указан' 
-        ? document.getElementById('projectContactPhone').textContent 
+    document.getElementById('editContactPhone').value = document.getElementById('projectContactPhone').textContent !== 'Не указан'
+        ? document.getElementById('projectContactPhone').textContent
         : '';
-    document.getElementById('editContactEmail').value = document.getElementById('projectContactEmail').textContent !== 'Не указан' 
-        ? document.getElementById('projectContactEmail').textContent 
+    document.getElementById('editContactEmail').value = document.getElementById('projectContactEmail').textContent !== 'Не указан'
+        ? document.getElementById('projectContactEmail').textContent
         : '';
 });
 
@@ -539,20 +529,20 @@ document.getElementById('cancelContactsBtn').addEventListener('click', function(
 
 document.getElementById('saveContactsBtn').addEventListener('click', async function() {
     const contactName = document.getElementById('editContactName').value.trim();
-    
+
     // Проверяем, что хотя бы имя заполнено
     if (!contactName) {
         alert('Пожалуйста, укажите контактное лицо');
         return;
     }
-    
+
     const data = {
         contact_name: contactName,
         contact_position: document.getElementById('editContactPosition').value.trim() || null,
         contact_phone: document.getElementById('editContactPhone').value.trim() || null,
         contact_email: document.getElementById('editContactEmail').value.trim() || null
     };
-    
+
     try {
         const token = localStorage.getItem('auth_token');
         if (!token) {
@@ -560,26 +550,26 @@ document.getElementById('saveContactsBtn').addEventListener('click', async funct
             return;
         }
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
+
         this.disabled = true;
         this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
-        
+
         const response = await axios.put(`/api/projects/${projectId}`, data);
         const project = response.data;
-        
+
         // Обновляем отображение
         renderProject(project);
-        
+
         // Закрываем режим редактирования
         document.getElementById('contactsEdit').style.display = 'none';
         document.getElementById('contactsView').style.display = 'block';
         document.getElementById('editContactsBtn').innerHTML = '<i class="bi bi-pencil"></i> Редактировать';
         document.getElementById('editContactsBtn').className = 'btn btn-sm btn-outline-primary';
         isContactsEditing = false;
-        
+
         // Обновляем историю
         await loadHistory();
-        
+
         showNotification('✅ Контактная информация обновлена!');
     } catch (error) {
         console.error('❌ Ошибка обновления контактов:', error);

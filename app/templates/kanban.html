@@ -3,6 +3,11 @@
 {% block title %}Kanban доска{% endblock %}
 {% block page_title %}Kanban доска{% endblock %}
 {% set active_page = 'kanban' %}
+{% block page_actions %}
+<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createFaultModal">
+    <i class="bi bi-plus-lg"></i> Новая неисправность
+</button>
+{% endblock %}
 
 {% block content %}
 <!-- Панель фильтров -->
@@ -22,7 +27,7 @@
                     <option value="">Все проекты</option>
                 </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <select class="form-select" id="severityFilter">
                     <option value="">Все важности</option>
                     <option value="critical">Критические</option>
@@ -30,11 +35,6 @@
                     <option value="minor">Незначительные</option>
                     <option value="trivial">Тривиальные</option>
                 </select>
-            </div>
-            <div class="col-md-2">
-                <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#createFaultModal">
-                    <i class="bi bi-plus-circle"></i> Создать
-                </button>
             </div>
         </div>
     </div>

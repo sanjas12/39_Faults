@@ -1,15 +1,9 @@
 {% extends "base.html" %}
 
 {% block title %}Статья{% endblock %}
-{% block page_title %}
-    <div class="d-flex justify-content-between align-items-center">
-        <span>Статья базы знаний</span>
-        <div>
-            <button class="btn btn-outline-secondary btn-sm" onclick="history.back()">
-                <i class="bi bi-arrow-left"></i> Назад
-            </button>
-        </div>
-    </div>
+{% block page_title %}Статья базы знаний{% endblock %}
+{% block page_actions %}
+<button class="btn btn-outline-secondary btn-sm" onclick="history.back()"><i class="bi bi-arrow-left"></i> Назад</button>
 {% endblock %}
 {% set active_page = 'knowledge' %}
 
@@ -30,26 +24,26 @@
                             </button>
                         </div>
                     </div>
-                    
+
                     <div class="mb-2">
                         <span class="badge bg-secondary" id="articleCategory">Категория</span>
                         <span class="badge bg-info" id="articleTags">Теги</span>
                         <span class="badge bg-light text-dark" id="articleViews">👁️ 0</span>
                         <span class="badge" id="articleStatus">Опубликовано</span>
                     </div>
-                    
+
                     <div id="articleContent" class="article-content" style="min-height: 200px;">
                         Загрузка содержимого...
                     </div>
-                    
+
                     <hr>
                     <div class="text-muted small">
-                        <span id="articleAuthor">Автор</span> • 
+                        <span id="articleAuthor">Автор</span> •
                         <span id="articleDate">Дата</span>
                     </div>
                 </div>
             </div>
-            
+
             <!-- ===== СВЯЗАННЫЕ НЕИСПРАВНОСТИ ===== -->
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -63,7 +57,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-md-4">
             <div class="card mb-3">
                 <div class="card-header">
@@ -187,10 +181,10 @@ async function loadArticle() {
             return;
         }
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
+
         const response = await axios.get(`/api/knowledge/${articleId}`);
         currentArticle = response.data;
-        
+
         document.getElementById('articleTitle').textContent = currentArticle.title;
         document.getElementById('articleContent').innerHTML = parseMarkdown(currentArticle.content);
         document.getElementById('articleCategory').textContent = currentArticle.category || 'Без категории';
@@ -200,10 +194,10 @@ async function loadArticle() {
         document.getElementById('articleStatus').className = `badge ${currentArticle.is_published ? 'bg-success' : 'bg-secondary'}`;
         document.getElementById('articleAuthor').textContent = `👤 ${currentArticle.author}`;
         document.getElementById('articleDate').textContent = new Date(currentArticle.created_at).toLocaleString('ru-RU');
-        
+
         // Загружаем связанные неисправности
         await loadLinkedFaults();
-        
+
     } catch (error) {
         console.error('Ошибка загрузки статьи:', error);
         if (error.response?.status === 401) {
@@ -222,15 +216,15 @@ async function loadLinkedFaults() {
     try {
         const response = await axios.get(`/api/knowledge/${articleId}`);
         const article = response.data;
-        
+
         const container = document.getElementById('linkedFaultsList');
         const linked = article.linked_faults || [];
-        
+
         if (linked.length === 0) {
             container.innerHTML = '<p class="text-muted text-center">Нет связанных неисправностей</p>';
             return;
         }
-        
+
         const statusLabels = {
             'open': 'Открыта',
             'in_progress': 'В работе',
@@ -255,7 +249,7 @@ async function loadLinkedFaults() {
             'minor': 'info',
             'trivial': 'secondary'
         };
-        
+
         container.innerHTML = linked.map(f => `
             <div class="fault-link-item mb-2 p-2 border rounded">
                 <div class="d-flex justify-content-between align-items-center">
@@ -272,7 +266,7 @@ async function loadLinkedFaults() {
                 </div>
             </div>
         `).join('');
-        
+
     } catch (error) {
         console.error('Ошибка загрузки связанных неисправностей:', error);
         document.getElementById('linkedFaultsList').innerHTML = `
@@ -285,20 +279,20 @@ async function showLinkFaultModal() {
     try {
         const response = await axios.get('/api/faults?limit=100');
         const faults = response.data || [];
-        
+
         const articleResponse = await axios.get(`/api/knowledge/${articleId}`);
         const currentLinkedIds = articleResponse.data.linked_faults?.map(f => f.id) || [];
-        
+
         const container = document.getElementById('faultSelectList');
-        
+
         if (faults.length === 0) {
             container.innerHTML = '<p class="text-muted text-center">Нет неисправностей</p>';
             return;
         }
-        
+
         container.innerHTML = faults.map(f => `
             <div class="form-check mb-2">
-                <input class="form-check-input fault-checkbox" type="checkbox" 
+                <input class="form-check-input fault-checkbox" type="checkbox"
                        value="${f.id}" id="fault_${f.id}"
                        ${currentLinkedIds.includes(f.id) ? 'checked' : ''}>
                 <label class="form-check-label" for="fault_${f.id}">
@@ -307,10 +301,10 @@ async function showLinkFaultModal() {
                 </label>
             </div>
         `).join('');
-        
+
         const modal = new bootstrap.Modal(document.getElementById('linkFaultModal'));
         modal.show();
-        
+
     } catch (error) {
         console.error('Ошибка загрузки неисправностей:', error);
         alert('Ошибка при загрузке неисправностей');
@@ -320,15 +314,15 @@ async function showLinkFaultModal() {
 document.getElementById('saveLinkedFaultsBtn').addEventListener('click', async function() {
     const checkboxes = document.querySelectorAll('.fault-checkbox:checked');
     const ids = Array.from(checkboxes).map(cb => parseInt(cb.value));
-    
+
     try {
         await axios.put(`/api/knowledge/${articleId}`, {
             related_faults: ids.join(',')
         });
-        
+
         const modal = bootstrap.Modal.getInstance(document.getElementById('linkFaultModal'));
         modal.hide();
-        
+
         await loadLinkedFaults();
         showNotification('✅ Неисправности привязаны к статье!');
     } catch (error) {
@@ -339,16 +333,16 @@ document.getElementById('saveLinkedFaultsBtn').addEventListener('click', async f
 
 async function removeFaultLink(faultId) {
     if (!confirm('Отвязать эту неисправность от статьи?')) return;
-    
+
     try {
         const response = await axios.get(`/api/knowledge/${articleId}`);
         const currentIds = response.data.linked_faults?.map(f => f.id) || [];
         const newIds = currentIds.filter(id => id !== faultId);
-        
+
         await axios.put(`/api/knowledge/${articleId}`, {
             related_faults: newIds.join(',')
         });
-        
+
         await loadLinkedFaults();
         showNotification('ℹ️ Неисправность отвязана');
     } catch (error) {
@@ -360,7 +354,7 @@ async function removeFaultLink(faultId) {
 // ======= РЕДАКТИРОВАНИЕ =======
 function editArticle() {
     if (!currentArticle) return;
-    
+
     document.getElementById('editArticleId').value = currentArticle.id;
     document.getElementById('editTitle').value = currentArticle.title;
     document.getElementById('editContent').value = currentArticle.content;
@@ -368,7 +362,7 @@ function editArticle() {
     document.getElementById('editTags').value = currentArticle.tags || '';
     document.getElementById('editPublished').checked = currentArticle.is_published;
     document.getElementById('editPreviewContent').innerHTML = parseMarkdown(currentArticle.content);
-    
+
     const modal = new bootstrap.Modal(document.getElementById('editArticleModal'));
     modal.show();
 }
@@ -377,12 +371,12 @@ document.getElementById('updateArticleBtn').addEventListener('click', async func
     const id = parseInt(document.getElementById('editArticleId').value);
     const title = document.getElementById('editTitle').value.trim();
     const content = document.getElementById('editContent').value.trim();
-    
+
     if (!title || !content) {
         alert('Заголовок и содержание обязательны!');
         return;
     }
-    
+
     const data = {
         title: title,
         content: content,
@@ -390,13 +384,13 @@ document.getElementById('updateArticleBtn').addEventListener('click', async func
         tags: document.getElementById('editTags').value.trim() || null,
         is_published: document.getElementById('editPublished').checked
     };
-    
+
     try {
         await axios.put(`/api/knowledge/${id}`, data);
-        
+
         const modal = bootstrap.Modal.getInstance(document.getElementById('editArticleModal'));
         modal.hide();
-        
+
         await loadArticle();
         showNotification('✅ Статья обновлена!');
     } catch (error) {
@@ -408,7 +402,7 @@ document.getElementById('updateArticleBtn').addEventListener('click', async func
 // ======= УДАЛЕНИЕ =======
 async function deleteArticle() {
     if (!confirm('Вы уверены, что хотите удалить эту статью?')) return;
-    
+
     try {
         await axios.delete(`/api/knowledge/${articleId}`);
         alert('Статья удалена!');

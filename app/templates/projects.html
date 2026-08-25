@@ -7,6 +7,11 @@
     </div>
 {% endblock %}
 {% set active_page = 'projects' %}
+{% block page_actions %}
+<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+    <i class="bi bi-plus-lg"></i> Новый проект
+</button>
+{% endblock %}
 
 {% block content %}
 <!-- Панель фильтров -->
@@ -41,11 +46,8 @@
             </div>
             <div class="col-md-3">
                 <div class="d-flex gap-2">
-                    <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#createProjectModal">
-                        <i class="bi bi-plus-circle"></i> Создать
-                    </button>
-                    <button class="btn btn-outline-secondary" id="resetFiltersBtn" title="Сбросить фильтры">
-                        <i class="bi bi-arrow-counterclockwise"></i>
+                    <button class="btn btn-outline-secondary w-100" id="resetFiltersBtn" title="Сбросить фильтры">
+                        <i class="bi bi-arrow-counterclockwise"></i> Сбросить
                     </button>
                 </div>
             </div>
@@ -220,7 +222,7 @@ async function loadFilters() {
         const token = localStorage.getItem('auth_token');
         if (!token) return;
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
+
         // Загружаем станции
         const stationsRes = await axios.get('/api/projects/stations/');
         const stations = stationsRes.data || [];
@@ -234,7 +236,7 @@ async function loadFilters() {
                 stationSelect.appendChild(option);
             }
         });
-        
+
         // Загружаем типы
         const typesRes = await axios.get('/api/projects/types/');
         const types = typesRes.data || [];
@@ -248,7 +250,7 @@ async function loadFilters() {
                 typeSelect.appendChild(option);
             }
         });
-        
+
         // Загружаем блоки
         const unitsRes = await axios.get('/api/projects/units/');
         const units = unitsRes.data || [];
@@ -270,7 +272,7 @@ async function loadFilters() {
 // ======= ЗАГРУЗКА ПРОЕКТОВ =======
 async function loadProjects() {
     console.log('🔄 Загрузка проектов...');
-    
+
     try {
         const token = localStorage.getItem('auth_token');
         if (!token) {
@@ -278,25 +280,25 @@ async function loadProjects() {
             return;
         }
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
+
         const params = new URLSearchParams();
-        
+
         const search = document.getElementById('searchInput').value.trim();
         if (search) params.append('search', search);
-        
+
         const station = document.getElementById('stationFilter').value;
         if (station) params.append('station', station);
-        
+
         const unit = document.getElementById('unitFilter').value;
         if (unit) params.append('unit', unit);
-        
+
         const type = document.getElementById('typeFilter').value;
         if (type) params.append('type', type);
-        
+
         const response = await axios.get(`/api/projects?${params.toString()}`);
         allProjects = response.data;
         renderProjects(allProjects);
-        
+
         // Обновляем счётчик
         document.getElementById('projectsCount').textContent = `(${allProjects.length})`;
     } catch (error) {
@@ -316,7 +318,7 @@ async function loadProjects() {
 // ======= ОТОБРАЖЕНИЕ ПРОЕКТОВ =======
 function renderProjects(projects) {
     const container = document.getElementById('projectsContainer');
-    
+
     if (projects.length === 0) {
         container.innerHTML = `
             <div class="col-12 text-center text-muted py-4">
@@ -329,7 +331,7 @@ function renderProjects(projects) {
         `;
         return;
     }
-    
+
     container.innerHTML = projects.map(project => `
         <div class="col-md-6 col-lg-4 mb-3">
             <div class="card project-card h-100" onclick="window.location.href='/projects/${project.id}'" style="cursor: pointer;">
@@ -354,7 +356,7 @@ function renderProjects(projects) {
                             </ul>
                         </div>
                     </div>
-                    
+
                     ${project.client ? `<p class="text-muted small mb-1"><i class="bi bi-building"></i> ${project.client}</p>` : ''}
                     ${project.station ? `<p class="text-muted small mb-1"><i class="bi bi-geo-alt"></i> ${project.station}</p>` : ''}
                     ${project.unit ? `<p class="text-muted small mb-1"><i class="bi bi-hash"></i> Блок ${project.unit}</p>` : ''}
@@ -366,7 +368,7 @@ function renderProjects(projects) {
                         </p>
                     ` : ''}
                     ${project.description ? `<p class="card-text small">${project.description.length > 80 ? project.description.slice(0, 80) + '...' : project.description}</p>` : ''}
-                    
+
                     <div class="mt-2">
                         <span class="badge bg-primary" id="faults-count-${project.id}">
                             <i class="bi bi-bug"></i> Загрузка...
@@ -379,7 +381,7 @@ function renderProjects(projects) {
             </div>
         </div>
     `).join('');
-    
+
     // Загружаем количество неисправностей
     loadFaultsCount(projects);
 }
@@ -389,7 +391,7 @@ async function loadFaultsCount(projects) {
     try {
         const response = await axios.get('/api/faults');
         const faults = response.data || [];
-        
+
         projects.forEach(project => {
             const count = faults.filter(f => f.project_id === project.id).length;
             const element = document.getElementById(`faults-count-${project.id}`);
@@ -436,7 +438,7 @@ document.getElementById('saveProjectBtn').addEventListener('click', async functi
         alert('Название проекта обязательно!');
         return;
     }
-    
+
     const data = {
         name: name,
         station: document.getElementById('projectStation').value.trim() || null,
@@ -449,14 +451,14 @@ document.getElementById('saveProjectBtn').addEventListener('click', async functi
         contact_position: document.getElementById('projectContactPosition').value.trim() || null,
         description: document.getElementById('projectDescription').value.trim() || null
     };
-    
+
     try {
         await axios.post('/api/projects', data);
-        
+
         const modal = bootstrap.Modal.getInstance(document.getElementById('createProjectModal'));
         modal.hide();
         document.getElementById('createProjectForm').reset();
-        
+
         await loadProjects();
         alert('✅ Проект создан!');
     } catch (error) {
@@ -470,7 +472,7 @@ async function editProject(id) {
     try {
         const response = await axios.get(`/api/projects/${id}`);
         const project = response.data;
-        
+
         document.getElementById('editProjectId').value = project.id;
         document.getElementById('editProjectName').value = project.name;
         document.getElementById('editProjectStation').value = project.station || '';
@@ -482,7 +484,7 @@ async function editProject(id) {
         document.getElementById('editContactEmail').value = project.contact_email || '';
         document.getElementById('editContactPosition').value = project.contact_position || '';
         document.getElementById('editProjectDescription').value = project.description || '';
-        
+
         const modal = new bootstrap.Modal(document.getElementById('editProjectModal'));
         modal.show();
     } catch (error) {
@@ -494,12 +496,12 @@ async function editProject(id) {
 document.getElementById('updateProjectBtn').addEventListener('click', async function() {
     const id = parseInt(document.getElementById('editProjectId').value);
     const name = document.getElementById('editProjectName').value.trim();
-    
+
     if (!name) {
         alert('Название проекта обязательно!');
         return;
     }
-    
+
     const data = {
         name: name,
         station: document.getElementById('editProjectStation').value.trim() || null,
@@ -512,13 +514,13 @@ document.getElementById('updateProjectBtn').addEventListener('click', async func
         contact_position: document.getElementById('editContactPosition').value.trim() || null,
         description: document.getElementById('editProjectDescription').value.trim() || null
     };
-    
+
     try {
         await axios.put(`/api/projects/${id}`, data);
-        
+
         const modal = bootstrap.Modal.getInstance(document.getElementById('editProjectModal'));
         modal.hide();
-        
+
         await loadProjects();
         alert('✅ Проект обновлён!');
     } catch (error) {
@@ -531,23 +533,23 @@ document.getElementById('updateProjectBtn').addEventListener('click', async func
 function deleteProject(id) {
     const project = allProjects.find(p => p.id === id);
     if (!project) return;
-    
+
     document.getElementById('deleteProjectName').textContent = project.name;
     currentDeleteId = id;
-    
+
     const modal = new bootstrap.Modal(document.getElementById('deleteProjectModal'));
     modal.show();
 }
 
 document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
     if (!currentDeleteId) return;
-    
+
     try {
         await axios.delete(`/api/projects/${currentDeleteId}`);
-        
+
         const modal = bootstrap.Modal.getInstance(document.getElementById('deleteProjectModal'));
         modal.hide();
-        
+
         await loadProjects();
         alert('✅ Проект удалён!');
     } catch (error) {
@@ -565,7 +567,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         return;
     }
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    
+
     await loadFilters();
     await loadProjects();
 });
