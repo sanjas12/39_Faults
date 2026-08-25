@@ -117,7 +117,7 @@ fi
 log_ok "Тестовое окружение готово"
 
 log_info "Проверяем синтаксис Python"
-if ! uv run --frozen python -m compileall -q src tests; then
+if ! uv run --frozen python -m compileall -q app tests _version.py init_db.py; then
     log_error "Синтаксическая проверка не прошла! Релиз отменён."
     exit 1
 fi
@@ -241,19 +241,19 @@ verify_versions() {
     local expected=$1
 
     VER_TOML=$(awk '
-        /^\[tool\.commitizen\]$/ { in_commitizen = 1; next }
-        /^\[/ { in_commitizen = 0 }
-        in_commitizen && /^version = / {
+        /^\[project\]$/ { in_project = 1; next }
+        /^\[/ { in_project = 0 }
+        in_project && /^version = / {
             split($0, parts, "\"")
             print parts[2]
             exit
         }
     ' pyproject.toml)
-    VER_PY=$(grep '__version__' src/_version.py | head -1 | awk -F'"' '{print $2}')
+    VER_PY=$(grep '^__version__' _version.py | head -1 | awk -F'"' '{print $2}')
 
     log_info "Проверка версий после bump:"
     log_info "  pyproject.toml  → $VER_TOML"
-    log_info "  src/_version.py → $VER_PY"
+    log_info "  _version.py     → $VER_PY"
 
     if [ "$VER_TOML" = "$expected" ] && [ "$VER_PY" = "$expected" ]; then
         log_ok "Версии совпадают: $expected ✅"
