@@ -67,6 +67,18 @@ def test_login_wrong_password(client, test_user):
     assert "Неверное имя пользователя или пароль" in response.json()["detail"]
 
 
+def test_logout_clears_browser_session(client, test_user):
+    login_response = client.post(
+        "/api/auth/login",
+        data={"username": "testuser", "password": "testpassword"},
+    )
+    assert login_response.status_code == 200
+
+    logout_response = client.post("/api/auth/logout")
+    assert logout_response.status_code == 204
+    assert client.get("/", follow_redirects=False).status_code == 302
+
+
 def test_get_current_user(client, auth_headers):
     """Тест получения текущего пользователя"""
     response = client.get("/api/auth/me", headers=auth_headers)

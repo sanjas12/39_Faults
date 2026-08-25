@@ -104,6 +104,12 @@ def login(
     return {"access_token": access_token, "token_type": "bearer", "user": user}
 
 
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(response: Response) -> None:
+    """Завершить браузерную сессию и удалить серверную cookie."""
+    response.delete_cookie(key="access_token", path="/", samesite="lax")
+
+
 @router.get("/me", response_model=UserResponse)
 def get_current_user_info(current_user: User = Depends(get_current_user)):
     """Получение информации о текущем пользователе"""

@@ -67,8 +67,15 @@ function updateUserUI() {
 }
 
 // Функция выхода (глобальная, доступна из onclick)
-function logout() {
+async function logout() {
     console.log('🚪 logout вызван');
+
+    try {
+        // Cookie авторизации создаётся сервером, поэтому и удаляем её сервером.
+        await axios.post('/api/auth/logout');
+    } catch (error) {
+        console.error('Ошибка серверного выхода:', error);
+    }
 
     // Очищаем localStorage
     localStorage.removeItem('auth_token');
@@ -78,7 +85,7 @@ function logout() {
     delete axios.defaults.headers.common['Authorization'];
 
     // ✅ Удаляем cookie
-    document.cookie = 'access_token=; path=/; max-age=0';
+    document.cookie = 'access_token=; path=/; max-age=0; samesite=lax';
 
     currentUser = null;
 
