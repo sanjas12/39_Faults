@@ -1,6 +1,8 @@
-from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
+
+from pydantic import BaseModel
+
 
 class ProjectHistoryBase(BaseModel):
     project_id: int
@@ -10,12 +12,14 @@ class ProjectHistoryBase(BaseModel):
     new_value: Optional[str] = None
     author: str = "system"
 
+
 class ProjectHistoryCreate(ProjectHistoryBase):
     pass
+
 
 class ProjectHistoryResponse(ProjectHistoryBase):
     id: int
     created_at: datetime
-    
+
     class Config:
         from_attributes = True

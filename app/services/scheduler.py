@@ -1,8 +1,10 @@
+from datetime import datetime
+
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-from datetime import datetime
-from app.services.backup_service import BackupService
+
 from app.core.database import SessionLocal
+from app.services.backup_service import BackupService
 
 scheduler = BackgroundScheduler()
 backup_service = BackupService()
@@ -28,11 +30,12 @@ def start_scheduler():
         scheduled_backup,
         trigger=CronTrigger(hour=3, minute=0),
         id="daily_backup",
-        replace_existing=True
+        replace_existing=True,
     )
 
     scheduler.start()
     print("🔄 Планировщик бэкапов запущен (ежедневно в 3:00)")
 
     import atexit
+
     atexit.register(lambda: scheduler.shutdown())

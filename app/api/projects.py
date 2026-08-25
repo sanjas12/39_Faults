@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import or_, func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -44,7 +44,7 @@ def create_project(
     db.commit()
     db.refresh(db_project)
 
-        # ✅ Записываем в историю создание проекта
+    # ✅ Записываем в историю создание проекта
     log_project_history(
         db=db,
         project_id=db_project.id,
@@ -52,7 +52,7 @@ def create_project(
         field="creation",
         old_value=None,
         new_value=f"Создан проект: {db_project.name}",
-        author=current_user.username
+        author=current_user.username,
     )
 
     return db_project
@@ -65,37 +65,43 @@ def list_projects(
     skip: int = 0,
     limit: int = 100,
     search: Optional[str] = Query(None, description="Поиск по названию или клиенту"),
-    station: Optional[str] = Query(None, description="Фильтр по станции"),      # ✅ Добавляем
-    unit: Optional[int] = Query(None, description="Фильтр по номеру блока"),    # ✅ Добавляем
-    type: Optional[str] = Query(None, description="Фильтр по типу проекта"),    # ✅ Добавляем
+    station: Optional[str] = Query(
+        None, description="Фильтр по станции"
+    ),  # ✅ Добавляем
+    unit: Optional[int] = Query(
+        None, description="Фильтр по номеру блока"
+    ),  # ✅ Добавляем
+    type: Optional[str] = Query(
+        None, description="Фильтр по типу проекта"
+    ),  # ✅ Добавляем
     db: Session = Depends(get_db),
-    current_user: UserResponse = Depends(get_current_user)
+    current_user: UserResponse = Depends(get_current_user),
 ):
     """Получить список проектов с фильтрацией"""
     query = db.query(Project)
-    
+
     # ✅ Фильтр по станции
     if station:
         query = query.filter(Project.station == station)
-    
+
     # ✅ Фильтр по номеру блока
     if unit is not None:
         query = query.filter(Project.unit == unit)
-    
+
     # ✅ Фильтр по типу
     if type:
         query = query.filter(Project.type == type)
-    
+
     # Поиск по названию или клиенту
     if search:
         search_pattern = f"%{search}%"
         query = query.filter(
             or_(
                 func.lower(Project.name).like(func.lower(search_pattern)),
-                func.lower(Project.client).like(func.lower(search_pattern))
+                func.lower(Project.client).like(func.lower(search_pattern)),
             )
         )
-    
+
     projects = query.offset(skip).limit(limit).all()
     return projects
 
@@ -125,16 +131,16 @@ def update_project(
     project_id: int,
     project_update: ProjectUpdate,
     db: Session = Depends(get_db),
-    current_user: UserResponse = Depends(require_engineer)
+    current_user: UserResponse = Depends(require_engineer),
 ):
     """Обновить проект с записью в историю"""
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Проект с ID {project_id} не найден"
+            detail=f"Проект с ID {project_id} не найден",
         )
-    
+
     # Сохраняем старые значения
     old_values = {
         "name": project.name,
@@ -146,29 +152,30 @@ def update_project(
         "contact_name": project.contact_name or "",
         "contact_phone": project.contact_phone or "",
         "contact_email": project.contact_email or "",
-        "contact_position": project.contact_position or ""
+        "contact_position": project.contact_position or "",
     }
-    
+
     # Проверяем имя
     if project_update.name:
-        existing = db.query(Project).filter(
-            Project.name == project_update.name,
-            Project.id != project_id
-        ).first()
+        existing = (
+            db.query(Project)
+            .filter(Project.name == project_update.name, Project.id != project_id)
+            .first()
+        )
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Проект с названием '{project_update.name}' уже существует"
+                detail=f"Проект с названием '{project_update.name}' уже существует",
             )
-    
+
     # Обновляем поля
     update_data = project_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(project, field, value)
-    
+
     db.commit()
     db.refresh(project)
-    
+
     # Записываем историю изменений
     author = current_user.username or "system"
     field_labels = {
@@ -181,14 +188,14 @@ def update_project(
         "contact_name": "Контактное лицо",
         "contact_phone": "Телефон",
         "contact_email": "Email",
-        "contact_position": "Должность"
+        "contact_position": "Должность",
     }
-    
+
     for field, old_value in old_values.items():
         new_value = getattr(project, field, None)
         old_value_str = str(old_value) if old_value is not None else ""
         new_value_str = str(new_value) if new_value is not None else ""
-        
+
         if old_value_str != new_value_str:
             log_project_history(
                 db=db,
@@ -197,9 +204,9 @@ def update_project(
                 field=field_labels.get(field, field),
                 old_value=old_value_str or "пусто",
                 new_value=new_value_str or "пусто",
-                author=author
+                author=author,
             )
-    
+
     return project
 
 
@@ -273,10 +280,11 @@ def get_project_stats(
 
     return stats
 
+
 @router.get("/stations/", response_model=List[str])
 def get_stations(
     db: Session = Depends(get_db),
-    current_user: UserResponse = Depends(get_current_user)
+    current_user: UserResponse = Depends(get_current_user),
 ):
     """Получить список всех станций"""
     stations = db.query(Project.station).distinct().all()
@@ -286,7 +294,7 @@ def get_stations(
 @router.get("/types/", response_model=List[str])
 def get_types(
     db: Session = Depends(get_db),
-    current_user: UserResponse = Depends(get_current_user)
+    current_user: UserResponse = Depends(get_current_user),
 ):
     """Получить список всех типов проектов"""
     types = db.query(Project.type).distinct().all()
@@ -296,7 +304,7 @@ def get_types(
 @router.get("/units/", response_model=List[int])
 def get_units(
     db: Session = Depends(get_db),
-    current_user: UserResponse = Depends(get_current_user)
+    current_user: UserResponse = Depends(get_current_user),
 ):
     """Получить список всех номеров блоков"""
     units = db.query(Project.unit).distinct().all()
@@ -310,7 +318,7 @@ def log_project_history(
     field: Optional[str] = None,
     old_value: Optional[str] = None,
     new_value: Optional[str] = None,
-    author: str = "system"
+    author: str = "system",
 ):
     """Запись события в историю проекта"""
     history = ProjectHistory(
@@ -319,10 +327,7 @@ def log_project_history(
         field=field,
         old_value=old_value,
         new_value=new_value,
-        author=author
+        author=author,
     )
     db.add(history)
     db.commit()
-
-
-    

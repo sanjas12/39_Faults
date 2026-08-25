@@ -1,46 +1,66 @@
 import os
-from pathlib import Path
 import shutil
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import or_, func, desc, asc
-from typing import List, Optional
 from datetime import datetime
+from pathlib import Path
+from typing import List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import asc, desc, or_
+from sqlalchemy.orm import Session, joinedload
 
 from app.core.database import get_db
 from app.core.security import get_current_user
-from app.models.all_models import Fault, Project, FaultHistory, User, KnowledgeBase, FaultAttachment
-from app.schemas.fault import FaultCreate, FaultUpdate, FaultResponse, SeverityEnum, StatusEnum
+from app.models.all_models import (
+    Fault,
+    FaultAttachment,
+    FaultHistory,
+    KnowledgeBase,
+    Project,
+    User,
+)
+from app.schemas.fault import (
+    FaultCreate,
+    FaultResponse,
+    FaultUpdate,
+    SeverityEnum,
+    StatusEnum,
+)
 from app.schemas.user import UserResponse
 from app.services.email_service import email_service
-
 
 router = APIRouter(prefix="/faults", tags=["faults"])
 
 
-@router.post("/", response_model=FaultResponse, status_code=status.HTTP_201_CREATED, summary="Создать новую неисправность")
+@router.post(
+    "/",
+    response_model=FaultResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Создать новую неисправность",
+)
 def create_fault(
     fault: FaultCreate,
     db: Session = Depends(get_db),
-    current_user: UserResponse = Depends(get_current_user)  # ✅ Параметр должен быть здесь
+    current_user: UserResponse = Depends(
+        get_current_user
+    ),  # ✅ Параметр должен быть здесь
 ):
     """Создание новой неисправности с отправкой уведомлений"""
-    
+
     # Проверяем проект
     if fault.project_id:
         project = db.query(Project).filter(Project.id == fault.project_id).first()
         if not project:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Проект с ID {fault.project_id} не найден"
+                detail=f"Проект с ID {fault.project_id} не найден",
             )
-    
+
     # Создаём неисправность
     db_fault = Fault(**fault.model_dump())
     db.add(db_fault)
     db.commit()
     db.refresh(db_fault)
-    
+
     # ✅ Записываем в историю создание (используем current_user)
     try:
         log_history(
@@ -50,37 +70,39 @@ def create_fault(
             field="creation",
             old_value=None,
             new_value=f"Создана неисправность: {db_fault.title}",
-            author=current_user.username  # ✅ current_user определён
+            author=current_user.username,  # ✅ current_user определён
         )
     except Exception as e:
         print(f"❌ Ошибка записи истории: {e}")
-    
+
     # ✅ Отправляем уведомления
     try:
         # Получаем всех активных пользователей (кроме создателя)
-        recipients = db.query(User).filter(
-            User.id != current_user.id,
-            User.is_active == True
-        ).all()
+        recipients = (
+            db.query(User)
+            .filter(User.id != current_user.id, User.is_active.is_(True))
+            .all()
+        )
         recipient_emails = [u.email for u in recipients if u.email]
-        
+
         # Название проекта
         project_name = "Без проекта"
         if db_fault.project_id:
-            project = db.query(Project).filter(Project.id == db_fault.project_id).first()
+            project = (
+                db.query(Project).filter(Project.id == db_fault.project_id).first()
+            )
             if project:
                 project_name = project.name
-        
+
         if recipient_emails and email_service.enabled:
             email_service.send_fault_created(
                 fault=db_fault,
                 project_name=project_name,
                 user_name=current_user.username,
-                recipients=recipient_emails
+                recipients=recipient_emails,
             )
     except Exception as e:
         print(f"❌ Ошибка отправки уведомлений: {e}")
-    
 
     # Записываем в историю создание
     log_history(
@@ -90,13 +112,15 @@ def create_fault(
         field="creation",
         old_value=None,
         new_value=f"Создана неисправность: {db_fault.title}",
-        author=current_user.username
-            )
+        author=current_user.username,
+    )
 
     return db_fault
 
 
-@router.get("/", response_model=List[FaultResponse], summary="Получить список неисправностей")
+@router.get(
+    "/", response_model=List[FaultResponse], summary="Получить список неисправностей"
+)
 def list_faults(
     skip: int = Query(0, ge=0, description="Сколько пропустить"),
     limit: int = Query(100, ge=1, le=1000, description="Сколько вернуть"),
@@ -104,11 +128,18 @@ def list_faults(
     severity: Optional[SeverityEnum] = Query(None, description="Фильтр по важности"),
     category: Optional[str] = Query(None, description="Фильтр по категории"),
     project_id: Optional[int] = Query(None, description="Фильтр по проекту"),
-    search: Optional[str] = Query(None, description="Поиск по названию, описанию или ID"),
-    sort_by: Optional[str] = Query("created_at", description="Поле для сортировки: id, title, severity, status, created_at, updated_at"),
-    sort_order: Optional[str] = Query("desc", description="Порядок сортировки: asc, desc"),
+    search: Optional[str] = Query(
+        None, description="Поиск по названию, описанию или ID"
+    ),
+    sort_by: Optional[str] = Query(
+        "created_at",
+        description="Поле для сортировки: id, title, severity, status, created_at, updated_at",
+    ),
+    sort_order: Optional[str] = Query(
+        "desc", description="Порядок сортировки: asc, desc"
+    ),
     db: Session = Depends(get_db),
-    current_user: UserResponse = Depends(get_current_user)
+    current_user: UserResponse = Depends(get_current_user),
 ):
     """
     Получение списка неисправностей с фильтрацией, поиском и сортировкой.
@@ -116,9 +147,9 @@ def list_faults(
     query = db.query(Fault).options(
         joinedload(Fault.project),
         joinedload(Fault.parent_fault),
-        joinedload(Fault.clones)
+        joinedload(Fault.clones),
     )
-    
+
     # Фильтры
     if status:
         query = query.filter(Fault.status == status)
@@ -128,28 +159,28 @@ def list_faults(
         query = query.filter(Fault.category == category)
     if project_id:
         query = query.filter(Fault.project_id == project_id)
-    
+
     # Поиск
     if search:
         print(f"🔍 Поиск: '{search}'")
         search_pattern = f"%{search}%"
-        
+
         if search.isdigit():
             query = query.filter(
                 or_(
                     Fault.id == int(search),
                     Fault.title.ilike(search_pattern),
-                    Fault.description.ilike(search_pattern)
+                    Fault.description.ilike(search_pattern),
                 )
             )
         else:
             query = query.filter(
                 or_(
                     Fault.title.ilike(search_pattern),
-                    Fault.description.ilike(search_pattern)
+                    Fault.description.ilike(search_pattern),
                 )
             )
-    
+
     # ✅ Сортировка
     sort_field_map = {
         "id": Fault.id,
@@ -159,36 +190,42 @@ def list_faults(
         "category": Fault.category,
         "created_at": Fault.created_at,
         "updated_at": Fault.updated_at,
-        "resolved_at": Fault.resolved_at
+        "resolved_at": Fault.resolved_at,
     }
-    
+
     sort_field = sort_field_map.get(sort_by, Fault.created_at)
-    
+
     if sort_order.lower() == "asc":
         query = query.order_by(asc(sort_field))
     else:
         query = query.order_by(desc(sort_field))
-    
+
     faults = query.offset(skip).limit(limit).all()
-    
+
     # Формируем ответ
     result = []
     for fault in faults:
         linked_knowledge = []
         if fault.linked_knowledge_ids:
-            ids = [int(id.strip()) for id in fault.linked_knowledge_ids.split(',') if id.strip()]
+            ids = [
+                int(id.strip())
+                for id in fault.linked_knowledge_ids.split(",")
+                if id.strip()
+            ]
             if ids:
-                articles = db.query(KnowledgeBase).filter(KnowledgeBase.id.in_(ids)).all()
+                articles = (
+                    db.query(KnowledgeBase).filter(KnowledgeBase.id.in_(ids)).all()
+                )
                 linked_knowledge = [
                     {
                         "id": a.id,
                         "title": a.title,
                         "category": a.category,
-                        "tags": a.tags
+                        "tags": a.tags,
                     }
                     for a in articles
                 ]
-        
+
         response_data = {
             "id": fault.id,
             "title": fault.title,
@@ -211,36 +248,44 @@ def list_faults(
                 "unit": fault.project.unit,
                 "type": fault.project.type,
                 "created_at": fault.project.created_at,
-                "updated_at": fault.project.updated_at
-            } if fault.project else None,
+                "updated_at": fault.project.updated_at,
+            }
+            if fault.project
+            else None,
             "comments": [],
             "linked_knowledge": linked_knowledge,
             "parent_fault": {
                 "id": fault.parent_fault.id,
                 "title": fault.parent_fault.title,
                 "severity": fault.parent_fault.severity,
-                "status": fault.parent_fault.status
-            } if fault.parent_fault else None,
+                "status": fault.parent_fault.status,
+            }
+            if fault.parent_fault
+            else None,
             "clones": [
                 {
                     "id": clone.id,
                     "title": clone.title,
                     "severity": clone.severity,
-                    "status": clone.status
+                    "status": clone.status,
                 }
                 for clone in fault.clones
-            ] if fault.clones else []
+            ]
+            if fault.clones
+            else [],
         }
         result.append(response_data)
-    
+
     return result
 
 
-@router.get("/{fault_id}", response_model=FaultResponse, summary="Получить неисправность по ID")
+@router.get(
+    "/{fault_id}", response_model=FaultResponse, summary="Получить неисправность по ID"
+)
 def get_fault(
-    fault_id: int, 
+    fault_id: int,
     db: Session = Depends(get_db),
-    current_user: UserResponse = Depends(get_current_user)
+    current_user: UserResponse = Depends(get_current_user),
 ):
     """
     Получение детальной информации о неисправности.
@@ -250,7 +295,7 @@ def get_fault(
         .options(
             joinedload(Fault.project),
             joinedload(Fault.parent_fault),
-            joinedload(Fault.clones)
+            joinedload(Fault.clones),
         )
         .filter(Fault.id == fault_id)
         .first()
@@ -258,25 +303,24 @@ def get_fault(
     if not fault:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Неисправность с ID {fault_id} не найдена"
+            detail=f"Неисправность с ID {fault_id} не найдена",
         )
-    
+
     # Загружаем связанные статьи
     linked_knowledge = []
     if fault.linked_knowledge_ids:
-        ids = [int(id.strip()) for id in fault.linked_knowledge_ids.split(',') if id.strip()]
+        ids = [
+            int(id.strip())
+            for id in fault.linked_knowledge_ids.split(",")
+            if id.strip()
+        ]
         if ids:
             articles = db.query(KnowledgeBase).filter(KnowledgeBase.id.in_(ids)).all()
             linked_knowledge = [
-                {
-                    "id": a.id,
-                    "title": a.title,
-                    "category": a.category,
-                    "tags": a.tags
-                }
+                {"id": a.id, "title": a.title, "category": a.category, "tags": a.tags}
                 for a in articles
             ]
-    
+
     # ✅ Формируем ответ вручную
     response_data = {
         "id": fault.id,
@@ -300,27 +344,33 @@ def get_fault(
             "unit": fault.project.unit,
             "type": fault.project.type,
             "created_at": fault.project.created_at,
-            "updated_at": fault.project.updated_at
-        } if fault.project else None,
+            "updated_at": fault.project.updated_at,
+        }
+        if fault.project
+        else None,
         "comments": [],
         "linked_knowledge": linked_knowledge,
         "parent_fault": {
             "id": fault.parent_fault.id,
             "title": fault.parent_fault.title,
             "severity": fault.parent_fault.severity,
-            "status": fault.parent_fault.status
-        } if fault.parent_fault else None,
+            "status": fault.parent_fault.status,
+        }
+        if fault.parent_fault
+        else None,
         "clones": [
             {
                 "id": clone.id,
                 "title": clone.title,
                 "severity": clone.severity,
-                "status": clone.status
+                "status": clone.status,
             }
             for clone in fault.clones
-        ] if fault.clones else []
+        ]
+        if fault.clones
+        else [],
     }
-    
+
     return response_data
 
 
@@ -329,16 +379,16 @@ def update_fault(
     fault_id: int,
     fault_update: FaultUpdate,
     db: Session = Depends(get_db),
-    current_user: UserResponse = Depends(get_current_user)
+    current_user: UserResponse = Depends(get_current_user),
 ):
     """Частичное обновление неисправности с записью в историю"""
     fault = db.query(Fault).filter(Fault.id == fault_id).first()
     if not fault:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Неисправность с ID {fault_id} не найдена"
+            detail=f"Неисправность с ID {fault_id} не найдена",
         )
-    
+
     # Сохраняем старые значения
     old_values = {
         "title": fault.title,
@@ -349,30 +399,31 @@ def update_fault(
         "project_id": fault.project_id,
         "parent_fault_id": fault.parent_fault_id,
         "linked_knowledge_ids": fault.linked_knowledge_ids or "",
-        "planned_actions": fault.planned_actions or ""
+        "planned_actions": fault.planned_actions or "",
     }
-    
+
     # Проверяем project_id
-    if fault_update.project_id is not None:
-        if fault_update.project_id:
-            project = db.query(Project).filter(Project.id == fault_update.project_id).first()
-            if not project:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Проект с ID {fault_update.project_id} не найден"
-                )
-    
+    if fault_update.project_id is not None and fault_update.project_id:
+        project = (
+            db.query(Project).filter(Project.id == fault_update.project_id).first()
+        )
+        if not project:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Проект с ID {fault_update.project_id} не найден",
+            )
+
     # Обновляем поля
     update_data = fault_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(fault, field, value)
-    
+
     if fault_update.status == StatusEnum.CLOSED:
         fault.resolved_at = datetime.utcnow()
-    
+
     db.commit()
     db.refresh(fault)
-    
+
     # Записываем историю
     author = current_user.username or "system"
     field_labels = {
@@ -384,12 +435,12 @@ def update_fault(
         "project_id": "Проект",
         "parent_fault_id": "Родительская неисправность",
         "linked_knowledge_ids": "Связанные статьи",
-        "planned_actions": "Планируемые мероприятия"
+        "planned_actions": "Планируемые мероприятия",
     }
-    
+
     for field, old_value in old_values.items():
         new_value = getattr(fault, field, None)
-        
+
         if field == "project_id":
             old_project = db.query(Project).filter(Project.id == old_value).first()
             new_project = db.query(Project).filter(Project.id == new_value).first()
@@ -398,39 +449,89 @@ def update_fault(
         elif field == "parent_fault_id":
             old_parent = db.query(Fault).filter(Fault.id == old_value).first()
             new_parent = db.query(Fault).filter(Fault.id == new_value).first()
-            old_value_str = f"#{old_parent.id} {old_parent.title}" if old_parent else "Нет"
-            new_value_str = f"#{new_parent.id} {new_parent.title}" if new_parent else "Нет"
+            old_value_str = (
+                f"#{old_parent.id} {old_parent.title}" if old_parent else "Нет"
+            )
+            new_value_str = (
+                f"#{new_parent.id} {new_parent.title}" if new_parent else "Нет"
+            )
         elif field == "linked_knowledge_ids":
-            old_ids = [int(id.strip()) for id in old_value.split(',') if id.strip()] if old_value else []
-            new_ids = [int(id.strip()) for id in new_value.split(',') if id.strip()] if new_value else []
-            
-            old_articles = db.query(KnowledgeBase).filter(KnowledgeBase.id.in_(old_ids)).all() if old_ids else []
-            new_articles = db.query(KnowledgeBase).filter(KnowledgeBase.id.in_(new_ids)).all() if new_ids else []
-            
-            old_value_str = ', '.join([a.title for a in old_articles]) if old_articles else "Нет статей"
-            new_value_str = ', '.join([a.title for a in new_articles]) if new_articles else "Нет статей"
-            
+            old_ids = (
+                [int(id.strip()) for id in old_value.split(",") if id.strip()]
+                if old_value
+                else []
+            )
+            new_ids = (
+                [int(id.strip()) for id in new_value.split(",") if id.strip()]
+                if new_value
+                else []
+            )
+
+            old_articles = (
+                db.query(KnowledgeBase).filter(KnowledgeBase.id.in_(old_ids)).all()
+                if old_ids
+                else []
+            )
+            new_articles = (
+                db.query(KnowledgeBase).filter(KnowledgeBase.id.in_(new_ids)).all()
+                if new_ids
+                else []
+            )
+
+            old_value_str = (
+                ", ".join([a.title for a in old_articles])
+                if old_articles
+                else "Нет статей"
+            )
+            new_value_str = (
+                ", ".join([a.title for a in new_articles])
+                if new_articles
+                else "Нет статей"
+            )
+
             for article in old_articles:
                 if article.id not in new_ids:
-                    article_fault_ids = [int(id.strip()) for id in article.related_faults.split(',') if id.strip()] if article.related_faults else []
+                    article_fault_ids = (
+                        [
+                            int(id.strip())
+                            for id in article.related_faults.split(",")
+                            if id.strip()
+                        ]
+                        if article.related_faults
+                        else []
+                    )
                     if fault_id in article_fault_ids:
                         article_fault_ids.remove(fault_id)
-                        article.related_faults = ','.join([str(id) for id in article_fault_ids]) if article_fault_ids else None
+                        article.related_faults = (
+                            ",".join([str(id) for id in article_fault_ids])
+                            if article_fault_ids
+                            else None
+                        )
                         db.add(article)
-            
+
             for article in new_articles:
                 if article.id not in old_ids:
-                    article_fault_ids = [int(id.strip()) for id in article.related_faults.split(',') if id.strip()] if article.related_faults else []
+                    article_fault_ids = (
+                        [
+                            int(id.strip())
+                            for id in article.related_faults.split(",")
+                            if id.strip()
+                        ]
+                        if article.related_faults
+                        else []
+                    )
                     if fault_id not in article_fault_ids:
                         article_fault_ids.append(fault_id)
-                        article.related_faults = ','.join([str(id) for id in article_fault_ids])
+                        article.related_faults = ",".join(
+                            [str(id) for id in article_fault_ids]
+                        )
                         db.add(article)
-            
+
             db.commit()
         else:
             old_value_str = str(old_value) if old_value is not None else ""
             new_value_str = str(new_value) if new_value is not None else ""
-        
+
         if old_value_str != new_value_str:
             log_history(
                 db=db,
@@ -439,18 +540,23 @@ def update_fault(
                 field=field_labels.get(field, field),
                 old_value=old_value_str,
                 new_value=new_value_str,
-                author=author
+                author=author,
             )
-    
+
     # ✅ Возвращаем правильно сериализованный ответ
     db.refresh(fault)
-    
-    fault_with_relations = db.query(Fault).options(
-        joinedload(Fault.project),
-        joinedload(Fault.parent_fault),
-        joinedload(Fault.clones)
-    ).filter(Fault.id == fault.id).first()
-    
+
+    fault_with_relations = (
+        db.query(Fault)
+        .options(
+            joinedload(Fault.project),
+            joinedload(Fault.parent_fault),
+            joinedload(Fault.clones),
+        )
+        .filter(Fault.id == fault.id)
+        .first()
+    )
+
     response_data = {
         "id": fault_with_relations.id,
         "title": fault_with_relations.title,
@@ -473,27 +579,33 @@ def update_fault(
             "unit": fault_with_relations.project.unit,
             "type": fault_with_relations.project.type,
             "created_at": fault_with_relations.project.created_at,
-            "updated_at": fault_with_relations.project.updated_at
-        } if fault_with_relations.project else None,
+            "updated_at": fault_with_relations.project.updated_at,
+        }
+        if fault_with_relations.project
+        else None,
         "comments": [],
         "linked_knowledge": [],
         "parent_fault": {
             "id": fault_with_relations.parent_fault.id,
             "title": fault_with_relations.parent_fault.title,
             "severity": fault_with_relations.parent_fault.severity,
-            "status": fault_with_relations.parent_fault.status
-        } if fault_with_relations.parent_fault else None,
+            "status": fault_with_relations.parent_fault.status,
+        }
+        if fault_with_relations.parent_fault
+        else None,
         "clones": [
             {
                 "id": clone.id,
                 "title": clone.title,
                 "severity": clone.severity,
-                "status": clone.status
+                "status": clone.status,
             }
             for clone in fault_with_relations.clones
-        ] if fault_with_relations.clones else []
+        ]
+        if fault_with_relations.clones
+        else [],
     }
-    
+
     return response_data
 
 
@@ -560,7 +672,7 @@ def log_history(
     field: Optional[str] = None,
     old_value: Optional[str] = None,
     new_value: Optional[str] = None,
-    author: str = "system"
+    author: str = "system",
 ):
     """Запись события в историю"""
     try:
@@ -570,25 +682,32 @@ def log_history(
             field=field,
             old_value=old_value,
             new_value=new_value,
-            author=author
+            author=author,
         )
         db.add(history)
         db.commit()
-        print(f"✅ История записана: {event_type} - {field} - {old_value} -> {new_value}")
+        print(
+            f"✅ История записана: {event_type} - {field} - {old_value} -> {new_value}"
+        )
     except Exception as e:
         print(f"❌ Ошибка записи истории: {e}")
         db.rollback()
 
-@router.post("/{fault_id}/clone", response_model=FaultResponse, status_code=status.HTTP_201_CREATED)
+
+@router.post(
+    "/{fault_id}/clone",
+    response_model=FaultResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 def clone_fault(
     fault_id: int,
     target_project_id: int,
     db: Session = Depends(get_db),
-    current_user: UserResponse = Depends(get_current_user)
+    current_user: UserResponse = Depends(get_current_user),
 ):
     """
     Клонировать неисправность в другой проект
-    
+
     - Сохраняется название, описание, важность
     - Создаётся связь с родительской неисправностью
     - Копируются вложения (файлы)
@@ -596,38 +715,44 @@ def clone_fault(
     - В истории отмечается клонирование
     """
     print(f"🔄 Клонирование неисправности #{fault_id} в проект #{target_project_id}")
-    
+
     try:
         # 1. Находим исходную неисправность
-        original_fault = db.query(Fault).options(
-            joinedload(Fault.project)
-        ).filter(Fault.id == fault_id).first()
-        
+        original_fault = (
+            db.query(Fault)
+            .options(joinedload(Fault.project))
+            .filter(Fault.id == fault_id)
+            .first()
+        )
+
         if not original_fault:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Исходная неисправность не найдена"
+                detail="Исходная неисправность не найдена",
             )
-        
-        print(f"   📋 Исходная неисправность: #{original_fault.id} - {original_fault.title}")
-        
+
+        print(
+            f"   📋 Исходная неисправность: #{original_fault.id} - {original_fault.title}"
+        )
+
         # 2. Проверяем целевой проект
-        target_project = db.query(Project).filter(Project.id == target_project_id).first()
+        target_project = (
+            db.query(Project).filter(Project.id == target_project_id).first()
+        )
         if not target_project:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Целевой проект не найден"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Целевой проект не найден"
             )
-        
+
         print(f"   📁 Целевой проект: #{target_project.id} - {target_project.name}")
-        
+
         # 3. Проверяем, что не клонируем в тот же проект
         if original_fault.project_id == target_project_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Нельзя клонировать неисправность в тот же проект"
+                detail="Нельзя клонировать неисправность в тот же проект",
             )
-        
+
         # 4. Создаём клон
         clone_fault_obj = Fault(
             title=f"[КЛОН] {original_fault.title}",
@@ -636,39 +761,41 @@ def clone_fault(
             status="open",
             project_id=target_project_id,
             parent_fault_id=original_fault.id,
-            linked_knowledge_ids=original_fault.linked_knowledge_ids
+            linked_knowledge_ids=original_fault.linked_knowledge_ids,
         )
-        
+
         db.add(clone_fault_obj)
         db.flush()
         print(f"   ✅ Клон создан: #{clone_fault_obj.id}")
-        
+
         # 5. Копируем вложения
-        attachments = db.query(FaultAttachment).filter(
-            FaultAttachment.fault_id == original_fault.id
-        ).all()
-        
-        BASE_DIR = Path(__file__).resolve().parent.parent.parent
-        UPLOAD_DIR = BASE_DIR / "uploads"
-        
+        attachments = (
+            db.query(FaultAttachment)
+            .filter(FaultAttachment.fault_id == original_fault.id)
+            .all()
+        )
+
+        base_dir = Path(__file__).resolve().parent.parent.parent
+        upload_dir = base_dir / "uploads"
+
         for attachment in attachments:
             try:
                 old_path = Path(attachment.file_path)
                 if old_path.exists():
-                    clone_dir = UPLOAD_DIR / str(clone_fault_obj.id)
+                    clone_dir = upload_dir / str(clone_fault_obj.id)
                     clone_dir.mkdir(exist_ok=True)
-                    
+
                     new_filename = f"{current_user.username}_{attachment.filename}"
                     new_path = clone_dir / new_filename
-                    
+
                     counter = 1
                     name, ext = os.path.splitext(new_filename)
                     while new_path.exists():
                         new_path = clone_dir / f"{name}_{counter}{ext}"
                         counter += 1
-                    
+
                     shutil.copy2(old_path, new_path)
-                    
+
                     new_attachment = FaultAttachment(
                         fault_id=clone_fault_obj.id,
                         filename=attachment.filename,
@@ -676,13 +803,13 @@ def clone_fault(
                         file_size=attachment.file_size,
                         file_type=attachment.file_type,
                         description=attachment.description,
-                        uploaded_by=current_user.username
+                        uploaded_by=current_user.username,
                     )
                     db.add(new_attachment)
                     print(f"   📎 Скопировано вложение: {attachment.filename}")
             except Exception as e:
                 print(f"   ⚠️ Ошибка копирования вложения {attachment.filename}: {e}")
-        
+
         # 6. ✅ Записываем историю для клона
         log_history(
             db=db,
@@ -691,10 +818,10 @@ def clone_fault(
             field="creation",
             old_value=None,
             new_value=f"Создан клон неисправности #{original_fault.id} из проекта '{original_fault.project.name if original_fault.project else 'Без проекта'}'",
-            author=current_user.username
+            author=current_user.username,
         )
-        print(f"   📝 История для клона записана")
-        
+        print("   📝 История для клона записана")
+
         # 7. ✅ Записываем историю для родительской неисправности
         log_history(
             db=db,
@@ -703,10 +830,10 @@ def clone_fault(
             field="Клонирование",
             old_value=None,
             new_value=f"Создан клон в проекте '{target_project.name}' (#{clone_fault_obj.id})",
-            author=current_user.username
+            author=current_user.username,
         )
-        print(f"   📝 История для родителя записана")
-        
+        print("   📝 История для родителя записана")
+
         # 8. ✅ Записываем дополнительную информацию в историю клона
         # Информация о родителе
         log_history(
@@ -716,9 +843,9 @@ def clone_fault(
             field="Родительская неисправность",
             old_value=None,
             new_value=f"#{original_fault.id} {original_fault.title}",
-            author=current_user.username
+            author=current_user.username,
         )
-        
+
         # Информация о целевом проекте
         log_history(
             db=db,
@@ -727,9 +854,9 @@ def clone_fault(
             field="Целевой проект",
             old_value=None,
             new_value=f"{target_project.name}",
-            author=current_user.username
+            author=current_user.username,
         )
-        
+
         # 9. ✅ Если были скопированы вложения, записываем это в историю
         if attachments:
             log_history(
@@ -739,9 +866,9 @@ def clone_fault(
                 field="Вложения",
                 old_value=None,
                 new_value=f"Скопировано {len(attachments)} файлов",
-                author=current_user.username
+                author=current_user.username,
             )
-        
+
         # 10. ✅ Если были скопированы связанные статьи
         if original_fault.linked_knowledge_ids:
             log_history(
@@ -750,20 +877,25 @@ def clone_fault(
                 event_type="field_change",
                 field="Связанные статьи",
                 old_value=None,
-                new_value=f"Скопированы связанные статьи",
-                author=current_user.username
+                new_value="Скопированы связанные статьи",
+                author=current_user.username,
             )
-        
+
         db.commit()
         db.refresh(clone_fault_obj)
-        
+
         # Загружаем связи для ответа
-        clone_with_relations = db.query(Fault).options(
-            joinedload(Fault.project),
-            joinedload(Fault.parent_fault),
-            joinedload(Fault.clones)
-        ).filter(Fault.id == clone_fault_obj.id).first()
-        
+        clone_with_relations = (
+            db.query(Fault)
+            .options(
+                joinedload(Fault.project),
+                joinedload(Fault.parent_fault),
+                joinedload(Fault.clones),
+            )
+            .filter(Fault.id == clone_fault_obj.id)
+            .first()
+        )
+
         # Формируем ответ
         response_data = {
             "id": clone_with_relations.id,
@@ -784,47 +916,54 @@ def clone_fault(
                 "unit": clone_with_relations.project.unit,
                 "type": clone_with_relations.project.type,
                 "created_at": clone_with_relations.project.created_at,
-                "updated_at": clone_with_relations.project.updated_at
-            } if clone_with_relations.project else None,
+                "updated_at": clone_with_relations.project.updated_at,
+            }
+            if clone_with_relations.project
+            else None,
             "comments": [],
             "linked_knowledge": [],
             "parent_fault": {
                 "id": clone_with_relations.parent_fault.id,
                 "title": clone_with_relations.parent_fault.title,
                 "severity": clone_with_relations.parent_fault.severity,
-                "status": clone_with_relations.parent_fault.status
-            } if clone_with_relations.parent_fault else None,
+                "status": clone_with_relations.parent_fault.status,
+            }
+            if clone_with_relations.parent_fault
+            else None,
             "clones": [
                 {
                     "id": clone.id,
                     "title": clone.title,
                     "severity": clone.severity,
-                    "status": clone.status
+                    "status": clone.status,
                 }
                 for clone in clone_with_relations.clones
-            ] if clone_with_relations.clones else []
+            ]
+            if clone_with_relations.clones
+            else [],
         }
-        
+
         print(f"✅ Клонирование завершено успешно! Новый ID: #{clone_fault_obj.id}")
         return response_data
-        
+
     except HTTPException:
         raise
     except Exception as e:
         print(f"❌ Ошибка при клонировании: {e}")
         import traceback
+
         traceback.print_exc()
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Ошибка при клонировании: {str(e)}"
-        )
+            detail=f"Ошибка при клонировании: {str(e)}",
+        ) from e
 
 
 @router.get("/categories/", response_model=List[str])
 def get_categories(
     db: Session = Depends(get_db),
-    current_user: UserResponse = Depends(get_current_user)
+    current_user: UserResponse = Depends(get_current_user),
 ):
     """Получить список всех категорий неисправностей"""
     categories = db.query(Fault.category).distinct().all()

@@ -1,4 +1,3 @@
-import os
 import json
 import shutil
 from datetime import datetime
@@ -8,12 +7,18 @@ from typing import Dict, List, Optional
 # ✅ Импортируем только после того, как путь настроен
 from sqlalchemy.orm import Session
 
+
 # ✅ Отложенный импорт для избежания циклических ссылок
 def get_models():
     from app.models.all_models import (
-        User, Project, Fault, FaultComment, 
-        FaultHistory, KnowledgeBase
+        Fault,
+        FaultComment,
+        FaultHistory,
+        KnowledgeBase,
+        Project,
+        User,
     )
+
     return User, Project, Fault, FaultComment, FaultHistory, KnowledgeBase
 
 
@@ -56,10 +61,13 @@ class BackupService:
                 "knowledge": len(data["knowledge"]),
             },
             "total_records": (
-                len(data["users"]) + len(data["projects"]) + 
-                len(data["faults"]) + len(data["comments"]) + 
-                len(data["history"]) + len(data["knowledge"])
-            )
+                len(data["users"])
+                + len(data["projects"])
+                + len(data["faults"])
+                + len(data["comments"])
+                + len(data["history"])
+                + len(data["knowledge"])
+            ),
         }
 
         # Сохраняем информацию о бэкапе
@@ -73,27 +81,34 @@ class BackupService:
 
     def _collect_all_data(self, db: Session) -> Dict:
         """Сбор всех данных из базы"""
-        User, Project, Fault, FaultComment, FaultHistory, KnowledgeBase = get_models()
-        
+        (
+            user_model,
+            project_model,
+            fault_model,
+            comment_model,
+            history_model,
+            knowledge_model,
+        ) = get_models()
+
         return {
-            "users": self._serialize_users(db, User),
-            "projects": self._serialize_projects(db, Project),
-            "faults": self._serialize_faults(db, Fault),
-            "comments": self._serialize_comments(db, FaultComment),
-            "history": self._serialize_history(db, FaultHistory),
-            "knowledge": self._serialize_knowledge(db, KnowledgeBase),
+            "users": self._serialize_users(db, user_model),
+            "projects": self._serialize_projects(db, project_model),
+            "faults": self._serialize_faults(db, fault_model),
+            "comments": self._serialize_comments(db, comment_model),
+            "history": self._serialize_history(db, history_model),
+            "knowledge": self._serialize_knowledge(db, knowledge_model),
         }
 
-    def _serialize_users(self, db: Session, User) -> List[Dict]:
+    def _serialize_users(self, db: Session, user_model) -> List[Dict]:
         """Сериализация пользователей"""
-        users = db.query(User).all()
+        users = db.query(user_model).all()
         return [
             {
                 "id": u.id,
                 "username": u.username,
                 "email": u.email,
                 "full_name": u.full_name,
-                "role": u.role.value if hasattr(u.role, 'value') else str(u.role),
+                "role": u.role.value if hasattr(u.role, "value") else str(u.role),
                 "is_active": u.is_active,
                 "created_at": u.created_at.isoformat() if u.created_at else None,
                 "updated_at": u.updated_at.isoformat() if u.updated_at else None,
@@ -101,9 +116,9 @@ class BackupService:
             for u in users
         ]
 
-    def _serialize_projects(self, db: Session, Project) -> List[Dict]:
+    def _serialize_projects(self, db: Session, project_model) -> List[Dict]:
         """Сериализация проектов"""
-        projects = db.query(Project).all()
+        projects = db.query(project_model).all()
         return [
             {
                 "id": p.id,
@@ -119,9 +134,9 @@ class BackupService:
             for p in projects
         ]
 
-    def _serialize_faults(self, db: Session, Fault) -> List[Dict]:
+    def _serialize_faults(self, db: Session, fault_model) -> List[Dict]:
         """Сериализация неисправностей"""
-        faults = db.query(Fault).all()
+        faults = db.query(fault_model).all()
         return [
             {
                 "id": f.id,
@@ -137,9 +152,9 @@ class BackupService:
             for f in faults
         ]
 
-    def _serialize_comments(self, db: Session, FaultComment) -> List[Dict]:
+    def _serialize_comments(self, db: Session, comment_model) -> List[Dict]:
         """Сериализация комментариев"""
-        comments = db.query(FaultComment).all()
+        comments = db.query(comment_model).all()
         return [
             {
                 "id": c.id,
@@ -152,9 +167,9 @@ class BackupService:
             for c in comments
         ]
 
-    def _serialize_history(self, db: Session, FaultHistory) -> List[Dict]:
+    def _serialize_history(self, db: Session, history_model) -> List[Dict]:
         """Сериализация истории"""
-        history = db.query(FaultHistory).all()
+        history = db.query(history_model).all()
         return [
             {
                 "id": h.id,
@@ -169,9 +184,9 @@ class BackupService:
             for h in history
         ]
 
-    def _serialize_knowledge(self, db: Session, KnowledgeBase) -> List[Dict]:
+    def _serialize_knowledge(self, db: Session, knowledge_model) -> List[Dict]:
         """Сериализация базы знаний"""
-        knowledge = db.query(KnowledgeBase).all()
+        knowledge = db.query(knowledge_model).all()
         return [
             {
                 "id": k.id,
@@ -199,27 +214,39 @@ class BackupService:
 
     def _cleanup_old_backups(self, keep: int = 10):
         """Удаление старых бэкапов, оставляя последние N"""
-        backups = sorted(self.backup_dir.glob("backup_*"), key=lambda x: x.stat().st_mtime, reverse=True)
+        backups = sorted(
+            self.backup_dir.glob("backup_*"),
+            key=lambda x: x.stat().st_mtime,
+            reverse=True,
+        )
         for old_backup in backups[keep:]:
             shutil.rmtree(old_backup)
 
     def list_backups(self) -> List[Dict]:
         """Список всех бэкапов с информацией"""
         backups = []
-        for folder in sorted(self.backup_dir.glob("backup_*"), key=lambda x: x.stat().st_mtime, reverse=True):
+        for folder in sorted(
+            self.backup_dir.glob("backup_*"),
+            key=lambda x: x.stat().st_mtime,
+            reverse=True,
+        ):
             info_file = folder / "info.json"
             if info_file.exists():
-                with open(info_file, "r", encoding="utf-8") as f:
+                with open(info_file, encoding="utf-8") as f:
                     info = json.load(f)
-                backups.append({
-                    "name": folder.name,
-                    "timestamp": info.get("timestamp"),
-                    "size": info.get("size", 0),
-                    "size_mb": round(info.get("size", 0) / (1024 * 1024), 2),
-                    "tables": info.get("tables", {}),
-                    "total_records": info.get("total_records", 0),
-                    "created_at": datetime.fromtimestamp(folder.stat().st_mtime).isoformat()
-                })
+                backups.append(
+                    {
+                        "name": folder.name,
+                        "timestamp": info.get("timestamp"),
+                        "size": info.get("size", 0),
+                        "size_mb": round(info.get("size", 0) / (1024 * 1024), 2),
+                        "tables": info.get("tables", {}),
+                        "total_records": info.get("total_records", 0),
+                        "created_at": datetime.fromtimestamp(
+                            folder.stat().st_mtime
+                        ).isoformat(),
+                    }
+                )
         return backups
 
     def get_backup_path(self, backup_name: str) -> Optional[Path]:

@@ -1,6 +1,3 @@
-import pytest
-
-
 def test_add_comment(client, auth_headers, test_fault):
     """Тест добавления комментария"""
     response = client.post(
@@ -8,11 +5,11 @@ def test_add_comment(client, auth_headers, test_fault):
         json={
             "content": "Тестовый комментарий",
             "is_internal": False,
-            "author": "testuser"
+            "author": "testuser",
         },
-        headers=auth_headers
+        headers=auth_headers,
     )
-    
+
     assert response.status_code == 201
     data = response.json()
     assert data["content"] == "Тестовый комментарий"
@@ -27,16 +24,13 @@ def test_list_comments(client, auth_headers, test_fault):
         json={
             "content": "Комментарий для списка",
             "is_internal": False,
-            "author": "testuser"
+            "author": "testuser",
         },
-        headers=auth_headers
+        headers=auth_headers,
     )
-    
-    response = client.get(
-        f"/api/faults/{test_fault.id}/comments",
-        headers=auth_headers
-    )
-    
+
+    response = client.get(f"/api/faults/{test_fault.id}/comments", headers=auth_headers)
+
     assert response.status_code == 200
     data = response.json()
     assert len(data) >= 1
@@ -50,11 +44,11 @@ def test_add_internal_comment(client, auth_headers, test_fault):
         json={
             "content": "Внутренний комментарий",
             "is_internal": True,
-            "author": "testuser"
+            "author": "testuser",
         },
-        headers=auth_headers
+        headers=auth_headers,
     )
-    
+
     assert response.status_code == 201
     data = response.json()
-    assert data["is_internal"] == True
+    assert data["is_internal"] is True

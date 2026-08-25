@@ -1,10 +1,11 @@
 import shutil
-from pathlib import Path
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
+from pathlib import Path
+from typing import List
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
-from typing import List
 
 from app.core.database import get_db
 from app.core.security import get_current_user
@@ -29,7 +30,7 @@ def log_history(
     field: str,
     old_value: str = None,
     new_value: str = None,
-    author: str = "system"
+    author: str = "system",
 ):
     """Запись события в историю"""
     try:
@@ -39,7 +40,7 @@ def log_history(
             field=field,
             old_value=old_value,
             new_value=new_value,
-            author=author
+            author=author,
         )
         db.add(history)
         db.commit()
@@ -48,33 +49,34 @@ def log_history(
         db.rollback()
 
 
-@router.post("/", response_model=AttachmentResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/", response_model=AttachmentResponse, status_code=status.HTTP_201_CREATED
+)
 async def upload_attachment(
     fault_id: int,
     file: UploadFile = File(...),
     description: str = Form(""),
     db: Session = Depends(get_db),
-    current_user: UserResponse = Depends(get_current_user)
+    current_user: UserResponse = Depends(get_current_user),
 ):
     """Загрузить файл к неисправности"""
     print(f"📤 Загрузка файла для неисправности #{fault_id}")
-    
+
     fault = db.query(Fault).filter(Fault.id == fault_id).first()
     if not fault:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Неисправность не найдена"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Неисправность не найдена"
         )
 
     # Проверяем размер файла (максимум 10MB)
     file.file.seek(0, 2)
     file_size = file.file.tell()
     file.file.seek(0)
-    
+
     if file_size > 10 * 1024 * 1024:  # 10MB
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail="Файл слишком большой. Максимальный размер 10MB"
+            detail="Файл слишком большой. Максимальный размер 10MB",
         )
 
     # Создаём папку для неисправности
@@ -82,9 +84,11 @@ async def upload_attachment(
     fault_dir.mkdir(exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    safe_filename = f"{timestamp}_{current_user.username}_{file.filename.replace(' ', '_')}"
+    safe_filename = (
+        f"{timestamp}_{current_user.username}_{file.filename.replace(' ', '_')}"
+    )
     file_path = fault_dir / safe_filename
-    
+
     try:
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
@@ -93,8 +97,8 @@ async def upload_attachment(
         print(f"❌ Ошибка сохранения файла: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Ошибка сохранения файла: {str(e)}"
-        )
+            detail=f"Ошибка сохранения файла: {str(e)}",
+        ) from e
 
     # Создаём запись в БД
     attachment = FaultAttachment(
@@ -104,9 +108,9 @@ async def upload_attachment(
         file_size=file_size,
         file_type=file.content_type or "application/octet-stream",
         description=description,
-        uploaded_by=current_user.username
+        uploaded_by=current_user.username,
     )
-    
+
     try:
         db.add(attachment)
         db.commit()
@@ -118,8 +122,8 @@ async def upload_attachment(
             file_path.unlink()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Ошибка записи в БД: {str(e)}"
-        )
+            detail=f"Ошибка записи в БД: {str(e)}",
+        ) from e
 
     # ✅ Записываем в историю
     log_history(
@@ -129,7 +133,7 @@ async def upload_attachment(
         field="Вложение",
         old_value=None,
         new_value=f"Загружен файл: {file.filename} ({description or 'без описания'})",
-        author=current_user.username
+        author=current_user.username,
     )
 
     return attachment
@@ -139,20 +143,22 @@ async def upload_attachment(
 def list_attachments(
     fault_id: int,
     db: Session = Depends(get_db),
-    current_user: UserResponse = Depends(get_current_user)
+    current_user: UserResponse = Depends(get_current_user),
 ):
     """Получить список всех вложений для неисправности"""
     fault = db.query(Fault).filter(Fault.id == fault_id).first()
     if not fault:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Неисправность не найдена"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Неисправность не найдена"
         )
 
-    attachments = db.query(FaultAttachment).filter(
-        FaultAttachment.fault_id == fault_id
-    ).order_by(FaultAttachment.created_at.desc()).all()
-    
+    attachments = (
+        db.query(FaultAttachment)
+        .filter(FaultAttachment.fault_id == fault_id)
+        .order_by(FaultAttachment.created_at.desc())
+        .all()
+    )
+
     return attachments
 
 
@@ -161,31 +167,32 @@ def download_attachment(
     fault_id: int,
     attachment_id: int,
     db: Session = Depends(get_db),
-    current_user: UserResponse = Depends(get_current_user)
+    current_user: UserResponse = Depends(get_current_user),
 ):
     """Скачать файл вложения"""
-    attachment = db.query(FaultAttachment).filter(
-        FaultAttachment.id == attachment_id,
-        FaultAttachment.fault_id == fault_id
-    ).first()
-    
+    attachment = (
+        db.query(FaultAttachment)
+        .filter(
+            FaultAttachment.id == attachment_id, FaultAttachment.fault_id == fault_id
+        )
+        .first()
+    )
+
     if not attachment:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Вложение не найдено"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Вложение не найдено"
         )
 
     file_path = Path(attachment.file_path)
     if not file_path.exists():
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Файл не найден на сервере"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Файл не найден на сервере"
         )
 
     return FileResponse(
         path=file_path,
         filename=attachment.filename,
-        media_type=attachment.file_type or "application/octet-stream"
+        media_type=attachment.file_type or "application/octet-stream",
     )
 
 
@@ -194,18 +201,20 @@ def delete_attachment(
     fault_id: int,
     attachment_id: int,
     db: Session = Depends(get_db),
-    current_user: UserResponse = Depends(get_current_user)
+    current_user: UserResponse = Depends(get_current_user),
 ):
     """Удалить вложение"""
-    attachment = db.query(FaultAttachment).filter(
-        FaultAttachment.id == attachment_id,
-        FaultAttachment.fault_id == fault_id
-    ).first()
-    
+    attachment = (
+        db.query(FaultAttachment)
+        .filter(
+            FaultAttachment.id == attachment_id, FaultAttachment.fault_id == fault_id
+        )
+        .first()
+    )
+
     if not attachment:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Вложение не найдено"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Вложение не найдено"
         )
 
     # Сохраняем имя файла для истории
@@ -228,7 +237,7 @@ def delete_attachment(
         field="Вложение",
         old_value=f"Удалён файл: {filename}",
         new_value=None,
-        author=current_user.username
+        author=current_user.username,
     )
 
     return None

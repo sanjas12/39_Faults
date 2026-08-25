@@ -1,8 +1,10 @@
 import smtplib
-from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from typing import List, Optional
+from email.mime.text import MIMEText
+from typing import List
+
 from app.core.config import settings
+
 
 class EmailService:
     def __init__(self):
@@ -20,13 +22,13 @@ class EmailService:
             return True
 
         try:
-            msg = MIMEMultipart('alternative')
-            msg['Subject'] = subject
-            msg['From'] = self.from_email
-            msg['To'] = to_email
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = subject
+            msg["From"] = self.from_email
+            msg["To"] = to_email
 
             # HTML версия
-            html_part = MIMEText(html_content, 'html')
+            html_part = MIMEText(html_content, "html")
             msg.attach(html_part)
 
             with smtplib.SMTP(self.host, self.port) as server:
@@ -41,7 +43,9 @@ class EmailService:
             print(f"❌ Ошибка отправки email: {e}")
             return False
 
-    def send_fault_created(self, fault, project_name: str, user_name: str, recipients: List[str]):
+    def send_fault_created(
+        self, fault, project_name: str, user_name: str, recipients: List[str]
+    ):
         """Уведомление о создании неисправности"""
         subject = f"🔴 Новая неисправность #{fault.id}: {fault.title}"
 
@@ -69,7 +73,7 @@ class EmailService:
             </div>
             <div class="content">
                 <h3>#{fault.id} {fault.title}</h3>
-                
+
                 <div class="field">
                     <span class="label">Проект:</span> {project_name}
                 </div>
@@ -82,9 +86,9 @@ class EmailService:
                 </div>
                 <div class="field">
                     <span class="label">Описание:</span><br>
-                    {fault.description or 'Нет описания'}
+                    {fault.description or "Нет описания"}
                 </div>
-                
+
                 <div style="margin: 20px 0;">
                     <a href="http://localhost:3000/faults/{fault.id}" class="button">🔗 Перейти к неисправности</a>
                 </div>
@@ -100,16 +104,24 @@ class EmailService:
         for recipient in recipients:
             self._send_email(recipient, subject, html_content)
 
-    def send_fault_updated(self, fault, user_name: str, changes: dict, recipients: List[str]):
+    def send_fault_updated(
+        self, fault, user_name: str, changes: dict, recipients: List[str]
+    ):
         """Уведомление об изменении неисправности"""
         subject = f"✏️ Изменена неисправность #{fault.id}: {fault.title}"
 
-        changes_html = "".join([
-            f"<div class='field'><span class='label'>{field}:</span> "
-            f"<span style='color: #dc3545;'>{old}</span> → "
-            f"<span style='color: #28a745;'>{new}</span></div>"
-            for field, (old, new) in changes.items()
-        ]) if changes else "<p>Изменения не указаны</p>"
+        changes_html = (
+            "".join(
+                [
+                    f"<div class='field'><span class='label'>{field}:</span> "
+                    f"<span style='color: #dc3545;'>{old}</span> → "
+                    f"<span style='color: #28a745;'>{new}</span></div>"
+                    for field, (old, new) in changes.items()
+                ]
+            )
+            if changes
+            else "<p>Изменения не указаны</p>"
+        )
 
         html_content = f"""
         <html>
@@ -136,12 +148,12 @@ class EmailService:
             </div>
             <div class="content">
                 <h3>#{fault.id} {fault.title}</h3>
-                
+
                 <div style="margin: 15px 0; padding: 10px; background: #f8f9fa; border-radius: 8px;">
                     <h4>📝 Изменения:</h4>
                     {changes_html}
                 </div>
-                
+
                 <div style="margin: 20px 0;">
                     <a href="http://localhost:3000/faults/{fault.id}" class="button">🔗 Перейти к неисправности</a>
                 </div>
@@ -157,13 +169,15 @@ class EmailService:
         for recipient in recipients:
             self._send_email(recipient, subject, html_content)
 
-    def send_fault_status_changed(self, fault, new_status: str, user_name: str, recipients: List[str]):
+    def send_fault_status_changed(
+        self, fault, new_status: str, user_name: str, recipients: List[str]
+    ):
         """Уведомление об изменении статуса"""
         status_icons = {
-            'open': '🟡 Открыта',
-            'in_progress': '🟠 В работе',
-            'review': '🔵 На проверке',
-            'closed': '✅ Закрыта'
+            "open": "🟡 Открыта",
+            "in_progress": "🟠 В работе",
+            "review": "🔵 На проверке",
+            "closed": "✅ Закрыта",
         }
 
         subject = f"🔄 Изменён статус неисправности #{fault.id}: {fault.title}"
@@ -190,12 +204,12 @@ class EmailService:
             </div>
             <div class="content">
                 <h3>#{fault.id} {fault.title}</h3>
-                
+
                 <div style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; text-align: center; font-size: 18px;">
                     <span>Новый статус:</span>
                     <span class="status-{new_status}">{status_icons.get(new_status, new_status)}</span>
                 </div>
-                
+
                 <div style="margin: 20px 0;">
                     <a href="http://localhost:3000/faults/{fault.id}" class="button">🔗 Перейти к неисправности</a>
                 </div>
@@ -210,6 +224,7 @@ class EmailService:
 
         for recipient in recipients:
             self._send_email(recipient, subject, html_content)
+
 
 # Глобальный экземпляр
 email_service = EmailService()

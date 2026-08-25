@@ -1,20 +1,27 @@
-from pydantic import BaseModel, Field, validator
 from datetime import datetime
 from typing import Optional
+
+from pydantic import BaseModel, Field, validator
 
 
 class ProjectBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=200, description="Название проекта")
-    description: Optional[str] = Field(None, max_length=1000, description="Описание проекта")
+    description: Optional[str] = Field(
+        None, max_length=1000, description="Описание проекта"
+    )
     client: Optional[str] = Field(None, max_length=200, description="Клиент")
     station: Optional[str] = Field(None, max_length=200, description="Станция")
     unit: Optional[int] = Field(None, description="Номер блока")
     type: Optional[str] = Field(None, max_length=200, description="Тип системы")
-    
-    contact_name: Optional[str] = Field(None, max_length=200, description="ФИО ответственного")
+
+    contact_name: Optional[str] = Field(
+        None, max_length=200, description="ФИО ответственного"
+    )
     contact_phone: Optional[str] = Field(None, max_length=50, description="Телефон")
     contact_email: Optional[str] = Field(None, max_length=200, description="Email")
-    contact_position: Optional[str] = Field(None, max_length=200, description="Должность")
+    contact_position: Optional[str] = Field(
+        None, max_length=200, description="Должность"
+    )
 
     @validator("name")
     @classmethod
@@ -28,6 +35,7 @@ class ProjectBase(BaseModel):
 class ProjectCreate(ProjectBase):
     pass
 
+
 class ProjectUpdate(BaseModel):
     """Схема для обновления проекта (все поля опциональны)."""
 
@@ -37,17 +45,18 @@ class ProjectUpdate(BaseModel):
     station: Optional[str] = Field(None, max_length=200)
     unit: Optional[int] = Field(None)
     type: Optional[str] = Field(None, max_length=200)
-    
-     # Контактная информация
+
+    # Контактная информация
     contact_name: Optional[str] = Field(None, max_length=200)
     contact_phone: Optional[str] = Field(None, max_length=50)
     contact_email: Optional[str] = Field(None, max_length=200)
     contact_position: Optional[str] = Field(None, max_length=200)
 
-    @validator('name')
+    @validator("name")
+    @classmethod
     def name_not_empty(cls, v):
         if v is not None and (not v or not v.strip()):
-            raise ValueError('Название проекта не может быть пустым')
+            raise ValueError("Название проекта не может быть пустым")
         return v.strip() if v else v
 
 
@@ -57,7 +66,7 @@ class ProjectResponse(ProjectBase):
     id: int
     created_at: datetime
     updated_at: Optional[datetime] = None
-    
+
     class Config:
         """Настройки Pydantic-модели."""
 

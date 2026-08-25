@@ -4,12 +4,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.main import app
 from app.core.database import Base, get_db
 from app.core.security import get_password_hash
-from app.models.all_models import User, Project, Fault, KnowledgeBase
+from app.main import app
+from app.models.all_models import Fault, Project, User
 from app.schemas.user import UserRole
-
 
 # Тестовая база данных SQLite в памяти
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test_faults.db"
@@ -39,7 +38,7 @@ def db_session():
     """Создание сессии БД для тестов"""
     # Создаём таблицы
     Base.metadata.create_all(bind=engine)
-    
+
     session = TestingSessionLocal()
     try:
         yield session
@@ -52,14 +51,15 @@ def db_session():
 @pytest.fixture(scope="function")
 def client(db_session):
     """Тестовый клиент FastAPI"""
+
     def override_get_db():
         try:
             yield db_session
         finally:
             pass
-    
+
     app.dependency_overrides[get_db] = override_get_db
-    
+
     with TestClient(app) as test_client:
         yield test_client
 
@@ -73,24 +73,7 @@ def test_user(db_session):
         password_hash=get_password_hash("test123"),
         full_name="Test User",
         role=UserRole.MANAGER,
-        is_active=True
-    )
-    db_session.add(user)
-    db_session.commit()
-    db_session.refresh(user)
-    return user
-
-
-@pytest.fixture(scope="function")
-def test_admin(db_session):
-    """Создание тестового администратора"""
-    user = User(
-        username="admin",
-        email="admin@example.com",
-        password_hash=get_password_hash("admin123"),
-        full_name="Admin User",
-        role=UserRole.ADMIN,
-        is_active=True
+        is_active=True,
     )
     db_session.add(user)
     db_session.commit()
@@ -107,7 +90,7 @@ def test_project(db_session, test_user):
         client="Тестовый клиент",
         station="Тестовая станция",
         unit=1,
-        type="САРЗ"
+        type="САРЗ",
     )
     db_session.add(project)
     db_session.commit()
@@ -123,7 +106,7 @@ def test_fault(db_session, test_project):
         description="Описание тестовой неисправности",
         severity="critical",
         status="open",
-        project_id=test_project.id
+        project_id=test_project.id,
     )
     db_session.add(fault)
     db_session.commit()
@@ -136,11 +119,8 @@ def auth_token(client, test_user):
     """Получение JWT токена для тестового пользователя"""
     response = client.post(
         "/api/auth/login",
-        data={
-            "username": "testuser",
-            "password": "test123"
-        },
-        headers={"Content-Type": "application/x-www-form-urlencoded"}
+        data={"username": "testuser", "password": "test123"},
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
     return response.json()["access_token"]
 
@@ -149,6 +129,7 @@ def auth_token(client, test_user):
 def auth_headers(auth_token):
     """Заголовки с токеном авторизации"""
     return {"Authorization": f"Bearer {auth_token}"}
+
 
 @pytest.fixture(scope="function")
 def test_engineer(db_session):
@@ -159,7 +140,7 @@ def test_engineer(db_session):
         password_hash=get_password_hash("eng123"),
         full_name="Test Engineer",
         role=UserRole.ENGINEER,
-        is_active=True
+        is_active=True,
     )
     db_session.add(user)
     db_session.commit()
@@ -172,11 +153,8 @@ def engineer_token(client, test_engineer):
     """Получение JWT токена для инженера"""
     response = client.post(
         "/api/auth/login",
-        data={
-            "username": "engineer",
-            "password": "eng123"
-        },
-        headers={"Content-Type": "application/x-www-form-urlencoded"}
+        data={"username": "engineer", "password": "eng123"},
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
     return response.json()["access_token"]
 
@@ -185,6 +163,7 @@ def engineer_token(client, test_engineer):
 def engineer_headers(engineer_token):
     """Заголовки с токеном инженера"""
     return {"Authorization": f"Bearer {engineer_token}"}
+
 
 @pytest.fixture(scope="function")
 def test_admin(db_session):
@@ -195,7 +174,7 @@ def test_admin(db_session):
         password_hash=get_password_hash("admin123"),
         full_name="Test Admin",
         role=UserRole.ADMIN,
-        is_active=True
+        is_active=True,
     )
     db_session.add(user)
     db_session.commit()
@@ -208,11 +187,8 @@ def admin_token(client, test_admin):
     """Получение JWT токена для админа"""
     response = client.post(
         "/api/auth/login",
-        data={
-            "username": "admin",
-            "password": "admin123"
-        },
-        headers={"Content-Type": "application/x-www-form-urlencoded"}
+        data={"username": "admin", "password": "admin123"},
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
     return response.json()["access_token"]
 

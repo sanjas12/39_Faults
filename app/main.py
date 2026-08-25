@@ -2,22 +2,30 @@
 
 from typing import Dict, Optional
 
-from fastapi import FastAPI, Request, Form, HTTPException, status
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import RedirectResponse
-from starlette.middleware.base import BaseHTTPMiddleware
-from app.middleware.auth import auth_middleware
-from app.core.security import verify_password, create_access_token, decode_token
-from app.core.database import SessionLocal
-from app.models.all_models import User
-from app.api import auth, comments, faults, projects, history, knowledge_base, project_history, backup, attachments, dashboard, export
-from app.services.scheduler import start_scheduler
 
 from _version import __version__
-
+from app.api import (
+    attachments,
+    auth,
+    backup,
+    comments,
+    dashboard,
+    export,
+    faults,
+    history,
+    knowledge_base,
+    project_history,
+    projects,
+)
+from app.core.database import SessionLocal
+from app.core.security import decode_token
+from app.models.all_models import User
+from app.services.scheduler import start_scheduler
 
 app = FastAPI(
     title="Faults", description="Отслеживание неисправностей", version=__version__
@@ -52,24 +60,27 @@ app.include_router(attachments.router, prefix="/api")
 app.include_router(dashboard.router, prefix="/api")
 app.include_router(export.router, prefix="/api")
 
+
 def is_authenticated(request: Request) -> bool:
     """Проверка авторизации пользователя (cookies + localStorage)"""
-    
+
     # 1. Проверяем токен в cookies
-    token = request.cookies.get('access_token')
-    
+    token = request.cookies.get("access_token")
+
     # 2. Проверяем токен в заголовке Authorization (из localStorage)
     if not token:
-        auth_header = request.headers.get('Authorization')
-        if auth_header and auth_header.startswith('Bearer '):
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
             token = auth_header[7:]
-    
+
     if token:
         payload = decode_token(token)
         if payload:
             db = SessionLocal()
             try:
-                user = db.query(User).filter(User.username == payload.get('sub')).first()
+                user = (
+                    db.query(User).filter(User.username == payload.get("sub")).first()
+                )
                 if user and user.is_active:
                     request.state.user = user
                     return True
@@ -87,7 +98,7 @@ def _render_page(
     **extra_context: object,
 ) -> HTMLResponse:
     """Отрендерить HTML-страницу через Jinja2Templates"""
-    
+
     context: Dict[str, object] = {"request": request}
     if active_page is not None:
         context["active_page"] = active_page
@@ -102,11 +113,11 @@ def _render_protected_page(
     **extra_context: object,
 ) -> HTMLResponse:
     """Отрендерить HTML-страницу с проверкой авторизации"""
-    
+
     # Проверяем авторизацию
     if not is_authenticated(request):
-        return RedirectResponse(url='/login', status_code=302)
-    
+        return RedirectResponse(url="/login", status_code=302)
+
     context: Dict[str, object] = {"request": request}
     if active_page is not None:
         context["active_page"] = active_page
@@ -136,7 +147,9 @@ def faults_page(request: Request) -> HTMLResponse:
 @app.get("/knowledge")
 def knowledge_page(request: Request) -> HTMLResponse:
     """Страница базы знаний."""
-    return _render_protected_page(request, "knowledge_base.html", active_page="knowledge")
+    return _render_protected_page(
+        request, "knowledge_base.html", active_page="knowledge"
+    )
 
 
 @app.get("/faults/{fault_id}")
@@ -162,7 +175,12 @@ def kanban_page(request: Request) -> HTMLResponse:
 @app.get("/knowledge/{article_id}")
 def knowledge_article_detail(request: Request, article_id: int):
     """Страница просмотра статьи"""
-    return _render_protected_page(request, "knowledge_article.html", active_page="knowledge", article_id=article_id)
+    return _render_protected_page(
+        request,
+        "knowledge_article.html",
+        active_page="knowledge",
+        article_id=article_id,
+    )
 
 
 @app.get("/settings")
@@ -173,7 +191,10 @@ def settings_page(request: Request):
 @app.get("/projects/{project_id}")
 def project_detail(request: Request, project_id: int):
     """Детальная страница проекта"""
-    return _render_protected_page(request, "project_detail.html", active_page="projects", project_id=project_id)
+    return _render_protected_page(
+        request, "project_detail.html", active_page="projects", project_id=project_id
+    )
+
 
 if not app.debug:
     start_scheduler()
@@ -185,7 +206,7 @@ def login_page(request: Request) -> HTMLResponse:
     """Страница входа в систему."""
     # Если уже авторизован — редирект на дашборд
     if is_authenticated(request):
-        return RedirectResponse(url='/', status_code=302)
+        return RedirectResponse(url="/", status_code=302)
     # Используем _render_page без проверки
     context = {"request": request}
     return templates.TemplateResponse("login.html", context)
@@ -195,7 +216,7 @@ def login_page(request: Request) -> HTMLResponse:
 def register_page(request: Request) -> HTMLResponse:
     """Страница регистрации."""
     if is_authenticated(request):
-        return RedirectResponse(url='/', status_code=302)
+        return RedirectResponse(url="/", status_code=302)
     context = {"request": request}
     return templates.TemplateResponse("register.html", context)
 
@@ -205,10 +226,10 @@ def admin_users_page(request: Request):
     """Страница управления пользователями (только админ)"""
     # Проверяем авторизацию и роль
     if not is_authenticated(request):
-        return RedirectResponse(url='/login', status_code=302)
-    
-    user = getattr(request.state, 'user', None)
-    if not user or user.role != 'admin':
-        return RedirectResponse(url='/', status_code=302)
-    
+        return RedirectResponse(url="/login", status_code=302)
+
+    user = getattr(request.state, "user", None)
+    if not user or user.role != "admin":
+        return RedirectResponse(url="/", status_code=302)
+
     return _render_protected_page(request, "admin/users.html", active_page="admin")

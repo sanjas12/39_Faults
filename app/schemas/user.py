@@ -22,10 +22,10 @@ class UserBase(BaseModel):
     email: EmailStr
     full_name: Optional[str] = Field(None, max_length=100)
     role: UserRole = UserRole.ENGINEER
-    notify_creation: bool = True  
+    notify_creation: bool = True
     notify_status_change: bool = True
-    notify_comments: bool = True  
-    notify_assigned: bool = True  
+    notify_comments: bool = True
+    notify_assigned: bool = True
 
 
 class UserCreate(UserBase):

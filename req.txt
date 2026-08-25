@@ -1,7 +1,7 @@
 pytest
 pytest-asyncio
 pytest-cov
-httpx 
+httpx
 factory-boy
 apscheduler
 aiofiles

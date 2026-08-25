@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import List, Optional
 
-from fastapi import Depends, HTTPException, status, Request
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -54,7 +54,7 @@ def decode_token(token: str) -> dict:
 async def get_current_user(
     request: Request,
     token: Optional[str] = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ) -> User:
     """Получение текущего пользователя по токену"""
     credentials_exception = HTTPException(
@@ -70,7 +70,7 @@ async def get_current_user(
     # ✅ Если нет в header, пробуем из cookie
     elif not token:
         token = request.cookies.get("access_token")
-    
+
     if not token:
         raise credentials_exception
 
@@ -79,8 +79,8 @@ async def get_current_user(
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
-    except JWTError:
-        raise credentials_exception
+    except JWTError as exc:
+        raise credentials_exception from exc
 
     user = db.query(User).filter(User.username == username).first()
     if user is None:

@@ -52,10 +52,16 @@ class FaultBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=500)
     description: Optional[str] = Field(None, max_length=2000)
     severity: SeverityEnum = SeverityEnum.MINOR
-    category: Optional[str] = Field(None, max_length=100, description="Категория неисправности")
+    category: Optional[str] = Field(
+        None, max_length=100, description="Категория неисправности"
+    )
     project_id: Optional[int] = Field(None, description="ID проекта (может быть null)")
-    linked_knowledge_ids: Optional[str] = Field(None, description="ID статей через запятую")
-    planned_actions: Optional[str] = Field(None, description="Планируемые мероприятия (Markdown)")
+    linked_knowledge_ids: Optional[str] = Field(
+        None, description="ID статей через запятую"
+    )
+    planned_actions: Optional[str] = Field(
+        None, description="Планируемые мероприятия (Markdown)"
+    )
 
     @validator("title")
     def title_not_empty(cls, v: str) -> str:  # noqa: N805
@@ -65,6 +71,7 @@ class FaultBase(BaseModel):
 
 class FaultCreate(FaultBase):
     """Схема для создания неисправности."""
+
     pass
 
 
@@ -78,8 +85,12 @@ class FaultUpdate(BaseModel):
     category: Optional[str] = Field(None, max_length=100)
     project_id: Optional[int] = None
     parent_fault_id: Optional[int] = None
-    linked_knowledge_ids: Optional[str] = Field(None, description="ID статей через запятую")
-    planned_actions: Optional[str] = Field(None, description="Планируемые мероприятия (Markdown)")
+    linked_knowledge_ids: Optional[str] = Field(
+        None, description="ID статей через запятую"
+    )
+    planned_actions: Optional[str] = Field(
+        None, description="Планируемые мероприятия (Markdown)"
+    )
 
     @validator("title")
     def title_not_empty(cls, v: Optional[str]) -> Optional[str]:  # noqa: N805
