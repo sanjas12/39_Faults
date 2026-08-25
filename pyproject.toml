@@ -135,6 +135,7 @@ build = []
 
 dev = [
     "commitizen>=3.27.0",
+    "mypy==1.14.1",
     "pre-commit>= 2.0.0, < 3.0.0",
     "python-semantic-release>=9.3.1",
     "pytest>=8.3.5",
@@ -160,6 +161,32 @@ version_files = [
 tag_format = "$version"
 update_changelog_on_bump = true
 changelog_file = "docs/CHANGELOG.md"
+
+[tool.mypy]
+python_version = "3.8"
+ignore_missing_imports = true
+check_untyped_defs = true
+no_implicit_optional = true
+
+# В этих legacy-модулях используется старый декларативный стиль SQLAlchemy.
+# Исключения перечислены явно, чтобы mypy проверял весь остальной пакет app и
+# baseline можно было сокращать по мере перехода моделей на Mapped[].
+[[tool.mypy.overrides]]
+module = [
+    "app.main",
+    "app.api.attachments",
+    "app.api.auth",
+    "app.api.backup",
+    "app.api.dashboard",
+    "app.api.export",
+    "app.api.faults",
+    "app.api.knowledge_base",
+    "app.api.projects",
+    "app.core.security",
+    "app.models.all_models",
+    "app.services.pdf_service",
+]
+ignore_errors = true
 
 # ─── Ruff: линтер + форматер ─────────────────────────────────────────────────
 [tool.ruff]
