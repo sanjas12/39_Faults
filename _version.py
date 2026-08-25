@@ -4,7 +4,7 @@ import subprocess
 from functools import lru_cache
 
 __app_name__ = "Faults"
-__version__ = "0.0.1"
+__version__ = "0.1.0"
 
 GIT_REVISION_CMD: tuple[str, ...] = ("git", "rev-list", "--count", "HEAD")
 

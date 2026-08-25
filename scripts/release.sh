@@ -187,7 +187,11 @@ do_bump() {
     local label=$1
     shift
     log_info "Запускаем: $*"
-    if ! "$@"; then
+    # Commitizen на Windows перезаписывает version-файлы с CRLF. Git всё равно
+    # сохраняет их как LF по .gitattributes, но mixed-line-ending отклоняет
+    # внутренний commit после собственного автоисправления. Остальные hooks
+    # продолжают выполняться; пропускаем только эту дублирующую проверку.
+    if ! SKIP=mixed-line-ending "$@"; then
         log_error "Ошибка при bump: $label"
         exit 1
     fi
