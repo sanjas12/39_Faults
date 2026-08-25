@@ -39,3 +39,13 @@ current_annotation.set_visible(True)
 - Если изменение затрагивает установку, запуск, сборку, выпуск версии или основные
   возможности проекта, при необходимости обновляй также корневой `Readme.md`.
 - Поддерживай номер версии и дату обновления руководства в актуальном состоянии.
+
+
+## Local server policy
+
+- Never start a local application or development server in this repository.
+- Do not run Uvicorn, `scripts/run_uv.sh`, `scripts/run_pip.sh`, or any command that opens or listens on a local network port.
+- Do not launch the application in a browser or perform browser-based UI testing against localhost.
+- The user performs all application startup and visual UI verification manually.
+- Validate changes only with non-server checks such as template compilation, static analysis, linters, and automated tests that do not start a listening server.
+- If completing a request appears to require a local server, stop and ask the user to perform that verification instead.
