@@ -412,11 +412,7 @@ async function loadFaultDetail() {
 
     try {
         const token = localStorage.getItem('auth_token');
-        if (!token) {
-            window.location.href = '/login';
-            return;
-        }
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         const response = await axios.get(`/api/faults/${faultId}`);
         currentFault = response.data;
@@ -761,11 +757,7 @@ if (saveBtn) {
 
         try {
             const token = localStorage.getItem('auth_token');
-            if (!token) {
-                window.location.href = '/login';
-                return;
-            }
-            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
             const response = await axios.patch(`/api/faults/${faultId}`, {
                 planned_actions: content || null
@@ -866,11 +858,6 @@ async function downloadFile(attachmentId, filename) {
 
     try {
         const token = localStorage.getItem('auth_token');
-        if (!token) {
-            alert('Вы не авторизованы!');
-            window.location.href = '/login';
-            return;
-        }
 
         const response = await axios.get(
             `/api/faults/${faultId}/attachments/${attachmentId}/download`,
@@ -942,11 +929,6 @@ document.getElementById('fileInput').addEventListener('change', async function(e
         formData.append('description', description || '');
 
         const token = localStorage.getItem('auth_token');
-        if (!token) {
-            alert('Вы не авторизованы!');
-            window.location.href = '/login';
-            return;
-        }
 
         const uploadBtn = document.querySelector('.card-header .btn-outline-primary');
         if (uploadBtn) {
@@ -1551,11 +1533,7 @@ if (document.getElementById('saveCategoryBtn')) {
 
         try {
             const token = localStorage.getItem('auth_token');
-            if (!token) {
-                window.location.href = '/login';
-                return;
-            }
-            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
             const response = await axios.patch(`/api/faults/${faultId}`, {
                 category: category
@@ -1585,11 +1563,7 @@ if (removeCategoryBtn) {
 
         try {
             const token = localStorage.getItem('auth_token');
-            if (!token) {
-                window.location.href = '/login';
-                return;
-            }
-            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
             const response = await axios.patch(`/api/faults/${faultId}`, {
                 category: null

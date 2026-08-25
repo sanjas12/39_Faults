@@ -220,8 +220,7 @@ let currentDeleteId = null;
 async function loadFilters() {
     try {
         const token = localStorage.getItem('auth_token');
-        if (!token) return;
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         // Загружаем станции
         const stationsRes = await axios.get('/api/projects/stations/');
@@ -275,11 +274,7 @@ async function loadProjects() {
 
     try {
         const token = localStorage.getItem('auth_token');
-        if (!token) {
-            window.location.href = '/login';
-            return;
-        }
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         const params = new URLSearchParams();
 
@@ -562,11 +557,7 @@ document.getElementById('confirmDeleteBtn').addEventListener('click', async func
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('🚀 Загрузка страницы проектов...');
     const token = localStorage.getItem('auth_token');
-    if (!token) {
-        window.location.href = '/login';
-        return;
-    }
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
     await loadFilters();
     await loadProjects();

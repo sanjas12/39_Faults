@@ -249,11 +249,7 @@ const projectId = {{ project_id }};
 async function loadProjectDetail() {
     try {
         const token = localStorage.getItem('auth_token');
-        if (!token) {
-            window.location.href = '/login';
-            return;
-        }
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         // Загружаем данные проекта
         const projectRes = await axios.get(`/api/projects/${projectId}`);
@@ -545,11 +541,7 @@ document.getElementById('saveContactsBtn').addEventListener('click', async funct
 
     try {
         const token = localStorage.getItem('auth_token');
-        if (!token) {
-            window.location.href = '/login';
-            return;
-        }
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         this.disabled = true;
         this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';

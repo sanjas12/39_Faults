@@ -293,12 +293,8 @@ let allFaultsData = [];
 async function loadProjectsForFilters() {
     try {
         const token = localStorage.getItem('auth_token');
-        if (!token) {
-            window.location.href = '/login';
-            return;
-        }
 
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         const response = await axios.get('/api/projects');
         allProjects = response.data;
@@ -334,8 +330,7 @@ async function loadProjectsForFilters() {
 async function loadCategoryFilter() {
     try {
         const token = localStorage.getItem('auth_token');
-        if (!token) return;
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         const response = await axios.get('/api/faults/categories/');
         const categories = response.data || [];
@@ -366,11 +361,7 @@ async function loadCategoryFilter() {
 async function loadFaults(searchTerm = '') {
     try {
         const token = localStorage.getItem('auth_token');
-        if (!token) {
-            window.location.href = '/login';
-            return;
-        }
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         const params = new URLSearchParams();
 
@@ -653,11 +644,7 @@ document.getElementById('saveFaultBtn').addEventListener('click', async function
 
     try {
         const token = localStorage.getItem('auth_token');
-        if (!token) {
-            window.location.href = '/login';
-            return;
-        }
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         await axios.post('/api/faults', data);
 
@@ -681,11 +668,7 @@ document.getElementById('saveFaultBtn').addEventListener('click', async function
 async function editFault(id) {
     try {
         const token = localStorage.getItem('auth_token');
-        if (!token) {
-            window.location.href = '/login';
-            return;
-        }
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         const response = await axios.get(`/api/faults/${id}`);
         const fault = response.data;
@@ -730,11 +713,7 @@ document.getElementById('updateFaultBtn').addEventListener('click', async functi
 
     try {
         const token = localStorage.getItem('auth_token');
-        if (!token) {
-            window.location.href = '/login';
-            return;
-        }
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         await axios.patch(`/api/faults/${id}`, data);
 
@@ -770,11 +749,7 @@ document.getElementById('confirmDeleteFaultBtn').addEventListener('click', async
 
     try {
         const token = localStorage.getItem('auth_token');
-        if (!token) {
-            window.location.href = '/login';
-            return;
-        }
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         await axios.delete(`/api/faults/${currentDeleteId}`);
 
@@ -874,13 +849,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Проверяем авторизацию
     const token = localStorage.getItem('auth_token');
-    if (!token) {
-        console.warn('🔒 Нет токена, редирект на логин');
-        window.location.href = '/login';
-        return;
-    }
 
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
     await loadProjectsForFilters();
     await loadCategoryFilter();

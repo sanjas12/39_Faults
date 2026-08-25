@@ -176,11 +176,7 @@ function parseMarkdown(text) {
 async function loadArticle() {
     try {
         const token = localStorage.getItem('auth_token');
-        if (!token) {
-            window.location.href = '/login';
-            return;
-        }
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         const response = await axios.get(`/api/knowledge/${articleId}`);
         currentArticle = response.data;

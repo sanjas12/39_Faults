@@ -226,11 +226,7 @@ let currentDeleteId = null;
 async function loadUsers() {
     try {
         const token = localStorage.getItem('auth_token');
-        if (!token) {
-            window.location.href = '/login';
-            return;
-        }
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         const params = new URLSearchParams();
 
@@ -390,7 +386,7 @@ async function updateUserRole(userId, newRole) {
 
     try {
         const token = localStorage.getItem('auth_token');
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         await axios.put(`/api/auth/users/${userId}`, {
             role: newRole
@@ -417,7 +413,7 @@ async function updateUserStatus(userId, isActive) {
 
     try {
         const token = localStorage.getItem('auth_token');
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         await axios.put(`/api/auth/users/${userId}`, {
             is_active: isActive
@@ -459,7 +455,7 @@ function deleteUser(id) {
 async function updateUserRole(userId, newRole) {
     try {
         const token = localStorage.getItem('auth_token');
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         await axios.put(`/api/auth/users/${userId}`, {
             role: newRole
@@ -479,7 +475,7 @@ async function updateUserRole(userId, newRole) {
 async function updateUserStatus(userId, isActive) {
     try {
         const token = localStorage.getItem('auth_token');
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         await axios.put(`/api/auth/users/${userId}`, {
             is_active: isActive
@@ -599,7 +595,7 @@ document.getElementById('saveUserBtn').addEventListener('click', async function(
 
     try {
         const token = localStorage.getItem('auth_token');
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         await axios.post('/api/auth/register', data);
 
@@ -620,7 +616,7 @@ document.getElementById('saveUserBtn').addEventListener('click', async function(
 async function editUser(id) {
     try {
         const token = localStorage.getItem('auth_token');
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         const response = await axios.get(`/api/auth/users/${id}`);
         const user = response.data;
@@ -671,7 +667,7 @@ document.getElementById('updateUserBtn').addEventListener('click', async functio
 
     try {
         const token = localStorage.getItem('auth_token');
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         await axios.put(`/api/auth/users/${id}`, data);
 
@@ -713,7 +709,7 @@ document.getElementById('confirmDeleteUserBtn').addEventListener('click', async 
 
     try {
         const token = localStorage.getItem('auth_token');
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         await axios.delete(`/api/auth/users/${currentDeleteId}`);
 
@@ -731,11 +727,7 @@ document.getElementById('confirmDeleteUserBtn').addEventListener('click', async 
 // ======= ИНИЦИАЛИЗАЦИЯ =======
 document.addEventListener('DOMContentLoaded', async function() {
     const token = localStorage.getItem('auth_token');
-    if (!token) {
-        window.location.href = '/login';
-        return;
-    }
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
     console.log('🚀 Загрузка страницы управления пользователями');
     await loadUsers();

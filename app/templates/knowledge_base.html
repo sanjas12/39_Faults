@@ -221,11 +221,7 @@ function parseMarkdown(text) {
 async function loadArticles() {
     try {
         const token = localStorage.getItem('auth_token');
-        if (!token) {
-            window.location.href = '/login';
-            return;
-        }
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         const params = new URLSearchParams();
         const search = document.getElementById('searchInput').value.trim();
@@ -251,8 +247,7 @@ async function loadArticles() {
 async function loadFilters() {
     try {
         const token = localStorage.getItem('auth_token');
-        if (!token) return;
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         // Загружаем категории
         const catResponse = await axios.get('/api/knowledge/categories/');
@@ -496,11 +491,7 @@ document.getElementById('tagFilter').addEventListener('change', applyFilters);
 
 document.addEventListener('DOMContentLoaded', async function() {
     const token = localStorage.getItem('auth_token');
-    if (!token) {
-        window.location.href = '/login';
-        return;
-    }
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
     await loadFilters();
     await loadArticles();

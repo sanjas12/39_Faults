@@ -1,18 +1,19 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.security import (
+    ACCESS_TOKEN_EXPIRE_MINUTES,
     create_access_token,
     get_current_user,
     get_password_hash,
     require_admin,
     verify_password,
 )
-from app.models.all_models import User
+from app.models.all_models import User, UserRole
 from app.schemas.user import (
     Token,
     UserCreate,
@@ -54,18 +55,18 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     db.refresh(db_user)
 
     # ✅ Автоматически создаём токен для входа
-    access_token = create_access_token(data={"sub": db_user.username, "role": db_user.role})
+    access_token = create_access_token(
+        data={"sub": db_user.username, "role": db_user.role}
+    )
 
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user": db_user
-    }
+    return {"access_token": access_token, "token_type": "bearer", "user": db_user}
 
 
 @router.post("/login", response_model=Token)
 def login(
-    form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
+    response: Response,
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
 ):
     """Вход в систему"""
     # Ищем пользователя
@@ -85,6 +86,20 @@ def login(
 
     # Создаём токен
     access_token = create_access_token(data={"sub": user.username, "role": user.role})
+
+    # Серверная cookie нужна для защищённых HTML-маршрутов. Заголовок
+    # Authorization доступен API-запросам, но не передаётся при обычном
+    # переходе браузера на страницу.
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        # Текущий клиент удаляет эту cookie через document.cookie при выходе.
+        # После появления серверного /logout это можно заменить на HttpOnly.
+        httponly=False,
+        samesite="lax",
+        path="/",
+    )
 
     return {"access_token": access_token, "token_type": "bearer", "user": user}
 
@@ -168,21 +183,25 @@ def update_user(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Пользователь не найден"
         )
-    
+
     # Защита: нельзя изменять другого администратора
     if user.role == UserRole.ADMIN and user.id != admin_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Нельзя изменять другого администратора"
+            detail="Нельзя изменять другого администратора",
         )
-    
+
     # ✅ Защита: нельзя менять свою роль с admin
-    if user.id == admin_user.id and user_data.role is not None and user_data.role != UserRole.ADMIN:
+    if (
+        user.id == admin_user.id
+        and user_data.role is not None
+        and user_data.role != UserRole.ADMIN
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Нельзя понизить себя с роли администратора"
+            detail="Нельзя понизить себя с роли администратора",
         )
-    
+
         # Проверяем уникальность
     if user_data.username:
         existing = (
@@ -201,35 +220,20 @@ def update_user(
             db.query(User)
             .filter(User.email == user_data.email, User.id != user_id)
             .first()
-        )   
-
-
-@router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_user(
-    user_id: int,
-    db: Session = Depends(get_db),
-    admin_user: User = Depends(require_admin),
-):
-    """Удаление пользователя (только админ)"""
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Пользователь не найден"
         )
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email уже используется",
+            )
 
-    # ✅ Защита: нельзя удалять другого администратора
-    if user.role == UserRole.ADMIN and user.id != admin_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Нельзя удалять другого администратора"
-        )
+    update_data = user_data.model_dump(exclude_unset=True, exclude={"password"})
+    for field, value in update_data.items():
+        setattr(user, field, value)
 
-    if user.id == admin_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Нельзя удалить самого себя"
-        )
+    if user_data.password:
+        user.password_hash = get_password_hash(user_data.password)
 
-    db.delete(user)
     db.commit()
     db.refresh(user)
     return user
@@ -246,6 +250,13 @@ def delete_user(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Пользователь не найден"
+        )
+
+    # Нельзя удалять другого администратора.
+    if user.role == UserRole.ADMIN and user.id != admin_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Нельзя удалять другого администратора",
         )
 
     if user.id == admin_user.id:

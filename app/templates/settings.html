@@ -104,11 +104,7 @@
 async function loadProfile() {
     try {
         const token = localStorage.getItem('auth_token');
-        if (!token) {
-            window.location.href = '/login';
-            return;
-        }
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         const response = await axios.get('/api/auth/me');
         const user = response.data;
@@ -169,7 +165,7 @@ document.getElementById('profileForm').addEventListener('submit', async function
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
 
         const token = localStorage.getItem('auth_token');
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         const response = await axios.put('/api/auth/me', data);
 
@@ -216,7 +212,7 @@ document.getElementById('notificationsForm').addEventListener('submit', async fu
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
 
         const token = localStorage.getItem('auth_token');
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         const response = await axios.put('/api/auth/me', data);
 

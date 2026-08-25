@@ -222,11 +222,7 @@ async function loadDashboard() {
 
     try {
         const token = localStorage.getItem('auth_token');
-        if (!token) {
-            window.location.href = '/login';
-            return;
-        }
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         const response = await axios.get('/api/dashboard/stats');
         const data = response.data;
@@ -379,10 +375,6 @@ async function loadDashboard() {
 // Загружаем данные при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
     const token = localStorage.getItem('auth_token');
-    if (!token) {
-        window.location.href = '/login';
-        return;
-    }
     loadDashboard();
 });
 
@@ -411,11 +403,7 @@ document.getElementById('saveFaultBtn').addEventListener('click', async function
 
     try {
         const token = localStorage.getItem('auth_token');
-        if (!token) {
-            window.location.href = '/login';
-            return;
-        }
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         await axios.post('/api/faults', data);
 
