@@ -32,7 +32,7 @@ Bootstrap 5.1.3, Bootstrap Icons 1.8.1 и Axios 1.7.9 хранятся в
 
 | Параметр | Значение |
 |---|---|
-| Python | 3.8.10 |
+| Python | 3.8.10 (`>=3.8.10,<3.9`) |
 | ОС | Windows 7 и выше |
 | [uv](https://github.com/astral-sh/uv) | 0.11.7 |
 
@@ -59,6 +59,9 @@ pip install -r requirements.txt
 ```
 
 > `requirements.txt` генерируется из `pyproject.toml` — не редактировать вручную.
+> В `pyproject.toml` перечислены только прямые зависимости приложения для Python
+> 3.8; тестовые и release-инструменты находятся в группе `dev`. Транзитивные
+> зависимости фиксируются только в `uv.lock`.
 
 ### 3. Запуск
 
