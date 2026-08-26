@@ -5,9 +5,7 @@ aiofiles==24.1.0 ; sys_platform == 'win32'
 annotated-doc==0.0.4 ; sys_platform == 'win32'
     # via fastapi
 annotated-types==0.7.0 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   pydantic
+    # via pydantic
 anyio==4.5.2 ; sys_platform == 'win32'
     # via
     #   httpx
@@ -15,9 +13,7 @@ anyio==4.5.2 ; sys_platform == 'win32'
 apscheduler==3.11.2 ; sys_platform == 'win32'
     # via faults
 argcomplete==3.5.3 ; sys_platform == 'win32'
-    # via
-    #   commitizen
-    #   faults
+    # via commitizen
 backports-zoneinfo==0.2.1 ; sys_platform == 'win32'
     # via
     #   apscheduler
@@ -26,63 +22,32 @@ bcrypt==4.0.1 ; sys_platform == 'win32'
     # via faults
 certifi==2026.5.20 ; sys_platform == 'win32'
     # via
-    #   faults
     #   httpcore
     #   httpx
-    #   requests
 cffi==1.17.1 ; platform_python_implementation != 'PyPy' and sys_platform == 'win32'
     # via cryptography
 cfgv==3.4.0 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   pre-commit
+    # via pre-commit
 charset-normalizer==3.4.7 ; sys_platform == 'win32'
-    # via
-    #   commitizen
-    #   faults
-    #   requests
+    # via commitizen
 click==8.1.8 ; sys_platform == 'win32'
-    # via
-    #   click-option-group
-    #   faults
-    #   python-semantic-release
-    #   uvicorn
-click-option-group==0.5.9 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   python-semantic-release
+    # via uvicorn
 colorama==0.4.6 ; sys_platform == 'win32'
     # via
     #   click
     #   commitizen
-    #   faults
     #   pytest
 commitizen==3.31.0 ; sys_platform == 'win32'
-    # via faults
 coverage==7.6.1 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   pytest-cov
+    # via pytest-cov
 cryptography==47.0.0 ; sys_platform == 'win32'
     # via python-jose
 decli==0.6.2 ; sys_platform == 'win32'
-    # via
-    #   commitizen
-    #   faults
-deprecated==1.3.1 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   python-semantic-release
+    # via commitizen
 distlib==0.4.0 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   virtualenv
+    # via virtualenv
 dnspython==2.6.1 ; sys_platform == 'win32'
     # via email-validator
-dotty-dict==1.3.1 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   python-semantic-release
 ecdsa==0.19.2 ; sys_platform == 'win32'
     # via python-jose
 email-validator==2.3.0 ; sys_platform == 'win32'
@@ -90,27 +55,13 @@ email-validator==2.3.0 ; sys_platform == 'win32'
 exceptiongroup==1.3.1 ; sys_platform == 'win32'
     # via
     #   anyio
-    #   faults
     #   pytest
-factory-boy==3.3.3 ; sys_platform == 'win32'
-    # via faults
-faker==35.2.2 ; sys_platform == 'win32'
-    # via factory-boy
 fastapi==0.124.4 ; sys_platform == 'win32'
     # via faults
 filelock==3.16.1 ; sys_platform == 'win32'
     # via
-    #   faults
     #   python-discovery
     #   virtualenv
-gitdb==4.0.12 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   gitpython
-gitpython==3.1.50 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   python-semantic-release
 greenlet==3.1.1 ; (platform_machine == 'AMD64' and sys_platform == 'win32') or (platform_machine == 'WIN32' and sys_platform == 'win32') or (platform_machine == 'aarch64' and sys_platform == 'win32') or (platform_machine == 'amd64' and sys_platform == 'win32') or (platform_machine == 'ppc64le' and sys_platform == 'win32') or (platform_machine == 'win32' and sys_platform == 'win32') or (platform_machine == 'x86_64' and sys_platform == 'win32')
     # via sqlalchemy
 h11==0.16.0 ; sys_platform == 'win32'
@@ -120,55 +71,31 @@ h11==0.16.0 ; sys_platform == 'win32'
 httpcore==1.0.9 ; sys_platform == 'win32'
     # via httpx
 httpx==0.28.1 ; sys_platform == 'win32'
-    # via faults
 identify==2.6.1 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   pre-commit
+    # via pre-commit
 idna==3.15 ; sys_platform == 'win32'
     # via
     #   anyio
     #   email-validator
-    #   faults
     #   httpx
-    #   requests
 importlib-metadata==8.5.0 ; sys_platform == 'win32'
-    # via
-    #   commitizen
-    #   faults
-importlib-resources==6.4.5 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   python-semantic-release
+    # via commitizen
 iniconfig==2.1.0 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   pytest
+    # via pytest
 jinja2==3.1.6 ; sys_platform == 'win32'
     # via
     #   commitizen
     #   faults
-    #   python-semantic-release
-markdown-it-py==3.0.0 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   rich
 markupsafe==2.1.5 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   jinja2
-mdurl==0.1.2 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   markdown-it-py
+    # via jinja2
+mypy==1.14.1 ; sys_platform == 'win32'
+mypy-extensions==1.1.0 ; sys_platform == 'win32'
+    # via mypy
 nodeenv==1.10.0 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   pre-commit
+    # via pre-commit
 packaging==26.2 ; sys_platform == 'win32'
     # via
     #   commitizen
-    #   faults
     #   pytest
 passlib==1.7.4 ; sys_platform == 'win32'
     # via faults
@@ -176,19 +103,13 @@ pillow==10.4.0 ; sys_platform == 'win32'
     # via reportlab
 platformdirs==4.3.6 ; sys_platform == 'win32'
     # via
-    #   faults
     #   python-discovery
     #   virtualenv
 pluggy==1.5.0 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   pytest
+    # via pytest
 pre-commit==2.21.0 ; sys_platform == 'win32'
-    # via faults
 prompt-toolkit==3.0.51 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   questionary
+    # via questionary
 pyasn1==0.4.8 ; sys_platform == 'win32'
     # via
     #   python-jose
@@ -200,85 +121,38 @@ pydantic==2.10.6 ; sys_platform == 'win32'
     #   fastapi
     #   faults
     #   pydantic-settings
-    #   python-semantic-release
 pydantic-core==2.27.2 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   pydantic
+    # via pydantic
 pydantic-settings==2.8.1 ; sys_platform == 'win32'
     # via faults
-pygments==2.19.2 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   rich
 pytest==8.3.5 ; sys_platform == 'win32'
     # via
-    #   faults
     #   pytest-asyncio
     #   pytest-cov
 pytest-asyncio==0.24.0 ; sys_platform == 'win32'
-    # via faults
 pytest-cov==5.0.0 ; sys_platform == 'win32'
-    # via faults
-python-dateutil==2.9.0.post0 ; sys_platform == 'win32'
-    # via faker
 python-discovery==1.4.0 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   virtualenv
+    # via virtualenv
 python-dotenv==1.0.1 ; sys_platform == 'win32'
     # via pydantic-settings
-python-gitlab==4.13.0 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   python-semantic-release
 python-jose==3.4.0 ; sys_platform == 'win32'
     # via faults
 python-multipart==0.0.20 ; sys_platform == 'win32'
-    # via faults
-python-semantic-release==10.5.3 ; sys_platform == 'win32'
     # via faults
 pytz==2026.2 ; sys_platform == 'win32'
     # via faults
 pyyaml==6.0.3 ; sys_platform == 'win32'
     # via
     #   commitizen
-    #   faults
     #   pre-commit
 questionary==2.1.0 ; sys_platform == 'win32'
-    # via
-    #   commitizen
-    #   faults
+    # via commitizen
 reportlab==3.6.12 ; sys_platform == 'win32'
     # via faults
-requests==2.32.4 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   python-gitlab
-    #   python-semantic-release
-    #   requests-toolbelt
-requests-toolbelt==1.0.0 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   python-gitlab
-rich==14.3.4 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   python-semantic-release
 rsa==4.9.1 ; sys_platform == 'win32'
     # via python-jose
-shellingham==1.5.4 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   python-semantic-release
 six==1.17.0 ; sys_platform == 'win32'
-    # via
-    #   ecdsa
-    #   python-dateutil
-smmap==5.0.3 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   gitdb
+    # via ecdsa
 sniffio==1.3.1 ; sys_platform == 'win32'
     # via anyio
 sqlalchemy==2.0.50 ; sys_platform == 'win32'
@@ -286,29 +160,22 @@ sqlalchemy==2.0.50 ; sys_platform == 'win32'
 starlette==0.44.0 ; sys_platform == 'win32'
     # via fastapi
 termcolor==2.4.0 ; sys_platform == 'win32'
-    # via
-    #   commitizen
-    #   faults
+    # via commitizen
 tomli==2.4.1 ; sys_platform == 'win32'
     # via
     #   coverage
-    #   faults
+    #   mypy
     #   pytest
 tomlkit==0.13.3 ; sys_platform == 'win32'
-    # via
-    #   commitizen
-    #   faults
-    #   python-semantic-release
+    # via commitizen
 typing-extensions==4.13.2 ; sys_platform == 'win32'
     # via
     #   annotated-types
     #   anyio
     #   cryptography
     #   exceptiongroup
-    #   faker
     #   fastapi
-    #   faults
-    #   gitpython
+    #   mypy
     #   pydantic
     #   pydantic-core
     #   sqlalchemy
@@ -319,26 +186,11 @@ tzdata==2026.2 ; sys_platform == 'win32'
     # via tzlocal
 tzlocal==5.2 ; sys_platform == 'win32'
     # via apscheduler
-urllib3==2.2.3 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   requests
 uvicorn==0.33.0 ; sys_platform == 'win32'
     # via faults
 virtualenv==21.4.1 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   pre-commit
+    # via pre-commit
 wcwidth==0.7.0 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   prompt-toolkit
-wrapt==2.0.1 ; sys_platform == 'win32'
-    # via
-    #   deprecated
-    #   faults
+    # via prompt-toolkit
 zipp==3.20.2 ; sys_platform == 'win32'
-    # via
-    #   faults
-    #   importlib-metadata
-    #   importlib-resources
+    # via importlib-metadata
